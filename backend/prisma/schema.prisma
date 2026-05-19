@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+  output   = "./ERD.svg"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  AGENT
+}
+
+enum PropertyType {
+  APARTMENT
+  VILLA
+  LAND
+  SHOP
+  OFFICE
+}
+
+enum PortfolioVisibility {
+  PUBLIC
+  HIDDEN
+}
+
+enum DemandStatus {
+  ACTIVE
+  CLOSED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  fullName     String
+  role         Role     @default(AGENT)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  portfolios Portfolio[]
+  demands    Demand[]
+}
+
+model Portfolio {
+  id           String              @id @default(cuid())
+  type         PropertyType
+  city         String
+  district     String
+  neighborhood String?
+  areaSqm      Int
+  roomCount    String
+  price        Decimal             @db.Decimal(14, 2)
+  features     String[]            @default([])
+  visibility   PortfolioVisibility @default(PUBLIC)
+  note         String?
+  ownerName    String
+  ownerPhone   String
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([type, city, district, visibility])
+  @@index([deletedAt])
+}
+
+model Demand {
+  id              String         @id @default(cuid())
+  types           PropertyType[] @default([])
+  regions         String[]       @default([])
+  minBudget       Decimal?       @db.Decimal(14, 2)
+  maxBudget       Decimal?       @db.Decimal(14, 2)
+  roomPreferences String[]       @default([])
+  featurePrefs    String[]       @default([])
+  note            String?
+  customerName    String
+  customerPhone   String
+  status          DemandStatus   @default(ACTIVE)
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([status])
+  @@index([deletedAt])
+}

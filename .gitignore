@@ -1,0 +1,21 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+.env.prod
+.env.*.local
+*.log
+.DS_Store
+.vscode/
+.idea/
+coverage/
+.cache/
+.turbo/
+
+# Prisma
+backend/prisma/migrations/dev.db*
+
+# Vite
+frontend/dist/
+frontend/.vite/
