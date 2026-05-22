@@ -1,4 +1,4 @@
-import type { PropertyType } from './portfolio';
+import type { ListingType, PropertyType } from './portfolio';
 
 export type DemandStatus = 'ACTIVE' | 'CLOSED';
 
@@ -10,11 +10,19 @@ export const DEMAND_STATUS_LABELS: Record<DemandStatus, string> = {
 export interface Demand {
   id: string;
   types: PropertyType[];
+  listingType: ListingType;
   regions: string[];
+  city?: string | null;
+  district?: string | null;
+  neighborhood?: string | null;
   minBudget?: string | number | null;
   maxBudget?: string | number | null;
   roomPreferences: string[];
+  minArea?: number | null;
+  maxArea?: number | null;
   featurePrefs: string[];
+  mustHaveFeatures: string[];
+  bonusFeatures: string[];
   note?: string | null;
   customerName: string;
   customerPhone: string;
@@ -28,11 +36,19 @@ export interface Demand {
 
 export interface CreateDemandPayload {
   types: PropertyType[];
-  regions: string[];
+  listingType?: ListingType;
+  regions?: string[];
+  city?: string;
+  district?: string;
+  neighborhood?: string;
   minBudget?: number;
   maxBudget?: number;
   roomPreferences?: string[];
+  minArea?: number;
+  maxArea?: number;
   featurePrefs?: string[];
+  mustHaveFeatures?: string[];
+  bonusFeatures?: string[];
   note?: string;
   customerName: string;
   customerPhone: string;

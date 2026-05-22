@@ -7,19 +7,16 @@ import {
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { DemandStatus, ListingType, PropertyType } from '@prisma/client';
+import { ListingType, PropertyType } from '@prisma/client';
 
-export class CreateDemandDto {
-  @IsArray()
-  @IsEnum(PropertyType, { each: true })
-  types!: PropertyType[];
-
-  @IsOptional() @IsEnum(ListingType) listingType?: ListingType;
-
+/** Alıcı kriterleri — sol panelden gelen, uyan portföyleri bulmak için. */
+export class MatchPortfoliosDto {
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
-  regions?: string[];
+  @IsEnum(PropertyType, { each: true })
+  types?: PropertyType[];
+
+  @IsOptional() @IsEnum(ListingType) listingType?: ListingType;
 
   @IsOptional() @IsString() city?: string;
   @IsOptional() @IsString() district?: string;
@@ -39,22 +36,10 @@ export class CreateDemandDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  featurePrefs?: string[];
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
   mustHaveFeatures?: string[];
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   bonusFeatures?: string[];
-
-  @IsOptional() @IsString() note?: string;
-
-  @IsString() customerName!: string;
-  @IsString() customerPhone!: string;
-
-  @IsOptional() @IsEnum(DemandStatus) status?: DemandStatus;
 }

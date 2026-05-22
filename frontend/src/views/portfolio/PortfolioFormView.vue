@@ -6,6 +6,8 @@ import {
   PROPERTY_TYPES,
   PROPERTY_TYPE_LABELS,
   LISTING_TYPE_LABELS,
+  ROOM_OPTIONS,
+  FEATURE_PRESETS,
   type CreatePortfolioPayload,
   type ListingType,
   type PropertyType,
@@ -32,14 +34,6 @@ const TYPE_GRADIENTS: Record<PropertyType, string> = {
   SHOP:      'linear-gradient(135deg, #b05e2c 0%, #d98048 100%)',
   OFFICE:    'linear-gradient(135deg, #4a4f5e 0%, #6e7585 100%)',
 };
-
-const ROOM_OPTIONS = ['1+0', '1+1', '2+1', '3+1', '4+1', '5+1'];
-
-const FEATURE_PRESETS = [
-  'Asansör', 'Otopark', 'Balkon', 'Deniz Manzarası', 'Güvenlik',
-  'Kombi', 'Havuz', 'Bahçe', 'Teras', 'Klima', 'Eşyalı',
-  'Isı Yalıtımı', 'Jeneratör', 'Garaj', 'Kapalı Otopark', 'Depolu',
-];
 
 // Kullanıcının aktif seçim yapıp yapmadığını takip eder
 const typeChosen    = ref(false);
