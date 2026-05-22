@@ -45,15 +45,6 @@ function fmtPrice(p: string | number) {
   return new Intl.NumberFormat('tr-TR').format(n) + ' ₺';
 }
 
-function initials(name: string) {
-  return name
-    .split(' ')
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-}
-
 async function remove(p: Portfolio) {
   if (!confirm(`"${p.city}/${p.district}" portföyü silinsin mi?`)) return;
   await portfolioService.remove(p.id);
@@ -65,38 +56,45 @@ onMounted(load);
 
 <template>
   <div class="page">
+    <!-- Page Header -->
     <div class="page-header">
       <div>
-        <h1>Portföy Yönetimi</h1>
-        <p class="muted" style="margin-top: 4px;">Toplam {{ total }} ilan</p>
+        <h1 class="text-headline-lg-mobile md:text-headline-lg font-semibold tracking-tight text-on-surface">Portföy Yönetimi</h1>
+        <p class="text-label-md text-on-surface-variant mt-1">Toplam {{ total }} ilan</p>
       </div>
       <button class="btn primary" @click="router.push('/portfolio/new')">
-        <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+        <span class="material-symbols-outlined text-[18px]">add</span>
         Yeni Portföy
       </button>
     </div>
 
-    <!-- Search & filter bar -->
-    <div class="search-bar-wrap">
-      <div class="search-bar">
-        <span class="material-symbols-outlined search-icon">search</span>
-        <input
-          class="search-input"
-          type="text"
-          v-model="filters.q"
-          placeholder="Bölge, fiyat, özellik ara…"
-          @keyup.enter="filters.page = 1; load()"
-        />
+    <!-- Search & Filter Bar -->
+    <div class="flex justify-center mb-gutter">
+      <div class="relative w-full max-w-2xl flex gap-3 items-center">
+        <div class="relative flex-1">
+          <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px] pointer-events-none">search</span>
+          <input
+            v-model="filters.q"
+            type="text"
+            placeholder="Bölge, fiyat, özellik ara..."
+            class="w-full pl-12 pr-4 py-3 bg-surface border border-outline-variant rounded-xl text-body-md text-on-surface placeholder:text-on-surface-variant shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all duration-150"
+            @keyup.enter="filters.page = 1; load()"
+          />
+        </div>
+        <button
+          class="btn gap-1.5 shrink-0"
+          :class="showFilters ? 'bg-primary-fixed text-on-primary-fixed-variant border-primary/30' : ''"
+          @click="showFilters = !showFilters"
+        >
+          <span class="material-symbols-outlined text-[18px]">tune</span>
+          Filtrele
+        </button>
       </div>
-      <button class="btn" @click="showFilters = !showFilters" :class="{ active: showFilters }">
-        <span class="material-symbols-outlined" style="font-size: 18px;">tune</span>
-        Filtrele
-      </button>
     </div>
 
-    <!-- Filter chips -->
-    <div v-if="showFilters" class="filters-panel card" style="margin-bottom: 24px;">
-      <div class="row">
+    <!-- Filter Panel -->
+    <div v-if="showFilters" class="card mb-gutter">
+      <div class="flex flex-wrap gap-stack-md">
         <div class="field">
           <label>Tür</label>
           <select class="select" v-model="filters.type">
@@ -133,7 +131,7 @@ onMounted(load);
           </select>
         </div>
       </div>
-      <div class="row" style="margin-top: 12px;">
+      <div class="flex gap-3 mt-stack-md">
         <button class="btn primary" @click="filters.page = 1; load()">Uygula</button>
         <button class="btn" @click="resetFilters">Sıfırla</button>
       </div>
@@ -142,70 +140,88 @@ onMounted(load);
     <!-- Loading -->
     <div v-if="loading" class="empty">Yükleniyor…</div>
 
-    <!-- Empty state -->
+    <!-- Empty -->
     <div v-else-if="!items.length" class="empty">Kayıt bulunamadı</div>
 
-    <!-- Card grid -->
-    <div v-else class="portfolio-grid">
+    <!-- Card Grid -->
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
       <article
         v-for="p in items"
         :key="p.id"
-        class="portfolio-card"
+        class="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col cursor-pointer group"
         @click="router.push(`/portfolio/${p.id}`)"
       >
-        <div class="card-img-placeholder">
-          <span class="material-symbols-outlined" style="font-size: 40px; color: var(--outline-variant);">maps_home_work</span>
-          <div class="card-badge-tl">
-            <span class="tag primary">{{ PROPERTY_TYPE_LABELS[p.type] }}</span>
+        <!-- Image Placeholder -->
+        <div class="relative h-44 bg-surface-container flex items-center justify-center">
+          <span class="material-symbols-outlined text-[44px] text-outline-variant">maps_home_work</span>
+          <!-- Type badge -->
+          <div class="absolute top-3 left-3">
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary text-on-primary text-label-sm shadow-sm">
+              <span class="w-1.5 h-1.5 rounded-full bg-on-primary/70"></span>
+              {{ PROPERTY_TYPE_LABELS[p.type] }}
+            </span>
           </div>
-          <div class="card-badge-tr">
-            <span :class="['status-dot', p.visibility === 'HIDDEN' ? 'hidden' : 'open']">
-              <span class="dot"></span>
-              {{ p.visibility === 'HIDDEN' ? 'GİZLİ' : 'AÇIK' }}
+          <!-- Visibility badge -->
+          <div class="absolute top-3 right-3">
+            <span
+              :class="[
+                'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-sm font-semibold uppercase tracking-wider backdrop-blur-sm',
+                p.visibility === 'HIDDEN'
+                  ? 'bg-error-container/90 text-on-error-container border border-error/20'
+                  : 'bg-emerald-50/90 text-emerald-700 border border-emerald-200'
+              ]"
+            >
+              <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+              {{ p.visibility === 'HIDDEN' ? 'Gizli' : 'Açık' }}
             </span>
           </div>
         </div>
 
-        <div class="card-body">
-          <h3 class="card-title">{{ p.city }}, {{ p.district }}<span v-if="p.neighborhood"> / {{ p.neighborhood }}</span></h3>
-          <p class="card-location">
-            <span class="material-symbols-outlined" style="font-size: 14px;">location_on</span>
+        <!-- Card Body -->
+        <div class="p-stack-md flex flex-col flex-1">
+          <h3 class="text-body-lg font-semibold text-on-surface mb-1 truncate group-hover:text-primary transition-colors">
+            {{ p.city }}, {{ p.district }}<span v-if="p.neighborhood"> / {{ p.neighborhood }}</span>
+          </h3>
+          <p class="text-label-md text-on-surface-variant flex items-center gap-1 mb-3">
+            <span class="material-symbols-outlined text-[14px]">location_on</span>
             {{ PROPERTY_TYPE_LABELS[p.type] }}
           </p>
 
-          <div class="card-specs">
-            <div class="spec">
-              <span class="material-symbols-outlined" style="font-size: 18px;">bed</span>
-              <span>{{ p.roomCount }}</span>
+          <!-- Specs -->
+          <div class="flex items-center gap-3 py-3 border-t border-b border-outline-variant mb-3">
+            <div class="flex items-center gap-1 text-label-md text-on-surface flex-1 justify-center">
+              <span class="material-symbols-outlined text-[18px] text-outline">bed</span>
+              {{ p.roomCount }}
             </div>
-            <div class="spec-divider"></div>
-            <div class="spec">
-              <span class="material-symbols-outlined" style="font-size: 18px;">square_foot</span>
-              <span>{{ p.areaSqm }} m²</span>
+            <div class="w-px h-4 bg-outline-variant"></div>
+            <div class="flex items-center gap-1 text-label-md text-on-surface flex-1 justify-center">
+              <span class="material-symbols-outlined text-[18px] text-outline">square_foot</span>
+              {{ p.areaSqm }} m²
             </div>
-            <div class="spec-divider"></div>
-            <div class="spec">
-              <span class="material-symbols-outlined" style="font-size: 18px;">person</span>
-              <span>{{ p.ownerName }}</span>
+            <div class="w-px h-4 bg-outline-variant"></div>
+            <div class="flex items-center gap-1 text-label-md text-on-surface flex-1 justify-center">
+              <span class="material-symbols-outlined text-[18px] text-outline">person</span>
+              <span class="truncate max-w-[80px]">{{ p.ownerName }}</span>
             </div>
           </div>
 
-          <div class="card-footer">
-            <div class="price">{{ fmtPrice(p.price) }}</div>
-            <div class="actions">
+          <!-- Footer -->
+          <div class="flex justify-between items-center mt-auto">
+            <div class="text-headline-md font-semibold tracking-tight text-primary">{{ fmtPrice(p.price) }}</div>
+            <div class="flex gap-1">
               <button
-                class="btn ghost"
+                class="btn ghost p-2"
                 @click.stop="router.push(`/portfolio/${p.id}`)"
                 title="Detay"
               >
-                <span class="material-symbols-outlined" style="font-size: 18px;">open_in_new</span>
+                <span class="material-symbols-outlined text-[18px]">open_in_new</span>
               </button>
               <button
-                class="btn ghost danger"
+                class="btn ghost danger p-2"
                 @click.stop="remove(p)"
                 title="Sil"
               >
-                <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
+                <span class="material-symbols-outlined text-[18px]">delete</span>
               </button>
             </div>
           </div>
@@ -214,202 +230,3 @@ onMounted(load);
     </div>
   </div>
 </template>
-
-<style scoped>
-.search-bar-wrap {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-  align-items: center;
-}
-
-.search-bar {
-  position: relative;
-  flex: 1;
-  max-width: 600px;
-}
-
-.search-icon {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 22px;
-  color: var(--outline);
-  pointer-events: none;
-}
-
-.search-input {
-  width: 100%;
-  height: 56px;
-  padding: 0 16px 0 48px;
-  border: 1px solid var(--outline-variant);
-  border-radius: var(--radius);
-  background: var(--surface-container-lowest);
-  font-family: inherit;
-  font-size: 16px;
-  color: var(--on-surface);
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(78, 96, 79, 0.1);
-}
-
-.search-input::placeholder { color: var(--outline-variant); }
-
-.btn.active {
-  background: var(--primary-fixed);
-  color: var(--primary-hover);
-}
-
-.portfolio-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
-}
-
-.portfolio-card {
-  background: var(--surface-container-lowest);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  box-shadow: var(--shadow-1);
-  display: flex;
-  flex-direction: column;
-  cursor: pointer;
-  transition: box-shadow 0.2s;
-}
-
-.portfolio-card:hover {
-  box-shadow: var(--shadow-2);
-}
-
-.card-img-placeholder {
-  height: 160px;
-  background: var(--surface-container);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-.card-badge-tl {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-}
-
-.card-badge-tr {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-}
-
-.status-dot {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border-radius: var(--radius-full);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  backdrop-filter: blur(4px);
-}
-
-.status-dot.open {
-  background: rgba(227, 238, 224, 0.9);
-  color: #3a4b3b;
-  border: 1px solid rgba(58, 75, 59, 0.2);
-}
-
-.status-dot.hidden {
-  background: rgba(255, 218, 214, 0.9);
-  color: var(--on-error-container);
-  border: 1px solid rgba(147, 0, 10, 0.2);
-}
-
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.card-body {
-  padding: 16px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.card-title {
-  font-size: 18px;
-  line-height: 24px;
-  font-weight: 600;
-  color: var(--on-surface);
-  margin: 0 0 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.card-location {
-  font-size: 13px;
-  color: var(--on-surface-variant);
-  margin: 0 0 12px;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.card-specs {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 0;
-  border-top: 1px solid var(--hairline);
-  border-bottom: 1px solid var(--hairline);
-  margin-bottom: 12px;
-}
-
-.spec {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--on-surface);
-  flex: 1;
-  justify-content: center;
-}
-
-.spec-divider {
-  width: 1px;
-  height: 20px;
-  background: var(--hairline);
-}
-
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: auto;
-}
-
-.price {
-  font-size: 24px;
-  line-height: 32px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--primary);
-}
-
-.actions {
-  display: flex;
-  gap: 4px;
-}
-</style>

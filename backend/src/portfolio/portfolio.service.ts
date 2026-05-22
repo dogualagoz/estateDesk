@@ -16,6 +16,7 @@ export class PortfolioService {
     const where: Prisma.PortfolioWhereInput = { deletedAt: null };
 
     if (query.type) where.type = query.type;
+    if (query.listingType) where.listingType = query.listingType;
     if (query.city) where.city = { equals: query.city, mode: 'insensitive' };
     if (query.district) where.district = { equals: query.district, mode: 'insensitive' };
     if (query.roomCount) where.roomCount = query.roomCount;
@@ -31,6 +32,7 @@ export class PortfolioService {
     if (query.q && query.q.trim().length > 0) {
       const q = query.q.trim();
       where.OR = [
+        { title: { contains: q, mode: 'insensitive' } },
         { city: { contains: q, mode: 'insensitive' } },
         { district: { contains: q, mode: 'insensitive' } },
         { neighborhood: { contains: q, mode: 'insensitive' } },
@@ -65,6 +67,8 @@ export class PortfolioService {
     return this.prisma.portfolio.create({
       data: {
         type: dto.type,
+        listingType: dto.listingType ?? 'SALE',
+        title: dto.title,
         city: dto.city,
         district: dto.district,
         neighborhood: dto.neighborhood,

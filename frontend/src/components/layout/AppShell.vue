@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, onMounted, onUnmounted, provide } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
@@ -20,6 +20,25 @@ const initials = computed(() => {
   if (!auth.user?.fullName) return '?';
   return auth.user.fullName.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
 });
+
+const showAddModal = ref(false);
+
+function openAddModal() { showAddModal.value = true; }
+function closeAddModal() { showAddModal.value = false; }
+
+provide('openAddModal', openAddModal);
+
+function navigateTo(path: string) {
+  closeAddModal();
+  router.push(path);
+}
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') closeAddModal();
+}
+
+onMounted(() => window.addEventListener('keydown', handleKeydown));
+onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 
 function logout() {
   auth.logout();
@@ -54,17 +73,6 @@ function logout() {
         </router-link>
       </nav>
 
-      <!-- New Portfolio CTA -->
-      <div class="px-3 pb-3">
-        <router-link
-          to="/portfolio/new"
-          class="flex items-center gap-2 px-3 py-2.5 bg-white/15 hover:bg-white/20 rounded-lg text-label-md text-on-primary font-medium transition-colors duration-150"
-        >
-          <span class="material-symbols-outlined text-[18px]">add</span>
-          Yeni Portföy
-        </router-link>
-      </div>
-
       <!-- User + Logout -->
       <div class="border-t border-white/10 px-4 py-4">
         <div class="flex items-center gap-3 mb-3">
@@ -90,5 +98,82 @@ function logout() {
     <main class="flex-1 pl-60 min-w-0">
       <slot />
     </main>
+
+    <!-- Add Modal -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div
+          v-if="showAddModal"
+          class="fixed inset-0 z-[200] flex items-center justify-center p-4"
+          @click.self="closeAddModal"
+        >
+          <!-- Backdrop -->
+          <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeAddModal" />
+
+          <!-- Panel -->
+          <div class="relative bg-surface-container-lowest rounded-2xl shadow-lg p-8 w-full max-w-sm">
+            <!-- Close -->
+            <button
+              class="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant transition-colors"
+              @click="closeAddModal"
+            >
+              <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+
+            <h2 class="text-headline-md font-semibold text-on-surface mb-1">Yeni Ekle</h2>
+            <p class="text-label-md text-on-surface-variant mb-6">Ne eklemek istersiniz?</p>
+
+            <div class="grid grid-cols-2 gap-4">
+              <!-- Portföy -->
+              <button
+                @click="navigateTo('/portfolio/new')"
+                class="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-outline-variant hover:border-primary hover:bg-primary-fixed/40 transition-all duration-150 cursor-pointer group"
+              >
+                <span class="material-symbols-outlined text-[44px] text-primary group-hover:scale-110 transition-transform duration-150">
+                  maps_home_work
+                </span>
+                <div class="text-center">
+                  <p class="text-label-md font-semibold text-on-surface">Portföy Ekle</p>
+                  <p class="text-label-sm text-on-surface-variant mt-0.5">Mülk ilanı oluştur</p>
+                </div>
+              </button>
+
+              <!-- Talep -->
+              <button
+                @click="navigateTo('/demand/new')"
+                class="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-outline-variant hover:border-primary hover:bg-primary-fixed/40 transition-all duration-150 cursor-pointer group"
+              >
+                <span class="material-symbols-outlined text-[44px] text-primary group-hover:scale-110 transition-transform duration-150">
+                  ads_click
+                </span>
+                <div class="text-center">
+                  <p class="text-label-md font-semibold text-on-surface">Talep Ekle</p>
+                  <p class="text-label-sm text-on-surface-variant mt-0.5">Alıcı talebi kaydet</p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
+
+<style>
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.modal-fade-enter-active .relative,
+.modal-fade-leave-active .relative {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+.modal-fade-enter-from .relative {
+  transform: scale(0.95) translateY(8px);
+  opacity: 0;
+}
+</style>

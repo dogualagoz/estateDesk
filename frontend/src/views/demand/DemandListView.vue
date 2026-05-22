@@ -43,12 +43,7 @@ function fmtPrice(p: string | number | null | undefined) {
 }
 
 function initials(name: string) {
-  return name
-    .split(' ')
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+  return name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 }
 
 function timeAgo(dateStr: string) {
@@ -57,8 +52,7 @@ function timeAgo(dateStr: string) {
   if (days === 0) return 'Bugün';
   if (days === 1) return '1 gün önce';
   if (days < 7) return `${days} gün önce`;
-  const weeks = Math.floor(days / 7);
-  return `${weeks} hafta önce`;
+  return `${Math.floor(days / 7)} hafta önce`;
 }
 
 async function remove(d: Demand) {
@@ -72,38 +66,45 @@ onMounted(load);
 
 <template>
   <div class="page">
+    <!-- Header -->
     <div class="page-header">
       <div>
-        <h1>Müşteri Talepleri</h1>
-        <p class="muted" style="margin-top: 4px;">Aktif alıcı ve kiracı arayışları</p>
+        <h1 class="text-headline-lg-mobile md:text-headline-lg font-semibold tracking-tight text-on-surface">Müşteri Talepleri</h1>
+        <p class="text-label-md text-on-surface-variant mt-1">Aktif alıcı ve kiracı arayışları</p>
       </div>
       <button class="btn primary" @click="router.push('/demand/new')">
-        <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+        <span class="material-symbols-outlined text-[18px]">add</span>
         Yeni Talep
       </button>
     </div>
 
-    <!-- Search bar -->
-    <div class="search-bar-wrap">
-      <div class="search-bar">
-        <span class="material-symbols-outlined search-icon">search</span>
-        <input
-          class="search-input"
-          type="text"
-          v-model="filters.q"
-          placeholder="Bölge veya müşteri ara…"
-          @keyup.enter="filters.page = 1; load()"
-        />
+    <!-- Search & Filter Bar -->
+    <div class="flex justify-center mb-gutter">
+      <div class="relative w-full max-w-2xl flex gap-3 items-center">
+        <div class="relative flex-1">
+          <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px] pointer-events-none">search</span>
+          <input
+            v-model="filters.q"
+            type="text"
+            placeholder="Bölge veya müşteri ara..."
+            class="w-full pl-12 pr-4 py-3 bg-surface border border-outline-variant rounded-xl text-body-md text-on-surface placeholder:text-on-surface-variant shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all duration-150"
+            @keyup.enter="filters.page = 1; load()"
+          />
+        </div>
+        <button
+          class="btn gap-1.5 shrink-0"
+          :class="showFilters ? 'bg-primary-fixed text-on-primary-fixed-variant border-primary/30' : ''"
+          @click="showFilters = !showFilters"
+        >
+          <span class="material-symbols-outlined text-[18px]">tune</span>
+          Filtrele
+        </button>
       </div>
-      <button class="btn" @click="showFilters = !showFilters" :class="{ active: showFilters }">
-        <span class="material-symbols-outlined" style="font-size: 18px;">tune</span>
-        Filtrele
-      </button>
     </div>
 
-    <!-- Filters panel -->
-    <div v-if="showFilters" class="filters-panel card" style="margin-bottom: 24px;">
-      <div class="row">
+    <!-- Filter Panel -->
+    <div v-if="showFilters" class="card mb-gutter">
+      <div class="flex flex-wrap gap-stack-md">
         <div class="field">
           <label>Tür</label>
           <select class="select" v-model="filters.type">
@@ -136,82 +137,86 @@ onMounted(load);
           <input class="input" type="number" v-model.number="filters.maxBudget" />
         </div>
       </div>
-      <div class="row" style="margin-top: 12px;">
+      <div class="flex gap-3 mt-stack-md items-center">
         <button class="btn primary" @click="filters.page = 1; load()">Uygula</button>
         <button class="btn" @click="resetFilters">Sıfırla</button>
-        <span class="muted" style="margin-left: auto;">{{ total }} kayıt</span>
+        <span class="ml-auto text-label-sm text-on-surface-variant">{{ total }} kayıt</span>
       </div>
     </div>
 
     <div v-if="loading" class="empty">Yükleniyor…</div>
     <div v-else-if="!items.length" class="empty">Kayıt bulunamadı</div>
 
-    <!-- Card grid -->
-    <div v-else class="demand-grid">
+    <!-- Card Grid -->
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
       <article
         v-for="d in items"
         :key="d.id"
-        class="demand-card"
-        :class="{ closed: d.status === 'CLOSED' }"
+        class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-md shadow-sm flex flex-col cursor-pointer transition-shadow duration-200 hover:shadow-md group"
+        :class="{ 'opacity-70': d.status === 'CLOSED' }"
         @click="router.push(`/demand/${d.id}`)"
       >
-        <!-- Header badges -->
-        <div class="card-badges">
-          <span class="badge searching" v-if="d.status === 'ACTIVE'">
-            <span class="material-symbols-outlined" style="font-size: 14px;">radar</span>
-            Arıyor
+        <!-- Status badges -->
+        <div class="flex justify-between items-start mb-3">
+          <span
+            :class="[
+              'inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-label-sm font-medium',
+              d.status === 'ACTIVE'
+                ? 'bg-primary-fixed text-on-primary-fixed-variant'
+                : 'bg-secondary-container text-on-surface-variant'
+            ]"
+          >
+            <span class="material-symbols-outlined text-[14px]">{{ d.status === 'ACTIVE' ? 'radar' : 'check_circle' }}</span>
+            {{ d.status === 'ACTIVE' ? 'Arıyor' : 'Kapandı' }}
           </span>
-          <span class="badge closed-badge" v-else>
-            <span class="material-symbols-outlined" style="font-size: 14px;">check_circle</span>
-            Kapandı
-          </span>
-          <span class="status-chip" :class="d.status === 'ACTIVE' ? 'active' : 'passive'">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-sm border border-outline-variant text-label-sm text-on-surface-variant bg-surface-container">
             {{ DEMAND_STATUS_LABELS[d.status] }}
           </span>
         </div>
 
         <!-- Title -->
-        <h2 class="demand-title">
+        <h2 class="text-body-lg font-semibold text-on-surface mb-1 transition-colors group-hover:text-primary">
           {{ d.regions.join(', ') || 'Bölge belirtilmemiş' }}
-          <span v-if="d.roomPreferences.length"> — {{ d.roomPreferences.join(', ') }}</span>
+          <span v-if="d.roomPreferences.length" class="text-on-surface-variant font-normal"> — {{ d.roomPreferences.join(', ') }}</span>
         </h2>
 
-        <!-- Note -->
-        <p v-if="d.note" class="demand-note">{{ d.note }}</p>
-        <p v-else class="demand-note muted">Not eklenmemiş</p>
+        <p class="text-label-md text-on-surface-variant mb-3 line-clamp-2">
+          {{ d.note || 'Not eklenmemiş' }}
+        </p>
 
         <!-- Budget -->
-        <div class="budget-box">
-          <span class="material-symbols-outlined budget-icon">payments</span>
+        <div class="flex items-center gap-3 bg-surface-container-low border border-outline-variant rounded-lg p-3 mb-3">
+          <span class="material-symbols-outlined text-[20px] text-primary p-1.5 bg-surface-container-lowest rounded-sm shadow-sm">payments</span>
           <div>
-            <div class="budget-label">Bütçe Aralığı</div>
-            <div class="budget-value">
-              {{ fmtPrice(d.minBudget) }} – {{ fmtPrice(d.maxBudget) }}
-            </div>
+            <div class="text-label-sm text-outline uppercase tracking-wider">Bütçe Aralığı</div>
+            <div class="text-label-md font-semibold text-primary mt-0.5">{{ fmtPrice(d.minBudget) }} – {{ fmtPrice(d.maxBudget) }}</div>
           </div>
         </div>
 
-        <!-- Feature tags -->
-        <div class="tags-row" v-if="d.featurePrefs.length">
-          <span class="tag" v-for="f in d.featurePrefs.slice(0, 4)" :key="f">{{ f }}</span>
-        </div>
-        <div class="tags-row" v-else-if="d.types.length">
-          <span class="tag" v-for="t in d.types" :key="t">{{ PROPERTY_TYPE_LABELS[t] }}</span>
+        <!-- Tags -->
+        <div class="flex flex-wrap gap-1.5 mb-3" v-if="d.featurePrefs.length || d.types.length">
+          <span
+            v-for="f in (d.featurePrefs.length ? d.featurePrefs.slice(0, 4) : d.types)"
+            :key="f"
+            class="tag"
+          >{{ d.featurePrefs.length ? f : PROPERTY_TYPE_LABELS[f as keyof typeof PROPERTY_TYPE_LABELS] }}</span>
         </div>
 
         <!-- Footer -->
-        <div class="card-footer">
-          <div class="agent">
-            <div class="agent-avatar">{{ initials(d.customerName) }}</div>
-            <span class="agent-name">{{ d.customerName }}</span>
+        <div class="flex justify-between items-center mt-auto pt-3 border-t border-outline-variant">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center text-[11px] font-bold shadow-sm">
+              {{ initials(d.customerName) }}
+            </div>
+            <span class="text-label-md font-medium text-on-surface">{{ d.customerName }}</span>
           </div>
-          <div class="footer-actions">
-            <span class="time-ago">
-              <span class="material-symbols-outlined" style="font-size: 14px;">schedule</span>
+          <div class="flex items-center gap-2">
+            <span class="flex items-center gap-1 text-label-sm text-outline">
+              <span class="material-symbols-outlined text-[14px]">schedule</span>
               {{ timeAgo(d.createdAt) }}
             </span>
-            <button class="btn ghost danger" @click.stop="remove(d)" title="Sil">
-              <span class="material-symbols-outlined" style="font-size: 16px;">delete</span>
+            <button class="btn ghost danger p-1.5" @click.stop="remove(d)" title="Sil">
+              <span class="material-symbols-outlined text-[16px]">delete</span>
             </button>
           </div>
         </div>
@@ -219,226 +224,3 @@ onMounted(load);
     </div>
   </div>
 </template>
-
-<style scoped>
-.search-bar-wrap {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-  align-items: center;
-}
-
-.search-bar {
-  position: relative;
-  flex: 1;
-  max-width: 480px;
-}
-
-.search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 20px;
-  color: var(--outline);
-  pointer-events: none;
-}
-
-.search-input {
-  width: 100%;
-  height: 44px;
-  padding: 0 16px 0 40px;
-  border: 1px solid var(--outline-variant);
-  border-radius: var(--radius);
-  background: var(--surface-container-lowest);
-  font-family: inherit;
-  font-size: 14px;
-  color: var(--on-surface);
-  transition: border-color 0.15s;
-  box-shadow: var(--shadow-1);
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(78, 96, 79, 0.1);
-}
-
-.search-input::placeholder { color: var(--outline); }
-.btn.active { background: var(--primary-fixed); color: var(--primary-hover); }
-
-.demand-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
-}
-
-.demand-card {
-  background: var(--surface-container-lowest);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-md);
-  padding: 16px;
-  box-shadow: var(--shadow-1);
-  display: flex;
-  flex-direction: column;
-  cursor: pointer;
-  transition: box-shadow 0.2s;
-  position: relative;
-}
-
-.demand-card:hover:not(.closed) { box-shadow: var(--shadow-2); }
-.demand-card.closed { opacity: 0.75; }
-
-.card-badges {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 8px;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.03em;
-}
-
-.badge.searching {
-  background: var(--primary-fixed);
-  color: var(--on-primary-fixed);
-}
-
-.badge.closed-badge {
-  background: var(--secondary-container);
-  color: var(--on-surface-variant);
-}
-
-.status-chip {
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  font-weight: 500;
-  border: 1px solid var(--hairline);
-}
-
-.status-chip.active { background: var(--surface-container-high); color: var(--on-surface-variant); }
-.status-chip.passive { background: var(--surface-variant); color: var(--on-surface-variant); }
-
-.demand-title {
-  font-size: 18px;
-  line-height: 26px;
-  font-weight: 600;
-  color: var(--on-surface);
-  margin: 0 0 8px;
-  transition: color 0.1s;
-}
-
-.demand-card:hover .demand-title { color: var(--primary); }
-
-.demand-note {
-  font-size: 14px;
-  line-height: 20px;
-  color: var(--on-surface-variant);
-  margin: 0 0 12px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.budget-box {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: var(--surface-container-low);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  padding: 12px;
-  margin-bottom: 12px;
-}
-
-.budget-icon {
-  font-size: 20px;
-  color: var(--primary);
-  padding: 6px;
-  background: var(--surface-container-lowest);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-1);
-}
-
-.budget-label {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.05em;
-  color: var(--outline);
-  margin-bottom: 2px;
-}
-
-.budget-value {
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--primary);
-  line-height: 22px;
-}
-
-.tags-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-
-.card-footer {
-  margin-top: auto;
-  padding-top: 12px;
-  border-top: 1px solid var(--hairline);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.agent {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.agent-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--primary-container);
-  color: var(--on-primary-container);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  box-shadow: var(--shadow-1);
-}
-
-.agent-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--on-surface);
-}
-
-.footer-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.time-ago {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--outline);
-}
-</style>
