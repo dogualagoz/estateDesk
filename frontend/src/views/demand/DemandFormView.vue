@@ -41,8 +41,23 @@ const form = reactive({
 
 const error = ref<string | null>(null);
 const saving = ref(false);
+const removing = ref(false);
 const customMust = ref('');
 const customBonus = ref('');
+
+async function remove() {
+  if (!isEdit.value) return;
+  if (!confirm('Bu talep silinsin mi?')) return;
+  removing.value = true;
+  try {
+    await demandService.remove(route.params.id as string);
+    router.push('/demand');
+  } catch (e: any) {
+    error.value = e?.response?.data?.message || 'Silme başarısız';
+  } finally {
+    removing.value = false;
+  }
+}
 
 // ── Sol panel etkileşimleri ──
 function toggleType(t: PropertyType) {
@@ -368,17 +383,29 @@ async function submit() {
               </div>
             </div>
             <textarea class="textarea" v-model="form.note" rows="2" placeholder="Not (isteğe bağlı)" />
+            <div v-if="isEdit" class="flex items-center gap-3 mt-3">
+              <label class="text-label-sm font-semibold text-on-surface-variant">Durum</label>
+              <select class="select" v-model="form.status">
+                <option value="ACTIVE">Aktif</option>
+                <option value="CLOSED">Kapandı</option>
+              </select>
+            </div>
           </div>
 
           <p v-if="error" class="px-4 py-2.5 rounded-lg bg-error-container text-on-error-container text-label-md">{{ error }}</p>
         </div>
 
         <!-- Alt bar -->
-        <div class="shrink-0 flex items-center justify-end gap-3 px-7 py-4 border-t border-outline-variant bg-surface">
+        <div class="shrink-0 flex items-center gap-3 px-7 py-4 border-t border-outline-variant bg-surface">
+          <button v-if="isEdit" type="button" class="btn danger" @click="remove" :disabled="removing">
+            <span class="material-symbols-outlined text-[18px]">delete</span>
+            {{ removing ? 'Siliniyor…' : 'Sil' }}
+          </button>
+          <div class="flex-1"></div>
           <button type="button" class="btn" @click="router.back()">İptal</button>
           <button type="button" class="btn primary" @click="submit" :disabled="saving || !canSubmit">
             <span class="material-symbols-outlined text-[18px]">{{ saving ? 'hourglass_empty' : 'save' }}</span>
-            {{ saving ? 'Kaydediliyor…' : 'Talebi Kaydet' }}
+            {{ saving ? 'Kaydediliyor…' : isEdit ? 'Değişiklikleri Kaydet' : 'Talebi Kaydet' }}
           </button>
         </div>
       </div>

@@ -51,11 +51,6 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/demand/:id',
     name: 'demand.detail',
-    component: () => import('@/views/demand/DemandDetailView.vue'),
-  },
-  {
-    path: '/demand/:id/edit',
-    name: 'demand.edit',
     component: () => import('@/views/demand/DemandFormView.vue'),
   },
   {

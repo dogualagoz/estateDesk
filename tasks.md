@@ -42,8 +42,11 @@ iki ayrı katman. Kaynak: `docs/eslestirme-motoru.md` + kullanıcı spesifikasyo
 - [x] `frontend type-check` temiz; dev server 200; backend endpoint canlı
 - [ ] Tarayıcıda manuel tıklama testi (kullanıcı tarafından doğrulanacak)
 
-## Faz 5 — (Sonraki) `/demand/:id` detayını iki panele çevir
-- [ ] Detay sayfası = düzenlenebilir iki panelli canlı eşleştirme görünümü
+## Faz 5 — `/demand/:id` detayını iki panele çevir
+- [x] `/demand/:id` route'u `DemandFormView`'a yönlendirildi (edit modu)
+- [x] Edit modunda durum (Aktif/Kapandı) seçimi + Sil butonu eklendi
+- [x] Eski salt-okunur `DemandDetailView.vue` kaldırıldı + `/edit` route'u sadeleşti
+- [x] `frontend type-check` temiz
 
 ## Kapsam dışı (şimdilik)
 Satıcı→talep yönü, MatchFeedback, otomatik eşleştirme/gelen kutusu, tipe göre
