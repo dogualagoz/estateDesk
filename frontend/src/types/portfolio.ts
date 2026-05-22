@@ -17,6 +17,16 @@ export const LISTING_TYPE_LABELS: Record<ListingType, string> = {
   RENT: 'Kiralık',
 };
 
+/** Ortak oda seçenekleri — portföy formu ve eşleştirme paneli paylaşır. */
+export const ROOM_OPTIONS = ['1+0', '1+1', '2+1', '3+1', '4+1', '5+1'];
+
+/** Ortak özellik ön ayarları. */
+export const FEATURE_PRESETS = [
+  'Asansör', 'Otopark', 'Balkon', 'Deniz Manzarası', 'Güvenlik',
+  'Kombi', 'Havuz', 'Bahçe', 'Teras', 'Klima', 'Eşyalı',
+  'Isı Yalıtımı', 'Jeneratör', 'Garaj', 'Kapalı Otopark', 'Depolu',
+];
+
 export interface Portfolio {
   id: string;
   type: PropertyType;

@@ -81,11 +81,19 @@ model Portfolio {
 model Demand {
   id              String         @id @default(cuid())
   types           PropertyType[] @default([])
+  listingType     ListingType    @default(SALE)
   regions         String[]       @default([])
+  city            String?
+  district        String?
+  neighborhood    String?
   minBudget       Decimal?       @db.Decimal(14, 2)
   maxBudget       Decimal?       @db.Decimal(14, 2)
   roomPreferences String[]       @default([])
+  minArea         Int?
+  maxArea         Int?
   featurePrefs    String[]       @default([])
+  mustHaveFeatures String[]      @default([])
+  bonusFeatures   String[]       @default([])
   note            String?
   customerName    String
   customerPhone   String
@@ -100,4 +108,5 @@ model Demand {
 
   @@index([status])
   @@index([deletedAt])
+  @@index([listingType, city, status])
 }
