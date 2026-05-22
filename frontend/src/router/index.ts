@@ -14,6 +14,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/DashboardView.vue'),
   },
   {
+    path: '/search',
+    name: 'search',
+    component: () => import('@/views/SearchView.vue'),
+  },
+  {
     path: '/portfolio',
     name: 'portfolio.list',
     component: () => import('@/views/portfolio/PortfolioListView.vue'),

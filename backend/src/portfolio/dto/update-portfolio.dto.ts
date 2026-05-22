@@ -8,10 +8,12 @@ import {
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { PortfolioVisibility, PropertyType } from '@prisma/client';
+import { ListingType, PortfolioVisibility, PropertyType } from '@prisma/client';
 
 export class UpdatePortfolioDto {
   @IsOptional() @IsEnum(PropertyType) type?: PropertyType;
+  @IsOptional() @IsEnum(ListingType) listingType?: ListingType;
+  @IsOptional() @IsString() title?: string;
   @IsOptional() @IsString() city?: string;
   @IsOptional() @IsString() district?: string;
   @IsOptional() @IsString() neighborhood?: string;

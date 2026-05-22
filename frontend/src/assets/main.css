@@ -1,298 +1,135 @@
-/* EstateDesk — DESIGN.md tokens (sage / Notion-minimal) */
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
 
-:root {
-  /* Surfaces */
-  --surface: #f9f9f7;
-  --surface-dim: #dadad8;
-  --surface-bright: #f9f9f7;
-  --surface-container-lowest: #ffffff;
-  --surface-container-low: #f4f4f2;
-  --surface-container: #eeeeec;
-  --surface-container-high: #e8e8e6;
-  --surface-container-highest: #e2e3e1;
-  --surface-variant: #e2e3e1;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  --on-surface: #1a1c1b;
-  --on-surface-variant: #434842;
+@layer base {
+  html, body, #app {
+    @apply h-full font-sans antialiased;
+  }
 
-  --inverse-surface: #2f3130;
-  --inverse-on-surface: #f1f1ef;
+  a {
+    @apply no-underline;
+  }
 
-  --outline: #747872;
-  --outline-variant: #c3c8c0;
-
-  /* Primary — Sage (Adaçayı) */
-  --primary: #4e604f;
-  --on-primary: #ffffff;
-  --primary-container: #677967;
-  --on-primary-container: #f7fff3;
-  --primary-fixed: #d4e8d2;
-  --primary-fixed-dim: #b8ccb7;
-  --inverse-primary: #b8ccb7;
-  --primary-hover: #3a4b3b;
-
-  /* Secondary */
-  --secondary: #5a605b;
-  --on-secondary: #ffffff;
-  --secondary-container: #dbe1db;
-  --on-secondary-container: #5e6460;
-
-  /* Tertiary */
-  --tertiary: #72545b;
-  --on-tertiary: #ffffff;
-  --tertiary-container: #8c6c73;
-  --on-tertiary-container: #fffbff;
-
-  /* Error / Status */
-  --error: #ba1a1a;
-  --on-error: #ffffff;
-  --error-container: #ffdad6;
-  --on-error-container: #93000a;
-
-  /* Notion-style hairline & hover */
-  --hairline: #e5e5e1;
-  --row-hover: #f5f5f2;
-  --placeholder: #a0a09a;
-
-  /* Radius */
-  --radius-sm: 0.25rem;
-  --radius: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.5rem;
-  --radius-full: 9999px;
-
-  /* Spacing (8px base) */
-  --space-1: 8px;
-  --space-2: 16px;
-  --space-3: 24px;
-  --space-4: 32px;
-  --space-5: 48px;
-
-  --container-max: 1200px;
-  --gutter: 24px;
-  --margin-mobile: 16px;
-  --margin-desktop: 48px;
-
-  /* Elevation — soft ambient shadows */
-  --shadow-1: 0 2px 4px rgba(0, 0, 0, 0.02);
-  --shadow-2: 0 12px 24px rgba(0, 0, 0, 0.05);
-
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  a:hover {
+    @apply no-underline;
+  }
 }
 
-* { box-sizing: border-box; }
+@layer components {
+  /* Page layout */
+  .page {
+    @apply max-w-container-max-width mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg;
+  }
 
-html, body, #app {
-  height: 100%;
-  margin: 0;
-  font-family: var(--font-sans);
-  color: var(--on-surface);
-  background: var(--surface);
-  font-size: 16px;
-  line-height: 24px;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  .page-header {
+    @apply flex justify-between items-center mb-gutter gap-stack-md flex-wrap;
+  }
+
+  /* Card */
+  .card {
+    @apply bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-stack-lg;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface text-label-md font-medium cursor-pointer transition-colors duration-150 select-none disabled:opacity-55 disabled:cursor-not-allowed;
+  }
+  .btn:hover {
+    @apply bg-surface-container-low;
+  }
+  .btn.primary {
+    @apply bg-primary text-on-primary border-primary hover:bg-surface-tint;
+  }
+  .btn.secondary {
+    @apply bg-transparent text-primary border-primary hover:bg-primary/5;
+  }
+  .btn.ghost {
+    @apply bg-transparent border-transparent text-primary px-2.5 py-1.5 hover:bg-surface-container-low;
+  }
+  .btn.danger {
+    @apply bg-error text-on-error border-error;
+  }
+  .btn.danger.ghost {
+    @apply bg-transparent text-error border-transparent hover:bg-error-container;
+  }
+
+  /* Inputs */
+  .input, .select, .textarea {
+    @apply w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface-container-lowest text-label-md text-on-surface placeholder:text-outline transition-colors duration-150;
+  }
+  .input:focus, .select:focus, .textarea:focus {
+    @apply outline-none border-primary ring-1 ring-primary/10;
+  }
+  .textarea {
+    @apply resize-y min-h-24;
+  }
+
+  /* Form field */
+  .field {
+    @apply flex flex-col gap-1.5 min-w-[200px] flex-1;
+  }
+  .field label {
+    @apply text-label-sm text-on-surface-variant uppercase tracking-wider;
+  }
+  .field.full {
+    @apply flex-none w-full;
+  }
+
+  /* Tags */
+  .tag {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-label-sm bg-surface-container text-on-surface-variant;
+  }
+  .tag.primary { @apply bg-primary-fixed text-on-primary-fixed-variant; }
+  .tag.success { @apply bg-emerald-50 text-emerald-700 border border-emerald-200; }
+  .tag.danger  { @apply bg-error-container text-on-error-container; }
+  .tag.warning { @apply bg-amber-50 text-amber-700; }
+
+  /* Table */
+  .table {
+    @apply w-full text-label-md border-collapse;
+  }
+  .table th {
+    @apply text-left px-stack-md py-stack-sm text-label-sm text-on-surface-variant uppercase tracking-wider border-b border-outline-variant bg-transparent;
+  }
+  .table td {
+    @apply px-stack-md py-stack-sm border-b border-surface-container;
+  }
+  .table tbody tr {
+    @apply transition-colors duration-100 cursor-pointer;
+  }
+  .table tbody tr:hover td {
+    @apply bg-surface-container-low;
+  }
+  .table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+
+  /* Empty state */
+  .empty {
+    @apply text-center py-stack-lg text-on-surface-variant text-label-md;
+  }
+
+  /* Error message */
+  .error-msg {
+    @apply text-error text-label-sm mt-1;
+  }
+
+  /* Muted text */
+  .muted {
+    @apply text-on-surface-variant;
+  }
+
+  /* Row layout */
+  .row {
+    @apply flex gap-stack-md items-center flex-wrap;
+  }
 }
 
-/* Typography scale (DESIGN.md) */
-.headline-xl { font-size: 40px; line-height: 48px; font-weight: 700; letter-spacing: -0.02em; }
-.headline-lg { font-size: 32px; line-height: 40px; font-weight: 600; letter-spacing: -0.01em; }
-.headline-md { font-size: 24px; line-height: 32px; font-weight: 600; }
-.body-lg     { font-size: 18px; line-height: 28px; font-weight: 400; }
-.body-md     { font-size: 16px; line-height: 24px; font-weight: 400; }
-.label-md    { font-size: 14px; line-height: 20px; font-weight: 500; }
-.label-sm    { font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.05em; }
-
-h1 { font-size: 32px; line-height: 40px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 var(--space-2); }
-h2 { font-size: 24px; line-height: 32px; font-weight: 600; margin: 0 0 var(--space-1); }
-h3 { font-size: 18px; line-height: 28px; font-weight: 600; margin: 0 0 var(--space-1); }
-
-@media (max-width: 768px) {
-  h1 { font-size: 28px; line-height: 36px; }
+/* Material Symbols fill variant */
+.material-symbols-outlined.filled {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
-
-a { color: var(--primary); text-decoration: none; }
-a:hover { text-decoration: underline; }
-
-.muted { color: var(--on-surface-variant); }
-
-/* Layout primitives */
-.row { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
-.col { display: flex; flex-direction: column; gap: var(--space-1); }
-.stack-sm > * + * { margin-top: var(--space-1); }
-.stack-md > * + * { margin-top: var(--space-2); }
-.stack-lg > * + * { margin-top: var(--space-4); }
-
-/* Cards — Level 1 surface */
-.card {
-  background: var(--surface-container-lowest);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-md);
-  padding: var(--space-4);
-  box-shadow: var(--shadow-1);
-}
-@media (max-width: 768px) {
-  .card { padding: var(--space-2); }
-}
-
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: 10px 16px;
-  border-radius: var(--radius);
-  border: 1px solid var(--hairline);
-  background: var(--surface-container-lowest);
-  color: var(--on-surface);
-  font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 20px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-  user-select: none;
-}
-.btn:hover { background: var(--surface-container-low); }
-
-.btn.primary {
-  background: var(--primary);
-  color: var(--on-primary);
-  border-color: var(--primary);
-}
-.btn.primary:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-}
-
-.btn.secondary {
-  background: transparent;
-  color: var(--primary);
-  border: 1px solid var(--primary);
-}
-.btn.secondary:hover { background: rgba(78, 96, 79, 0.06); }
-
-.btn.ghost {
-  background: transparent;
-  border-color: transparent;
-  color: var(--primary);
-  padding: 8px 10px;
-}
-.btn.ghost:hover { background: var(--surface-container-low); }
-
-.btn.danger {
-  background: var(--error);
-  color: var(--on-error);
-  border-color: var(--error);
-}
-.btn.danger.ghost {
-  background: transparent;
-  color: var(--error);
-  border-color: transparent;
-}
-.btn.danger.ghost:hover { background: var(--error-container); }
-
-.btn:disabled { opacity: 0.55; cursor: not-allowed; }
-
-/* Inputs */
-.input, .select, .textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--surface-container-lowest);
-  font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 20px;
-  color: var(--on-surface);
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.input::placeholder, .textarea::placeholder { color: var(--placeholder); }
-.input:focus, .select:focus, .textarea:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(78, 96, 79, 0.1);
-}
-.textarea { resize: vertical; min-height: 96px; }
-
-.search {
-  border-radius: var(--radius-xl);
-  padding-left: 16px;
-}
-
-/* Form fields */
-.field { display: flex; flex-direction: column; gap: 6px; min-width: 200px; flex: 1 1 200px; }
-.field label {
-  font-size: 12px;
-  line-height: 16px;
-  font-weight: 500;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--on-surface-variant);
-}
-.field.full { flex: 1 1 100%; }
-
-/* Tables — Notion-like, hairline rows */
-.table { width: 100%; border-collapse: collapse; font-size: 14px; }
-.table th, .table td {
-  text-align: left;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--hairline);
-}
-.table th {
-  background: transparent;
-  font-weight: 500;
-  color: var(--on-surface-variant);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.table tbody tr { transition: background 0.1s; }
-.table tbody tr:hover td { background: var(--row-hover); }
-.table tbody tr:last-child td { border-bottom: none; }
-
-/* Chips / tags — desaturated status colors */
-.tag {
-  display: inline-block;
-  padding: 4px 10px;
-  background: var(--surface-container);
-  color: var(--on-surface-variant);
-  border-radius: var(--radius-full);
-  font-size: 12px;
-  line-height: 16px;
-  font-weight: 500;
-  margin-right: 6px;
-}
-.tag.primary { background: var(--primary-fixed); color: var(--on-primary-fixed-variant, #3a4b3b); }
-.tag.success { background: #e3eee0; color: #3a4b3b; }
-.tag.danger  { background: var(--error-container); color: var(--on-error-container); }
-.tag.warning { background: #f6e7d9; color: #6b4a1e; }
-
-/* Page container — fixed-fluid hybrid */
-.page {
-  padding: var(--margin-desktop);
-  max-width: var(--container-max);
-  margin: 0 auto;
-  width: 100%;
-}
-@media (max-width: 768px) {
-  .page { padding: var(--margin-mobile); }
-}
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-3);
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
-.empty { text-align: center; padding: var(--space-4); color: var(--on-surface-variant); }
-.error { color: var(--error); font-size: 13px; margin-top: var(--space-1); }
-
-/* Notion-style hairline divider */
-.divider { height: 1px; background: var(--hairline); margin: var(--space-3) 0; }

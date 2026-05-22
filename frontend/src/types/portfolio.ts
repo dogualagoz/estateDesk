@@ -1,18 +1,27 @@
-export type PropertyType = 'APARTMENT' | 'VILLA' | 'LAND' | 'SHOP' | 'OFFICE';
+export type PropertyType = 'APARTMENT' | 'VILLA' | 'LAND' | 'HOTEL' | 'SHOP' | 'OFFICE';
+export type ListingType = 'SALE' | 'RENT';
 export type PortfolioVisibility = 'PUBLIC' | 'HIDDEN';
 
-export const PROPERTY_TYPES: PropertyType[] = ['APARTMENT', 'VILLA', 'LAND', 'SHOP', 'OFFICE'];
+export const PROPERTY_TYPES: PropertyType[] = ['APARTMENT', 'VILLA', 'LAND', 'HOTEL', 'SHOP', 'OFFICE'];
 export const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
   APARTMENT: 'Daire',
   VILLA: 'Villa',
   LAND: 'Arsa',
+  HOTEL: 'Otel',
   SHOP: 'Dükkan',
   OFFICE: 'Ofis',
+};
+
+export const LISTING_TYPE_LABELS: Record<ListingType, string> = {
+  SALE: 'Satılık',
+  RENT: 'Kiralık',
 };
 
 export interface Portfolio {
   id: string;
   type: PropertyType;
+  listingType: ListingType;
+  title?: string | null;
   city: string;
   district: string;
   neighborhood?: string | null;
@@ -33,6 +42,8 @@ export interface Portfolio {
 
 export interface CreatePortfolioPayload {
   type: PropertyType;
+  listingType?: ListingType;
+  title?: string;
   city: string;
   district: string;
   neighborhood?: string;
@@ -50,6 +61,7 @@ export type UpdatePortfolioPayload = Partial<CreatePortfolioPayload>;
 
 export interface PortfolioQuery {
   type?: PropertyType;
+  listingType?: ListingType;
   city?: string;
   district?: string;
   roomCount?: string;

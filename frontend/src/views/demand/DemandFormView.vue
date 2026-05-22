@@ -82,43 +82,71 @@ async function submit() {
 
 <template>
   <div class="page">
+    <!-- Header -->
     <div class="page-header">
-      <h1>{{ isEdit ? 'Talep Düzenle' : 'Yeni Talep' }}</h1>
+      <div class="flex items-center gap-3">
+        <button
+          class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container transition-colors"
+          @click="router.back()"
+        >
+          <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+        </button>
+        <h1 class="text-headline-lg-mobile md:text-headline-md font-semibold text-on-surface tracking-tight">
+          {{ isEdit ? 'Talep Düzenle' : 'Yeni Talep' }}
+        </h1>
+      </div>
     </div>
 
     <form class="card" @submit.prevent="submit">
-      <div class="row">
+      <div class="flex flex-wrap gap-stack-md">
+        <!-- Property types checkboxes -->
         <div class="field full">
-          <label>Aranan türler *</label>
-          <div class="row">
-            <label v-for="t in PROPERTY_TYPES" :key="t" class="check">
-              <input type="checkbox" :checked="form.types.includes(t)" @change="toggleType(t)" />
+          <label>Aranan Türler *</label>
+          <div class="flex flex-wrap gap-2 mt-1">
+            <label
+              v-for="t in PROPERTY_TYPES"
+              :key="t"
+              :class="[
+                'flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors text-label-md select-none',
+                form.types.includes(t)
+                  ? 'bg-primary-fixed text-on-primary-fixed-variant border-primary/30 font-medium'
+                  : 'bg-surface-container-lowest border-outline-variant text-on-surface-variant hover:bg-surface-container-low'
+              ]"
+            >
+              <input
+                type="checkbox"
+                class="sr-only"
+                :checked="form.types.includes(t)"
+                @change="toggleType(t)"
+              />
+              <span class="material-symbols-outlined text-[16px]">{{ form.types.includes(t) ? 'check_box' : 'check_box_outline_blank' }}</span>
               {{ PROPERTY_TYPE_LABELS[t] }}
             </label>
           </div>
         </div>
+
         <div class="field full">
-          <label>Tercih edilen bölgeler (virgülle) *</label>
+          <label>Tercih Edilen Bölgeler (virgülle) *</label>
           <input class="input" v-model="form.regionsText" placeholder="Kadıköy, Üsküdar, Ataşehir" required />
         </div>
         <div class="field">
-          <label>Min bütçe</label>
+          <label>Min Bütçe</label>
           <input class="input" type="number" min="0" v-model.number="form.minBudget" />
         </div>
         <div class="field">
-          <label>Max bütçe</label>
+          <label>Max Bütçe</label>
           <input class="input" type="number" min="0" v-model.number="form.maxBudget" />
         </div>
         <div class="field full">
-          <label>Oda tercihleri (virgülle)</label>
+          <label>Oda Tercihleri (virgülle)</label>
           <input class="input" v-model="form.roomPreferencesText" placeholder="2+1, 3+1" />
         </div>
         <div class="field full">
-          <label>Özellik tercihleri (virgülle)</label>
+          <label>Özellik Tercihleri (virgülle)</label>
           <input class="input" v-model="form.featurePrefsText" placeholder="asansör, otopark" />
         </div>
         <div class="field">
-          <label>Müşteri adı *</label>
+          <label>Müşteri Adı *</label>
           <input class="input" v-model="form.customerName" required />
         </div>
         <div class="field">
@@ -134,14 +162,15 @@ async function submit() {
         </div>
         <div class="field full">
           <label>Not</label>
-          <textarea class="textarea" v-model="form.note"></textarea>
+          <textarea class="textarea" v-model="form.note" rows="3"></textarea>
         </div>
       </div>
 
-      <p v-if="error" class="error">{{ error }}</p>
+      <p v-if="error" class="error-msg mt-stack-md">{{ error }}</p>
 
-      <div class="row" style="margin-top: 1rem;">
+      <div class="flex gap-3 mt-gutter pt-gutter border-t border-outline-variant">
         <button class="btn primary" type="submit" :disabled="saving || !form.types.length">
+          <span class="material-symbols-outlined text-[18px]">{{ saving ? 'hourglass_empty' : 'save' }}</span>
           {{ saving ? 'Kaydediliyor…' : 'Kaydet' }}
         </button>
         <button class="btn" type="button" @click="router.back()">İptal</button>
@@ -149,7 +178,3 @@ async function submit() {
     </form>
   </div>
 </template>
-
-<style scoped>
-.check { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.9rem; }
-</style>

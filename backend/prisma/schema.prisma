@@ -2,11 +2,6 @@ generator client {
   provider = "prisma-client-js"
 }
 
-generator erd {
-  provider = "prisma-erd-generator"
-  output   = "./ERD.svg"
-}
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -21,8 +16,14 @@ enum PropertyType {
   APARTMENT
   VILLA
   LAND
+  HOTEL
   SHOP
   OFFICE
+}
+
+enum ListingType {
+  SALE
+  RENT
 }
 
 enum PortfolioVisibility {
@@ -52,6 +53,8 @@ model User {
 model Portfolio {
   id           String              @id @default(cuid())
   type         PropertyType
+  listingType  ListingType         @default(SALE)
+  title        String?
   city         String
   district     String
   neighborhood String?

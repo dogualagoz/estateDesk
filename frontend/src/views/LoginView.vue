@@ -24,157 +24,70 @@ async function submit() {
 </script>
 
 <template>
-  <div class="login-page">
-    <main class="login-card">
-      <div class="top-bar"></div>
+  <div class="min-h-screen bg-background flex items-center justify-center px-margin-mobile py-margin-desktop">
+    <main class="w-full max-w-[420px] bg-surface-container-lowest rounded-xl shadow-md border border-outline-variant p-stack-lg flex flex-col gap-gutter relative overflow-hidden">
+      <!-- Accent top bar -->
+      <div class="absolute top-0 left-0 right-0 h-1 bg-primary rounded-t-xl"></div>
 
-      <header class="login-header">
-        <div class="logo-box">
-          <span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' 1;">domain</span>
+      <!-- Header -->
+      <header class="flex flex-col items-center gap-2 text-center pt-2">
+        <div class="w-14 h-14 bg-surface-container rounded-xl flex items-center justify-center text-primary mb-2">
+          <span class="material-symbols-outlined text-[28px]" style="font-variation-settings:'FILL' 1">domain</span>
         </div>
-        <h1>EstateDesk</h1>
-        <p class="muted">Yönetim paneline hoş geldiniz</p>
+        <h1 class="text-headline-lg font-semibold tracking-tight text-primary">EstateDesk</h1>
+        <p class="text-label-md text-on-surface-variant">Yönetim paneline hoş geldiniz</p>
       </header>
 
-      <form class="login-form" @submit.prevent="submit">
+      <!-- Form -->
+      <form class="flex flex-col gap-stack-md" @submit.prevent="submit">
         <div class="field full">
           <label for="email">E-posta Adresi</label>
-          <div class="input-wrap">
-            <span class="material-symbols-outlined input-icon">mail</span>
-            <input id="email" class="input with-icon" type="email" v-model="email" placeholder="ornek@estatedesk.com" required autofocus />
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-outline pointer-events-none">mail</span>
+            <input
+              id="email"
+              class="input pl-10 h-12"
+              type="email"
+              v-model="email"
+              placeholder="ornek@estatedesk.com"
+              required
+              autofocus
+            />
           </div>
         </div>
 
         <div class="field full">
           <label for="password">Şifre</label>
-          <div class="input-wrap">
-            <span class="material-symbols-outlined input-icon">lock</span>
-            <input id="password" class="input with-icon" type="password" v-model="password" placeholder="••••••••" required />
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-outline pointer-events-none">lock</span>
+            <input
+              id="password"
+              class="input pl-10 h-12"
+              type="password"
+              v-model="password"
+              placeholder="••••••••"
+              required
+            />
           </div>
         </div>
 
-        <p v-if="error" class="error">{{ error }}</p>
+        <p v-if="error" class="error-msg text-center">{{ error }}</p>
 
-        <button class="btn primary submit-btn" :disabled="auth.loading" type="submit">
+        <button
+          class="btn primary w-full h-12 text-[15px] font-semibold mt-1 gap-2"
+          :disabled="auth.loading"
+          type="submit"
+        >
           {{ auth.loading ? 'Giriş yapılıyor…' : 'Giriş Yap' }}
-          <span class="material-symbols-outlined" style="font-size: 18px;">arrow_forward</span>
+          <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
         </button>
       </form>
 
-      <footer class="login-footer">
-        <span class="material-symbols-outlined" style="font-size: 14px;">verified_user</span>
+      <!-- Footer -->
+      <footer class="flex items-center justify-center gap-1 text-label-sm text-outline -mt-2">
+        <span class="material-symbols-outlined text-[14px]">verified_user</span>
         Güvenli bağlantı
       </footer>
     </main>
   </div>
 </template>
-
-<style scoped>
-.login-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface);
-  padding: 16px;
-}
-
-.login-card {
-  width: 420px;
-  max-width: 100%;
-  background: var(--surface-container-lowest);
-  border: 1px solid var(--outline-variant);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-2);
-  padding: var(--space-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  position: relative;
-  overflow: hidden;
-}
-
-.top-bar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: var(--primary);
-}
-
-.login-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
-  text-align: center;
-  padding-top: 8px;
-}
-
-.logo-box {
-  width: 56px;
-  height: 56px;
-  background: var(--surface-container);
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary);
-  margin-bottom: 8px;
-}
-
-.login-header h1 {
-  font-size: 32px;
-  line-height: 40px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--primary);
-  margin: 0;
-}
-
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.input-wrap {
-  position: relative;
-}
-
-.input-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 20px;
-  color: var(--outline);
-  pointer-events: none;
-}
-
-.input.with-icon {
-  padding-left: 40px;
-  height: 48px;
-}
-
-.submit-btn {
-  height: 48px;
-  margin-top: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  gap: 6px;
-}
-
-.login-footer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  font-size: 12px;
-  line-height: 16px;
-  font-weight: 500;
-  color: var(--outline);
-  margin-top: -8px;
-}
-</style>

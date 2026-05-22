@@ -1,0 +1,3 @@
+-- Türkçe karakter ve yazım-hatası toleranslı genel arama için PostgreSQL eklentileri
+CREATE EXTENSION IF NOT EXISTS unaccent;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
