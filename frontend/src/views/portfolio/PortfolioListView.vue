@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { portfolioService } from '@/services/portfolio.service';
+import { resolveImgUrl } from '@/utils/image';
 import {
   PROPERTY_TYPES,
   PROPERTY_TYPE_LABELS,
@@ -16,6 +17,30 @@ const total = ref(0);
 const showFilters = ref(false);
 
 const filters = reactive<PortfolioQuery>({ page: 1, pageSize: 20 });
+
+const totalPages = computed(() => Math.ceil(total.value / (filters.pageSize ?? 20)));
+
+const pageNumbers = computed(() => {
+  const current = filters.page ?? 1;
+  const last = totalPages.value;
+  const pages: (number | '...')[] = [];
+  if (last <= 7) {
+    for (let i = 1; i <= last; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (current > 3) pages.push('...');
+    for (let i = Math.max(2, current - 1); i <= Math.min(last - 1, current + 1); i++) pages.push(i);
+    if (current < last - 2) pages.push('...');
+    pages.push(last);
+  }
+  return pages;
+});
+
+function goToPage(p: number) {
+  if (p < 1 || p > totalPages.value) return;
+  filters.page = p;
+  load();
+}
 
 async function load() {
   loading.value = true;
@@ -155,7 +180,7 @@ onMounted(load);
         <div class="relative h-44 bg-surface-container flex items-center justify-center overflow-hidden">
           <img
             v-if="p.images && p.images.length"
-            :src="p.images[0]"
+            :src="resolveImgUrl(p.images[0])"
             :alt="p.title || p.city"
             class="absolute inset-0 w-full h-full object-cover"
           />
@@ -233,6 +258,41 @@ onMounted(load);
           </div>
         </div>
       </article>
+    </div>
+
+    <!-- Pagination -->
+    <div v-if="totalPages > 1" class="flex items-center justify-center gap-2 mt-8">
+      <button
+        class="btn p-2"
+        :disabled="(filters.page ?? 1) <= 1"
+        @click="goToPage((filters.page ?? 1) - 1)"
+        title="Önceki sayfa"
+      >
+        <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+      </button>
+
+      <template v-for="p in pageNumbers" :key="p">
+        <span v-if="p === '...'" class="px-2 text-on-surface-variant select-none">…</span>
+        <button
+          v-else
+          class="w-9 h-9 rounded-lg text-label-md font-medium transition-colors"
+          :class="p === (filters.page ?? 1)
+            ? 'bg-primary text-on-primary'
+            : 'text-on-surface hover:bg-surface-container'"
+          @click="goToPage(p as number)"
+        >
+          {{ p }}
+        </button>
+      </template>
+
+      <button
+        class="btn p-2"
+        :disabled="(filters.page ?? 1) >= totalPages"
+        @click="goToPage((filters.page ?? 1) + 1)"
+        title="Sonraki sayfa"
+      >
+        <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+      </button>
     </div>
   </div>
 </template>

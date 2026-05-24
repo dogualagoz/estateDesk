@@ -15,6 +15,7 @@ import {
   type ListingType,
   type PropertyType,
 } from '@/types/portfolio';
+import { resolveImgUrl } from '@/utils/image';
 
 const route = useRoute();
 const router = useRouter();
@@ -434,78 +435,114 @@ async function submit() {
             <p class="text-label-md text-on-surface-variant/60 mt-1">Filtreleri gevşetin veya talebi yine de kaydedin — yeni portföy gelince eşleşir.</p>
           </div>
 
-          <!-- Kartlar -->
-          <div v-else class="space-y-4">
+          <!-- Kartlar: 2'li dikey grid -->
+          <div v-else class="grid grid-cols-2 gap-4">
             <div
               v-for="r in results" :key="r.portfolio.id"
-              class="bg-surface-container-lowest rounded-xl border border-outline-variant p-5 shadow-sm"
+              class="rounded-2xl overflow-hidden shadow-sm border border-outline-variant/50 flex flex-col bg-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
             >
-              <div class="flex items-start gap-4">
-                <!-- Skor rozeti -->
-                <div class="shrink-0 flex flex-col items-center">
-                  <div class="w-14 h-14 rounded-full flex items-center justify-center font-bold text-[18px]" :class="scoreBadgeClass(r.score)">
-                    {{ r.score }}
-                  </div>
-                  <span class="text-label-sm text-on-surface-variant/60 mt-1">skor</span>
+              <!-- Görsel -->
+              <div class="relative w-full h-52 bg-surface-container shrink-0">
+                <img
+                  v-if="r.portfolio.images?.length"
+                  :src="resolveImgUrl(r.portfolio.images[0])"
+                  :alt="r.portfolio.title ?? undefined"
+                  class="w-full h-full object-cover"
+                />
+                <div v-else class="w-full h-full flex flex-col items-center justify-center bg-surface-container">
+                  <span class="material-symbols-outlined text-[48px] text-on-surface-variant/20">apartment</span>
                 </div>
 
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <h3 class="text-body-md font-semibold text-on-surface truncate">
-                      {{ r.portfolio.title || PROPERTY_TYPE_LABELS[r.portfolio.type] }}
-                    </h3>
-                    <span class="px-2 py-0.5 rounded-full text-label-sm bg-surface-container text-on-surface-variant">
-                      {{ LISTING_TYPE_LABELS[r.portfolio.listingType] }}
-                    </span>
-                    <span v-if="r.isHidden" class="px-2 py-0.5 rounded-full text-label-sm bg-tertiary-container text-on-tertiary-container">
-                      İlansız / Gizli
-                    </span>
-                  </div>
-                  <p class="text-label-md text-on-surface-variant flex items-center gap-1 mt-1">
-                    <span class="material-symbols-outlined text-[15px]">location_on</span>{{ locationOf(r.portfolio) }}
-                  </p>
-                  <div class="flex items-center gap-4 mt-1.5 text-label-md text-on-surface">
-                    <span class="font-bold text-primary">{{ fmtPrice(r.portfolio.price) }}</span>
-                    <span class="flex items-center gap-1 text-on-surface-variant"><span class="material-symbols-outlined text-[15px]">straighten</span>{{ r.portfolio.areaSqm }} m²</span>
-                    <span class="flex items-center gap-1 text-on-surface-variant"><span class="material-symbols-outlined text-[15px]">door_open</span>{{ r.portfolio.roomCount }}</span>
+                <!-- Sol üst: ilan tipi -->
+                <div class="absolute top-3 left-3">
+                  <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-black/40 text-white backdrop-blur-sm">
+                    {{ LISTING_TYPE_LABELS[r.portfolio.listingType] }}
+                  </span>
+                </div>
+
+                <!-- Sağ alt: skor (büyük, cam efektli) -->
+                <div class="absolute bottom-3 right-3 flex flex-col items-center justify-center w-[52px] h-[52px] rounded-2xl backdrop-blur-md shadow-lg"
+                  :class="r.score >= 80 ? 'bg-primary/90' : r.score >= 60 ? 'bg-primary/75' : 'bg-black/50'">
+                  <span class="text-[22px] font-black leading-none text-white">{{ r.score }}</span>
+                  <span class="text-[9px] font-semibold text-white/70 uppercase tracking-wide leading-none mt-0.5">puan</span>
+                </div>
+              </div>
+
+              <!-- Beyaz bilgi alanı -->
+              <div class="flex flex-col flex-1 px-4 pt-3.5 pb-4 gap-2">
+                <!-- Başlık -->
+                <h3 class="text-[13px] font-semibold text-on-surface leading-snug line-clamp-2">
+                  {{ r.portfolio.title || PROPERTY_TYPE_LABELS[r.portfolio.type] }}
+                </h3>
+
+                <!-- Fiyat -->
+                <p class="text-[18px] font-black text-primary leading-none tracking-tight">
+                  {{ fmtPrice(r.portfolio.price) }}
+                </p>
+
+                <!-- Konum -->
+                <p class="text-[11px] text-on-surface-variant flex items-center gap-0.5">
+                  <span class="material-symbols-outlined text-[12px] shrink-0">location_on</span>
+                  <span class="truncate">{{ locationOf(r.portfolio) }}</span>
+                </p>
+
+                <!-- Alan + oda + dimension çubukları -->
+                <div class="flex items-center gap-3 text-[11px] text-on-surface-variant">
+                  <span class="flex items-center gap-0.5 font-medium">
+                    <span class="material-symbols-outlined text-[12px]">straighten</span>{{ r.portfolio.areaSqm }} m²
+                  </span>
+                  <span class="flex items-center gap-0.5 font-medium">
+                    <span class="material-symbols-outlined text-[12px]">door_open</span>{{ r.portfolio.roomCount }}
+                  </span>
+                </div>
+
+                <!-- Dimension uyum çubukları -->
+                <div class="grid grid-cols-5 gap-1.5 py-1">
+                  <div v-for="b in activeBreakdown(r)" :key="b.key">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-[9px] text-on-surface-variant/70 leading-none">{{ dimLabel(b.key) }}</span>
+                      <span class="text-[9px] font-semibold leading-none"
+                        :class="b.score >= 0.6 ? 'text-primary' : b.score >= 0.3 ? 'text-on-surface-variant' : 'text-error'">
+                        {{ Math.round(b.score * 100) }}
+                      </span>
+                    </div>
+                    <div class="h-1 rounded-full bg-surface-container overflow-hidden">
+                      <div class="h-full rounded-full transition-all duration-500" :class="barColor(b.score)"
+                        :style="{ width: (b.score * 100) + '%' }" />
+                    </div>
                   </div>
                 </div>
 
-                <!-- Telefon -->
-                <a :href="`tel:${r.portfolio.ownerPhone}`" class="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-on-primary text-label-md font-medium hover:opacity-90 transition">
-                  <span class="material-symbols-outlined text-[16px]">call</span>{{ r.portfolio.ownerName }}
+                <!-- Uyuşan / eksik etiketler -->
+                <div class="flex flex-wrap gap-1">
+                  <span v-for="k in r.reasons" :key="'r'+k"
+                    class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-primary-fixed/80 text-on-primary-fixed-variant">
+                    ✓ {{ dimLabel(k) }}
+                  </span>
+                  <span v-for="k in r.gaps" :key="'g'+k"
+                    class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-error-container text-on-error-container">
+                    ✕ {{ dimLabel(k) }}
+                  </span>
+                </div>
+
+                <!-- Eşleşen özellikler -->
+                <div v-if="r.matchedFeatures.length" class="flex flex-wrap gap-1">
+                  <span v-for="f in r.matchedFeatures.slice(0, 3)" :key="f"
+                    class="px-1.5 py-0.5 rounded-full text-[10px] bg-surface-container text-on-surface-variant">
+                    {{ f }}
+                  </span>
+                  <span v-if="r.matchedFeatures.length > 3"
+                    class="px-1.5 py-0.5 rounded-full text-[10px] bg-surface-container text-on-surface-variant">
+                    +{{ r.matchedFeatures.length - 3 }}
+                  </span>
+                </div>
+
+                <!-- Telefon butonu -->
+                <a :href="`tel:${r.portfolio.ownerPhone}`"
+                  class="mt-auto flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary text-on-primary text-[12px] font-semibold hover:opacity-90 active:scale-[0.98] transition-all">
+                  <span class="material-symbols-outlined text-[14px]">call</span>
+                  {{ r.portfolio.ownerName }}
                 </a>
-              </div>
-
-              <!-- Boyut çubukları (renklendirme) -->
-              <div class="grid grid-cols-5 gap-2 mt-4">
-                <div v-for="b in activeBreakdown(r)" :key="b.key">
-                  <div class="flex items-center justify-between text-label-sm text-on-surface-variant mb-1">
-                    <span>{{ dimLabel(b.key) }}</span>
-                    <span>{{ Math.round(b.score * 100) }}</span>
-                  </div>
-                  <div class="h-1.5 rounded-full bg-surface-container overflow-hidden">
-                    <div class="h-full rounded-full transition-all" :class="barColor(b.score)" :style="{ width: (b.score * 100) + '%' }" />
-                  </div>
-                </div>
-              </div>
-
-              <!-- Nedenler / eksikler / eşleşen özellikler -->
-              <div class="flex flex-wrap items-center gap-1.5 mt-4">
-                <span v-for="k in r.reasons" :key="'r' + k"
-                  class="px-2.5 py-1 rounded-full text-label-sm bg-primary-fixed text-on-primary-fixed-variant">
-                  ✓ {{ dimLabel(k) }}
-                </span>
-                <span v-for="k in r.gaps" :key="'g' + k"
-                  class="px-2.5 py-1 rounded-full text-label-sm bg-error-container text-on-error-container">
-                  ✕ {{ dimLabel(k) }}
-                </span>
-              </div>
-              <div v-if="r.matchedFeatures.length" class="flex flex-wrap items-center gap-1.5 mt-2">
-                <span v-for="f in r.matchedFeatures" :key="f"
-                  class="px-2.5 py-1 rounded-full text-label-sm bg-surface-container text-on-surface-variant">
-                  {{ f }}
-                </span>
               </div>
             </div>
           </div>
