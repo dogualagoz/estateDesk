@@ -19,3 +19,7 @@ backend/prisma/migrations/dev.db*
 # Vite
 frontend/dist/
 frontend/.vite/
+
+# Uploads (kullanıcı medyası — repoya girmesin)
+uploads/*
+!uploads/.gitkeep
