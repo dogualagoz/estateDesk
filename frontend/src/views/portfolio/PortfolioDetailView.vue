@@ -8,6 +8,8 @@ const route = useRoute();
 const router = useRouter();
 const item = ref<Portfolio | null>(null);
 const loading = ref(true);
+const uploading = ref(false);
+const fileInput = ref<HTMLInputElement | null>(null);
 
 async function load() {
   loading.value = true;
@@ -28,6 +30,32 @@ async function remove() {
   if (!confirm('Bu portföy silinsin mi?')) return;
   await portfolioService.remove(item.value.id);
   router.push('/portfolio');
+}
+
+function pickImages() {
+  fileInput.value?.click();
+}
+
+async function onFilesSelected(e: Event) {
+  const input = e.target as HTMLInputElement;
+  if (!input.files?.length || !item.value) return;
+  uploading.value = true;
+  try {
+    item.value = await portfolioService.uploadImages(item.value.id, Array.from(input.files));
+  } finally {
+    uploading.value = false;
+    input.value = '';
+  }
+}
+
+async function removeImage(url: string) {
+  if (!item.value) return;
+  const filename = url.split('/').pop()!;
+  item.value = await portfolioService.deleteImage(item.value.id, filename);
+}
+
+function filenameFrom(url: string) {
+  return url.split('/').pop() ?? url;
 }
 
 onMounted(load);
@@ -80,6 +108,45 @@ onMounted(load);
             Sil
           </button>
         </div>
+      </div>
+
+      <!-- Image Gallery -->
+      <div class="card mb-gutter">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-label-sm text-on-surface-variant uppercase tracking-wider">Görseller</span>
+          <button class="btn" :disabled="uploading" @click="pickImages">
+            <span v-if="uploading" class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+            <span v-else class="material-symbols-outlined text-[18px]">add_photo_alternate</span>
+            {{ uploading ? 'Yükleniyor…' : 'Görsel Ekle' }}
+          </button>
+          <input
+            ref="fileInput"
+            type="file"
+            multiple
+            accept="image/jpeg,image/png,image/webp"
+            class="hidden"
+            @change="onFilesSelected"
+          />
+        </div>
+
+        <!-- Gallery Grid -->
+        <div v-if="item.images && item.images.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          <div
+            v-for="url in item.images"
+            :key="url"
+            class="relative group rounded-lg overflow-hidden bg-surface-container aspect-square"
+          >
+            <img :src="url" :alt="filenameFrom(url)" class="w-full h-full object-cover" />
+            <button
+              class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
+              title="Görseli sil"
+              @click="removeImage(url)"
+            >
+              <span class="material-symbols-outlined text-white text-[28px]">delete</span>
+            </button>
+          </div>
+        </div>
+        <p v-else class="text-label-md text-on-surface-variant">Henüz görsel eklenmemiş.</p>
       </div>
 
       <!-- Detail Card -->

@@ -151,9 +151,15 @@ onMounted(load);
         class="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col cursor-pointer group"
         @click="router.push(`/portfolio/${p.id}`)"
       >
-        <!-- Image Placeholder -->
-        <div class="relative h-44 bg-surface-container flex items-center justify-center">
-          <span class="material-symbols-outlined text-[44px] text-outline-variant">maps_home_work</span>
+        <!-- Image / Placeholder -->
+        <div class="relative h-44 bg-surface-container flex items-center justify-center overflow-hidden">
+          <img
+            v-if="p.images && p.images.length"
+            :src="p.images[0]"
+            :alt="p.title || p.city"
+            class="absolute inset-0 w-full h-full object-cover"
+          />
+          <span v-else class="material-symbols-outlined text-[44px] text-outline-variant">maps_home_work</span>
           <!-- Type badge -->
           <div class="absolute top-3 left-3">
             <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary text-on-primary text-label-sm shadow-sm">
