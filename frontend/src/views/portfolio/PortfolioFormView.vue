@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref, computed, watch, nextTick, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { resolveImgUrl } from '@/utils/image';
 import { portfolioService } from '@/services/portfolio.service';
 import {
   PROPERTY_TYPES,
@@ -67,8 +68,9 @@ const previewUrls  = ref<string[]>([]);
 const existingImages = ref<string[]>([]); // edit modunda sunucudaki görseller
 const isDragging   = ref(false);
 
+
 const allPreviewUrls = computed(() => [
-  ...existingImages.value,
+  ...existingImages.value.map(resolveImgUrl),
   ...previewUrls.value,
 ]);
 
@@ -97,6 +99,13 @@ function removePreview(index: number) {
   URL.revokeObjectURL(previewUrls.value[index]);
   previewUrls.value.splice(index, 1);
   pendingFiles.value.splice(index, 1);
+}
+
+async function removeExistingImage(url: string) {
+  const filename = url.split('/').pop()!;
+  const portfolioId = route.params.id as string;
+  await portfolioService.deleteImage(portfolioId, filename);
+  existingImages.value = existingImages.value.filter((u) => u !== url);
 }
 
 onUnmounted(() => previewUrls.value.forEach(URL.revokeObjectURL));
@@ -301,6 +310,7 @@ async function submit() {
             :src="allPreviewUrls[0]"
             class="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
             alt="Ön izleme"
+            @error="($event.target as HTMLImageElement).style.display = 'none'"
           />
 
           <!-- Fotoğraf varken okunabilirlik için koyu gradyan -->
@@ -402,9 +412,17 @@ async function submit() {
             <div
               v-for="url in existingImages"
               :key="url"
-              class="relative shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 border-primary/40"
+              class="relative shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 border-primary/40 group"
             >
-              <img :src="url" class="w-full h-full object-cover" alt="" />
+              <img :src="resolveImgUrl(url)" class="w-full h-full object-cover" alt="" />
+              <button
+                v-if="isEdit"
+                type="button"
+                class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
+                @click="removeExistingImage(url)"
+              >
+                <span class="material-symbols-outlined text-white text-[18px]">close</span>
+              </button>
             </div>
             <!-- Bekleyen yeni görseller -->
             <div
