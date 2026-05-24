@@ -16,4 +16,15 @@ export const portfolioService = {
   update: (id: string, payload: UpdatePortfolioPayload) =>
     api.patch<Portfolio>(`/portfolios/${id}`, payload).then((r) => r.data),
   remove: (id: string) => api.delete(`/portfolios/${id}`).then((r) => r.data),
+  uploadImages: (id: string, files: File[]) => {
+    const form = new FormData();
+    files.forEach((f) => form.append('files', f));
+    return api
+      .post<Portfolio>(`/portfolios/${id}/images`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((r) => r.data);
+  },
+  deleteImage: (id: string, filename: string) =>
+    api.delete<Portfolio>(`/portfolios/${id}/images/${filename}`).then((r) => r.data),
 };

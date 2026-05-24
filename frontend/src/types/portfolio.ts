@@ -39,6 +39,7 @@ export interface Portfolio {
   roomCount: string;
   price: string | number;
   features: string[];
+  images: string[];
   visibility: PortfolioVisibility;
   note?: string | null;
   ownerName: string;
