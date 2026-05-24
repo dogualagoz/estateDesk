@@ -6,6 +6,7 @@ import { UpdatePortfolioDto } from './dto/update-portfolio.dto';
 import { QueryPortfolioDto } from './dto/query-portfolio.dto';
 import * as fs from 'fs';
 import * as path from 'path';
+import sharp from 'sharp';
 
 @Injectable()
 export class PortfolioService {
@@ -106,7 +107,20 @@ export class PortfolioService {
 
   async addImages(id: string, _userId: string, files: Express.Multer.File[]) {
     const item = await this.get(id);
-    const newUrls = files.map((f) => `/uploads/portfolio/${id}/${f.filename}`);
+    const dir = path.join('/app/uploads/portfolio', id);
+    fs.mkdirSync(dir, { recursive: true });
+
+    const newUrls: string[] = [];
+    for (const file of files) {
+      const filename = `${Date.now()}-${Math.round(Math.random() * 1e6)}.webp`;
+      const dest = path.join(dir, filename);
+      await sharp(file.buffer)
+        .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true })
+        .webp({ quality: 82 })
+        .toFile(dest);
+      newUrls.push(`/uploads/portfolio/${id}/${filename}`);
+    }
+
     return this.prisma.portfolio.update({
       where: { id },
       data: { images: { set: [...item.images, ...newUrls] } },
