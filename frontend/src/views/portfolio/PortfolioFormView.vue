@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref, computed, watch, nextTick } from 'vue';
+import { onMounted, reactive, ref, computed, watch, nextTick, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { portfolioService } from '@/services/portfolio.service';
 import {
@@ -59,6 +59,47 @@ const form = reactive({
 const error        = ref<string | null>(null);
 const saving       = ref(false);
 const customFeature = ref('');
+
+// ── Görsel yükleme ──
+const fileInput    = ref<HTMLInputElement | null>(null);
+const pendingFiles = ref<File[]>([]);
+const previewUrls  = ref<string[]>([]);
+const existingImages = ref<string[]>([]); // edit modunda sunucudaki görseller
+const isDragging   = ref(false);
+
+const allPreviewUrls = computed(() => [
+  ...existingImages.value,
+  ...previewUrls.value,
+]);
+
+function pickFiles() { fileInput.value?.click(); }
+
+function addFiles(files: FileList | null) {
+  if (!files) return;
+  for (const file of Array.from(files)) {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) continue;
+    pendingFiles.value.push(file);
+    previewUrls.value.push(URL.createObjectURL(file));
+  }
+}
+
+function onFilePick(e: Event) {
+  addFiles((e.target as HTMLInputElement).files);
+  (e.target as HTMLInputElement).value = '';
+}
+
+function onDrop(e: DragEvent) {
+  isDragging.value = false;
+  addFiles(e.dataTransfer?.files ?? null);
+}
+
+function removePreview(index: number) {
+  URL.revokeObjectURL(previewUrls.value[index]);
+  previewUrls.value.splice(index, 1);
+  pendingFiles.value.splice(index, 1);
+}
+
+onUnmounted(() => previewUrls.value.forEach(URL.revokeObjectURL));
 
 // Bölüm görünürlüğü — sırayla açılır
 const s1Done = computed(() => typeChosen.value && listingChosen.value);
@@ -163,6 +204,7 @@ onMounted(async () => {
     ownerName:    p.ownerName,
     ownerPhone:   p.ownerPhone,
   });
+  existingImages.value = [...(p.images ?? [])];
   typeChosen.value    = true;
   listingChosen.value = true;
 });
@@ -189,9 +231,15 @@ async function submit() {
     };
     if (isEdit.value) {
       await portfolioService.update(route.params.id as string, payload);
+      if (pendingFiles.value.length) {
+        await portfolioService.uploadImages(route.params.id as string, pendingFiles.value);
+      }
       router.push(`/portfolio/${route.params.id}`);
     } else {
       const created = await portfolioService.create(payload);
+      if (pendingFiles.value.length) {
+        await portfolioService.uploadImages(created.id, pendingFiles.value);
+      }
       router.push(`/portfolio/${created.id}`);
     }
   } catch (e: any) {
@@ -228,18 +276,92 @@ async function submit() {
 
       <!-- ── Sol: Canlı Önizleme ── -->
       <div class="w-1/2 border-r border-outline-variant bg-surface-container/40 flex flex-col overflow-hidden">
-        <!-- Gradient alan — büyük -->
-        <div
-          class="relative flex-1 flex flex-col justify-end p-8 transition-all duration-700"
-          :style="{ background: previewGradient }"
-        >
-          <!-- Dekoratif daireler -->
-          <div class="absolute top-6 right-6 w-40 h-40 rounded-full bg-white/10" />
-          <div class="absolute top-16 right-20 w-20 h-20 rounded-full bg-white/10" />
-          <div class="absolute bottom-24 left-6 w-12 h-12 rounded-full bg-white/10" />
 
-          <!-- Etiketler -->
-          <div class="flex gap-2 mb-4">
+        <!-- hidden file input -->
+        <input
+          ref="fileInput"
+          type="file"
+          multiple
+          accept="image/jpeg,image/png,image/webp"
+          class="hidden"
+          @change="onFilePick"
+        />
+
+        <!-- Gradient / Fotoğraf alanı -->
+        <div
+          class="relative flex-1 flex flex-col justify-end p-8 transition-all duration-700 overflow-hidden"
+          :style="allPreviewUrls.length ? {} : { background: previewGradient }"
+          @dragover.prevent="isDragging = true"
+          @dragleave.prevent="isDragging = false"
+          @drop.prevent="onDrop"
+        >
+          <!-- Arka plan fotoğrafı -->
+          <img
+            v-if="allPreviewUrls.length"
+            :src="allPreviewUrls[0]"
+            class="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+            alt="Ön izleme"
+          />
+
+          <!-- Fotoğraf varken okunabilirlik için koyu gradyan -->
+          <div
+            v-if="allPreviewUrls.length"
+            class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"
+          />
+
+          <!-- Dekoratif daireler — sadece fotoğrafsız -->
+          <template v-if="!allPreviewUrls.length">
+            <div class="absolute top-6 right-6 w-40 h-40 rounded-full bg-white/10" />
+            <div class="absolute top-16 right-20 w-20 h-20 rounded-full bg-white/10" />
+            <div class="absolute bottom-24 left-6 w-12 h-12 rounded-full bg-white/10" />
+          </template>
+
+          <!-- Sürükle-bırak overlay -->
+          <Transition name="fade">
+            <div
+              v-if="isDragging"
+              class="absolute inset-4 z-20 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-white/70 bg-black/30 backdrop-blur-sm"
+            >
+              <span class="material-symbols-outlined text-white text-[52px]">cloud_upload</span>
+              <p class="text-white font-semibold mt-2 text-label-md">Bırakın, yüklensin</p>
+            </div>
+          </Transition>
+
+          <!-- Fotoğraf ekle butonu — fotoğraf yokken ortada -->
+          <Transition name="fade">
+            <div
+              v-if="!allPreviewUrls.length && !isDragging"
+              class="absolute inset-0 flex flex-col items-center justify-center z-10 gap-3"
+            >
+              <button
+                type="button"
+                class="flex flex-col items-center gap-2 px-6 py-4 rounded-2xl bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/30 text-white transition-all duration-200"
+                @click="pickFiles"
+              >
+                <span class="material-symbols-outlined text-[36px]">add_photo_alternate</span>
+                <span class="text-label-md font-semibold">Fotoğraf Ekle</span>
+              </button>
+              <p class="text-white/60 text-label-sm">veya sürükleyip bırakın</p>
+            </div>
+          </Transition>
+
+          <!-- Fotoğraf varken sağ üst: ekle butonu + sayaç -->
+          <div v-if="allPreviewUrls.length" class="absolute top-4 right-4 z-10 flex items-center gap-2">
+            <span class="px-2.5 py-1 rounded-full bg-black/50 text-white text-label-sm backdrop-blur-sm">
+              {{ allPreviewUrls.length }} fotoğraf
+            </span>
+            <button
+              type="button"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white text-label-sm font-medium transition-all"
+              @click="pickFiles"
+            >
+              <span class="material-symbols-outlined text-[16px]">add</span>
+              Ekle
+            </button>
+          </div>
+
+          <!-- Etiketler (relative, içerik üstünde) -->
+          <div class="relative z-10 flex gap-2 mb-4">
             <span class="px-3 py-1.5 rounded-full text-[12px] font-bold bg-white/90 text-on-surface tracking-wide">
               {{ LISTING_TYPE_LABELS[form.listingType] }}
             </span>
@@ -249,16 +371,16 @@ async function submit() {
           </div>
 
           <!-- İçerik -->
-          <h2 class="text-[22px] font-bold text-white leading-snug drop-shadow mb-2">
+          <h2 class="relative z-10 text-[22px] font-bold text-white leading-snug drop-shadow mb-2">
             {{ previewTitle }}
           </h2>
-          <p class="text-white/80 text-label-md flex items-center gap-1 mb-4">
+          <p class="relative z-10 text-white/80 text-label-md flex items-center gap-1 mb-4">
             <span class="material-symbols-outlined text-[16px]">location_on</span>
             {{ previewLocation }}
           </p>
 
           <!-- Fiyat + detay bar -->
-          <div class="bg-white/15 backdrop-blur-sm rounded-xl p-4 flex items-center justify-between">
+          <div class="relative z-10 bg-white/15 backdrop-blur-sm rounded-xl p-4 flex items-center justify-between">
             <span class="text-[24px] font-extrabold text-white drop-shadow">{{ previewPrice }}</span>
             <div class="flex gap-4 text-white/80 text-label-sm">
               <span v-if="form.areaSqm" class="flex items-center gap-1">
@@ -271,9 +393,38 @@ async function submit() {
           </div>
         </div>
 
-        <!-- Özellik chip'leri + etiket -->
-        <div class="shrink-0 bg-surface-container-lowest border-t border-outline-variant px-8 py-5">
-          <p class="text-label-xs font-semibold uppercase tracking-widest text-on-surface-variant mb-3">Canlı Önizleme</p>
+        <!-- Alt şerit: thumbnail strip + özellikler -->
+        <div class="shrink-0 bg-surface-container-lowest border-t border-outline-variant px-6 py-4">
+
+          <!-- Thumbnail strip -->
+          <div v-if="allPreviewUrls.length" class="flex gap-2 mb-3 overflow-x-auto pb-1">
+            <!-- Mevcut sunucu görselleri (edit modu) -->
+            <div
+              v-for="url in existingImages"
+              :key="url"
+              class="relative shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 border-primary/40"
+            >
+              <img :src="url" class="w-full h-full object-cover" alt="" />
+            </div>
+            <!-- Bekleyen yeni görseller -->
+            <div
+              v-for="(url, i) in previewUrls"
+              :key="url"
+              class="relative shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 border-outline-variant group"
+            >
+              <img :src="url" class="w-full h-full object-cover" alt="" />
+              <button
+                type="button"
+                class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
+                @click="removePreview(i)"
+              >
+                <span class="material-symbols-outlined text-white text-[18px]">close</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Özellik chip'leri -->
+          <p class="text-label-xs font-semibold uppercase tracking-widest text-on-surface-variant mb-2">Canlı Önizleme</p>
           <div v-if="form.features.length > 0" class="flex flex-wrap gap-2">
             <span
               v-for="f in form.features.slice(0, 6)" :key="f"
