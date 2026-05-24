@@ -4,6 +4,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreatePortfolioDto } from './dto/create-portfolio.dto';
 import { UpdatePortfolioDto } from './dto/update-portfolio.dto';
 import { QueryPortfolioDto } from './dto/query-portfolio.dto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class PortfolioService {
@@ -100,5 +102,31 @@ export class PortfolioService {
       data: { deletedAt: new Date() },
     });
     return { success: true };
+  }
+
+  async addImages(id: string, _userId: string, files: Express.Multer.File[]) {
+    const item = await this.get(id);
+    const newUrls = files.map((f) => `/uploads/portfolio/${id}/${f.filename}`);
+    return this.prisma.portfolio.update({
+      where: { id },
+      data: { images: { set: [...item.images, ...newUrls] } },
+      include: { createdBy: { select: { id: true, fullName: true } } },
+    });
+  }
+
+  async removeImage(id: string, _userId: string, filename: string) {
+    const item = await this.get(id);
+    const url = `/uploads/portfolio/${id}/${filename}`;
+    const filePath = path.join('/app/uploads/portfolio', id, filename);
+
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    return this.prisma.portfolio.update({
+      where: { id },
+      data: { images: { set: item.images.filter((img) => img !== url) } },
+      include: { createdBy: { select: { id: true, fullName: true } } },
+    });
   }
 }
