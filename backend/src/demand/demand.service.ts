@@ -76,6 +76,8 @@ export class DemandService {
         city: dto.city,
         district: dto.district,
         neighborhood: dto.neighborhood,
+        districts: dto.districts ?? [],
+        neighborhoods: dto.neighborhoods ?? [],
         minBudget: dto.minBudget,
         maxBudget: dto.maxBudget,
         roomPreferences: dto.roomPreferences ?? [],

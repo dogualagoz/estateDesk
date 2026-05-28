@@ -9,6 +9,8 @@ export interface MatchCriteria {
   city?: string;
   district?: string;
   neighborhood?: string;
+  districts?: string[];
+  neighborhoods?: string[];
   minBudget?: number;
   maxBudget?: number;
   roomPreferences?: string[];

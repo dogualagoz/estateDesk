@@ -13,6 +13,12 @@ import {
   type ListingType,
   type PropertyType,
 } from '@/types/portfolio';
+import LocationDropdown from '@/components/ui/LocationDropdown.vue';
+import {
+  getCityNames,
+  getDistrictNames,
+  getNeighborhoods,
+} from '@/data/tr-locations';
 
 const route = useRoute();
 const router = useRouter();
@@ -60,6 +66,38 @@ const form = reactive({
 const error        = ref<string | null>(null);
 const saving       = ref(false);
 const customFeature = ref('');
+const priceDisplay = ref('');
+
+// Konum yardımcıları
+const cityOptions      = computed(() => getCityNames());
+const districtOptions  = computed(() => form.city ? getDistrictNames(form.city) : []);
+const neighborhoodOpts = computed(() => form.city && form.district ? getNeighborhoods(form.city, form.district) : []);
+
+watch(() => form.city, () => { form.district = ''; form.neighborhood = ''; });
+watch(() => form.district, () => { form.neighborhood = ''; });
+
+function formatTR(n: number | string | undefined): string {
+  if (n == null || n === '') return '';
+  const num = typeof n === 'string' ? parseFloat(n) : n;
+  return isNaN(num) ? '' : num.toLocaleString('tr-TR');
+}
+
+function onPriceInput(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const raw = input.value.replace(/[^\d]/g, '');
+  form.price = raw ? parseInt(raw) : '';
+  const formatted = raw ? parseInt(raw).toLocaleString('tr-TR') : '';
+  priceDisplay.value = formatted;
+  input.value = formatted;
+  // İmleç sona taşı
+  requestAnimationFrame(() => input.setSelectionRange(formatted.length, formatted.length));
+}
+
+function onPriceBlur(e: Event) {
+  const formatted = formatTR(form.price);
+  priceDisplay.value = formatted;
+  (e.target as HTMLInputElement).value = formatted;
+}
 
 // ── Görsel yükleme ──
 const fileInput    = ref<HTMLInputElement | null>(null);
@@ -67,7 +105,7 @@ const pendingFiles = ref<File[]>([]);
 const previewUrls  = ref<string[]>([]);
 const existingImages = ref<string[]>([]); // edit modunda sunucudaki görseller
 const isDragging   = ref(false);
-
+const activeIndex  = ref(0);
 
 const allPreviewUrls = computed(() => [
   ...existingImages.value.map(resolveImgUrl),
@@ -78,11 +116,13 @@ function pickFiles() { fileInput.value?.click(); }
 
 function addFiles(files: FileList | null) {
   if (!files) return;
+  const before = allPreviewUrls.value.length;
   for (const file of Array.from(files)) {
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) continue;
     pendingFiles.value.push(file);
     previewUrls.value.push(URL.createObjectURL(file));
   }
+  if (before === 0 && allPreviewUrls.value.length > 0) activeIndex.value = 0;
 }
 
 function onFilePick(e: Event) {
@@ -99,13 +139,20 @@ function removePreview(index: number) {
   URL.revokeObjectURL(previewUrls.value[index]);
   previewUrls.value.splice(index, 1);
   pendingFiles.value.splice(index, 1);
+  if (activeIndex.value >= allPreviewUrls.value.length) {
+    activeIndex.value = Math.max(0, allPreviewUrls.value.length - 1);
+  }
 }
 
 async function removeExistingImage(url: string) {
+  const idx = existingImages.value.indexOf(url);
   const filename = url.split('/').pop()!;
   const portfolioId = route.params.id as string;
   await portfolioService.deleteImage(portfolioId, filename);
   existingImages.value = existingImages.value.filter((u) => u !== url);
+  if (idx !== -1 && activeIndex.value >= allPreviewUrls.value.length) {
+    activeIndex.value = Math.max(0, allPreviewUrls.value.length - 1);
+  }
 }
 
 onUnmounted(() => previewUrls.value.forEach(URL.revokeObjectURL));
@@ -214,6 +261,7 @@ onMounted(async () => {
     ownerPhone:   p.ownerPhone,
   });
   existingImages.value = [...(p.images ?? [])];
+  priceDisplay.value  = formatTR(form.price);
   typeChosen.value    = true;
   listingChosen.value = true;
 });
@@ -307,7 +355,7 @@ async function submit() {
           <!-- Arka plan fotoğrafı -->
           <img
             v-if="allPreviewUrls.length"
-            :src="allPreviewUrls[0]"
+            :src="allPreviewUrls[activeIndex]"
             class="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
             alt="Ön izleme"
             @error="($event.target as HTMLImageElement).style.display = 'none'"
@@ -410,33 +458,37 @@ async function submit() {
           <div v-if="allPreviewUrls.length" class="flex gap-2 mb-3 overflow-x-auto pb-1">
             <!-- Mevcut sunucu görselleri (edit modu) -->
             <div
-              v-for="url in existingImages"
+              v-for="(url, i) in existingImages"
               :key="url"
-              class="relative shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 border-primary/40 group"
+              class="relative shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-all group cursor-pointer"
+              :class="activeIndex === i ? 'border-primary shadow-md' : 'border-outline-variant hover:border-primary/50'"
+              @click="activeIndex = i"
             >
               <img :src="resolveImgUrl(url)" class="w-full h-full object-cover" alt="" />
               <button
                 v-if="isEdit"
                 type="button"
-                class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
-                @click="removeExistingImage(url)"
+                class="absolute top-0.5 right-0.5 w-5 h-5 flex items-center justify-center rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                @click.stop="removeExistingImage(url)"
               >
-                <span class="material-symbols-outlined text-white text-[18px]">close</span>
+                <span class="material-symbols-outlined text-[12px]">close</span>
               </button>
             </div>
             <!-- Bekleyen yeni görseller -->
             <div
               v-for="(url, i) in previewUrls"
               :key="url"
-              class="relative shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 border-outline-variant group"
+              class="relative shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-all group cursor-pointer"
+              :class="activeIndex === existingImages.length + i ? 'border-primary shadow-md' : 'border-outline-variant hover:border-primary/50'"
+              @click="activeIndex = existingImages.length + i"
             >
               <img :src="url" class="w-full h-full object-cover" alt="" />
               <button
                 type="button"
-                class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
-                @click="removePreview(i)"
+                class="absolute top-0.5 right-0.5 w-5 h-5 flex items-center justify-center rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                @click.stop="removePreview(i)"
               >
-                <span class="material-symbols-outlined text-white text-[18px]">close</span>
+                <span class="material-symbols-outlined text-[12px]">close</span>
               </button>
             </div>
           </div>
@@ -552,11 +604,20 @@ async function submit() {
                 <div class="grid grid-cols-2 gap-3">
                   <div class="flex flex-col gap-1.5">
                     <label class="text-label-sm font-semibold text-on-surface-variant">İl *</label>
-                    <input class="input" v-model="form.city" placeholder="İstanbul" />
+                    <LocationDropdown
+                      v-model="form.city"
+                      :options="cityOptions"
+                      placeholder="İl seçin..."
+                    />
                   </div>
                   <div class="flex flex-col gap-1.5">
                     <label class="text-label-sm font-semibold text-on-surface-variant">İlçe *</label>
-                    <input class="input" v-model="form.district" placeholder="Kadıköy" />
+                    <LocationDropdown
+                      v-model="form.district"
+                      :options="districtOptions"
+                      :disabled="!form.city"
+                      placeholder="İlçe seçin..."
+                    />
                   </div>
                 </div>
                 <div class="flex flex-col gap-1.5">
@@ -564,7 +625,12 @@ async function submit() {
                     Mahalle
                     <span class="font-normal ml-1 text-on-surface-variant/60">(isteğe bağlı)</span>
                   </label>
-                  <input class="input" v-model="form.neighborhood" placeholder="Moda" />
+                  <LocationDropdown
+                    v-model="form.neighborhood"
+                    :options="neighborhoodOpts"
+                    :disabled="!form.district"
+                    placeholder="Mahalle seçin..."
+                  />
                 </div>
               </div>
             </div>
@@ -587,7 +653,11 @@ async function submit() {
                     <label class="text-label-sm font-semibold text-on-surface-variant">Fiyat *</label>
                     <div class="relative">
                       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-label-sm select-none pointer-events-none">₺</span>
-                      <input class="input pl-7" type="number" min="0" v-model.number="form.price" placeholder="12500000" />
+                      <input class="input pl-7" type="text" inputmode="numeric" :value="priceDisplay"
+                        @focus="priceDisplay = form.price !== '' ? String(form.price) : ''"
+                        @input="onPriceInput"
+                        @blur="onPriceBlur($event)"
+                        placeholder="12.500.000" />
                     </div>
                   </div>
                 </div>

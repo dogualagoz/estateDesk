@@ -1205,36 +1205,893 @@ async function seedPortfolios(ownerId: string) {
 
 async function seedDemands(ownerId: string) {
   const count = await prisma.demand.count();
-  if (count > 0) {
+  if (count >= 50) {
     console.log(`[seed] Demands already present (${count}), skipping.`);
     return;
   }
 
-  await prisma.demand.create({
-    data: {
-      types: ['APARTMENT'],
-      listingType: 'SALE',
-      regions: ['Kadıköy'],
-      city: 'İstanbul',
-      district: 'Kadıköy',
-      minBudget: 9000000,
-      maxBudget: 12000000,
-      roomPreferences: ['3+1'],
-      minArea: 120,
-      maxArea: 180,
+  const demands = [
+    // --- ANTALYA – Muratpaşa ---
+    {
+      types: ['APARTMENT'], listingType: 'SALE',
+      city: 'Antalya', district: 'Muratpaşa', neighborhood: 'Lara',
+      minBudget: 4500000, maxBudget: 7000000,
+      roomPreferences: ['3+1'], minArea: 110, maxArea: 160,
+      mustHaveFeatures: ['Asansör', 'Otopark'], bonusFeatures: ['Deniz Manzarası', 'Kapalı Mutfak'],
+      customerName: 'Ceren Arslan', customerPhone: '05321110001', status: 'ACTIVE',
+      note: 'Lara sahil yakını, yürüyüş mesafesinde olsun.',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'RENT',
+      city: 'Antalya', district: 'Muratpaşa', neighborhood: 'Şirinyalı',
+      minBudget: 18000, maxBudget: 25000,
+      roomPreferences: ['2+1'], minArea: 80, maxArea: 110,
+      mustHaveFeatures: ['Eşyalı'], bonusFeatures: ['Balkon', 'Site İçi'],
+      customerName: 'Emirhan Koç', customerPhone: '05321110002', status: 'ACTIVE',
+      note: 'Uzun dönem kiralık, çalışan genç aile.',
+    },
+    {
+      types: ['APARTMENT', 'VILLA'], listingType: 'SALE',
+      city: 'Antalya', district: 'Muratpaşa', neighborhood: 'Güzeloba',
+      minBudget: 8000000, maxBudget: 14000000,
+      roomPreferences: ['4+1', '5+1'], minArea: 180, maxArea: 300,
+      mustHaveFeatures: ['Otopark', 'Güvenlik'], bonusFeatures: ['Havuz', 'Bahçe'],
+      customerName: 'Seda Polat', customerPhone: '05321110003', status: 'ACTIVE',
+      note: 'Geniş aile, bebek geliyor, güvenlik önemli.',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'RENT',
+      city: 'Antalya', district: 'Muratpaşa',
+      minBudget: 12000, maxBudget: 16000,
+      roomPreferences: ['1+1', '2+1'], minArea: 50, maxArea: 90,
+      mustHaveFeatures: ['Eşyalı', 'Balkon'],
+      customerName: 'Barış Yıldız', customerPhone: '05321110004', status: 'ACTIVE',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'SALE',
+      city: 'Antalya', district: 'Muratpaşa', neighborhood: 'Fener',
+      minBudget: 5500000, maxBudget: 8500000,
+      roomPreferences: ['3+1'], minArea: 120, maxArea: 160,
+      mustHaveFeatures: ['Asansör'], bonusFeatures: ['Deniz Manzarası'],
+      customerName: 'Neslihan Çelik', customerPhone: '05321110005', status: 'CLOSED',
+      note: 'Bulundu, kapatıldı.',
+    },
+
+    // --- ANTALYA – Konyaaltı ---
+    {
+      types: ['APARTMENT'], listingType: 'SALE',
+      city: 'Antalya', district: 'Konyaaltı', neighborhood: 'Uncalı',
+      minBudget: 3500000, maxBudget: 5500000,
+      roomPreferences: ['2+1', '3+1'], minArea: 90, maxArea: 140,
+      mustHaveFeatures: ['Asansör'], bonusFeatures: ['Site İçi', 'Otopark'],
+      customerName: 'Murat Özdoğan', customerPhone: '05321110006', status: 'ACTIVE',
+    },
+    {
+      types: ['VILLA'], listingType: 'SALE',
+      city: 'Antalya', district: 'Konyaaltı', neighborhood: 'Hurma',
+      minBudget: 12000000, maxBudget: 20000000,
+      roomPreferences: ['4+1', '5+1'], minArea: 250, maxArea: 450,
+      mustHaveFeatures: ['Havuz', 'Bahçe', 'Otopark'], bonusFeatures: ['Deniz Manzarası', 'Güvenlik'],
+      customerName: 'Ahu Demirkol', customerPhone: '05321110007', status: 'ACTIVE',
+      note: 'Müstakil villa, müteahhit projesi olmaz.',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'RENT',
+      city: 'Antalya', district: 'Konyaaltı', neighborhood: 'Sarısu',
+      minBudget: 22000, maxBudget: 32000,
+      roomPreferences: ['3+1'], minArea: 110, maxArea: 150,
+      mustHaveFeatures: ['Deniz Manzarası', 'Balkon'],
+      customerName: 'Tolga Başer', customerPhone: '05321110008', status: 'ACTIVE',
+      note: 'Yaz dönemi için deniz manzaralı olsun.',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'SALE',
+      city: 'Antalya', district: 'Konyaaltı',
+      minBudget: 2800000, maxBudget: 4200000,
+      roomPreferences: ['2+1'], minArea: 80, maxArea: 115,
+      bonusFeatures: ['Asansör', 'Otopark'],
+      customerName: 'Gizem Tunç', customerPhone: '05321110009', status: 'ACTIVE',
+    },
+    {
+      types: ['LAND'], listingType: 'SALE',
+      city: 'Antalya', district: 'Konyaaltı', neighborhood: 'Çakırlar',
+      minBudget: 6000000, maxBudget: 10000000,
+      minArea: 500, maxArea: 2000,
+      mustHaveFeatures: ['İmarlı'],
+      customerName: 'Volkan Şahin', customerPhone: '05321110010', status: 'ACTIVE',
+      note: 'Konut imarlı arsa, müstakil ev yapacak.',
+    },
+
+    // --- ANTALYA – Kepez ---
+    {
+      types: ['APARTMENT'], listingType: 'SALE',
+      city: 'Antalya', district: 'Kepez', neighborhood: 'Varsak',
+      minBudget: 1800000, maxBudget: 3000000,
+      roomPreferences: ['2+1', '3+1'], minArea: 85, maxArea: 130,
       mustHaveFeatures: ['Asansör'],
-      bonusFeatures: ['Deniz Manzarası', 'Otopark'],
-      customerName: 'Selin Öztürk',
-      customerPhone: '05339990001',
-      createdById: ownerId,
-    } as any,
-  });
-  console.log('[seed] 1 demand created.');
+      customerName: 'Fatih Kara', customerPhone: '05321110011', status: 'ACTIVE',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'RENT',
+      city: 'Antalya', district: 'Kepez', neighborhood: 'Haşimişcan',
+      minBudget: 10000, maxBudget: 14000,
+      roomPreferences: ['2+1'], minArea: 70, maxArea: 100,
+      bonusFeatures: ['Eşyalı', 'Doğalgaz'],
+      customerName: 'Hatice Bozkurt', customerPhone: '05321110012', status: 'ACTIVE',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'SALE',
+      city: 'Antalya', district: 'Kepez', neighborhood: 'Gülveren',
+      minBudget: 2200000, maxBudget: 3500000,
+      roomPreferences: ['3+1'], minArea: 100, maxArea: 140,
+      mustHaveFeatures: ['Otopark'], bonusFeatures: ['Asansör'],
+      customerName: 'Kemal Yıldırım', customerPhone: '05321110013', status: 'ACTIVE',
+    },
+    {
+      types: ['SHOP'], listingType: 'RENT',
+      city: 'Antalya', district: 'Kepez', neighborhood: 'Varsak',
+      minBudget: 15000, maxBudget: 25000,
+      minArea: 60, maxArea: 150,
+      mustHaveFeatures: ['Cadde Cephesi'],
+      customerName: 'Ayşegül Erdoğan', customerPhone: '05321110014', status: 'ACTIVE',
+      note: 'Gıda dükkanı açacak, mutfak tesisatı şart.',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'SALE',
+      city: 'Antalya', district: 'Kepez',
+      minBudget: 1500000, maxBudget: 2500000,
+      roomPreferences: ['1+1', '2+1'], minArea: 60, maxArea: 95,
+      customerName: 'Serkan Doğan', customerPhone: '05321110015', status: 'ACTIVE',
+    },
+
+    // --- ANTALYA – Alanya ---
+    {
+      types: ['APARTMENT'], listingType: 'SALE',
+      city: 'Antalya', district: 'Alanya', neighborhood: 'Mahmutlar',
+      minBudget: 5000000, maxBudget: 8000000,
+      roomPreferences: ['2+1', '3+1'], minArea: 90, maxArea: 140,
+      mustHaveFeatures: ['Deniz Manzarası', 'Havuz'], bonusFeatures: ['Site İçi', 'Asansör'],
+      customerName: 'Klaus Müller', customerPhone: '05321110016', status: 'ACTIVE',
+      note: 'Alman müşteri, yatırım amaçlı alıyor.',
+    },
+    {
+      types: ['VILLA'], listingType: 'SALE',
+      city: 'Antalya', district: 'Alanya', neighborhood: 'Kargıcak',
+      minBudget: 18000000, maxBudget: 30000000,
+      roomPreferences: ['4+1', '5+1'], minArea: 300, maxArea: 600,
+      mustHaveFeatures: ['Havuz', 'Bahçe', 'Deniz Manzarası'],
+      customerName: 'Johan Berg', customerPhone: '05321110017', status: 'ACTIVE',
+      note: 'İsveçli yatırımcı, lüks segment.',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'RENT',
+      city: 'Antalya', district: 'Alanya', neighborhood: 'Kestel',
+      minBudget: 20000, maxBudget: 30000,
+      roomPreferences: ['2+1'], minArea: 80, maxArea: 120,
+      mustHaveFeatures: ['Eşyalı', 'Balkon'], bonusFeatures: ['Deniz Manzarası'],
+      customerName: 'Irina Popova', customerPhone: '05321110018', status: 'ACTIVE',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'SALE',
+      city: 'Antalya', district: 'Alanya', neighborhood: 'Oba',
+      minBudget: 3800000, maxBudget: 6000000,
+      roomPreferences: ['2+1', '3+1'], minArea: 90, maxArea: 130,
+      bonusFeatures: ['Havuz', 'Site İçi'],
+      customerName: 'Özlem Şimşek', customerPhone: '05321110019', status: 'ACTIVE',
+    },
+    {
+      types: ['LAND'], listingType: 'SALE',
+      city: 'Antalya', district: 'Alanya', neighborhood: 'Payallar',
+      minBudget: 8000000, maxBudget: 15000000,
+      minArea: 1000, maxArea: 5000,
+      mustHaveFeatures: ['Deniz Manzarası'],
+      customerName: 'Hasan Aktaş', customerPhone: '05321110020', status: 'ACTIVE',
+      note: 'Villa ya da otel projesi için arsa.',
+    },
+
+    // --- ANTALYA – Manavgat / Side ---
+    {
+      types: ['VILLA'], listingType: 'SALE',
+      city: 'Antalya', district: 'Manavgat', neighborhood: 'Side',
+      minBudget: 10000000, maxBudget: 18000000,
+      roomPreferences: ['4+1'], minArea: 200, maxArea: 400,
+      mustHaveFeatures: ['Havuz', 'Bahçe'], bonusFeatures: ['Deniz Manzarası', 'Güvenlik'],
+      customerName: 'Petra Schmidt', customerPhone: '05321110021', status: 'ACTIVE',
+      note: 'Tatil evi, yazları kullanacak.',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'RENT',
+      city: 'Antalya', district: 'Manavgat', neighborhood: 'Evrenseki',
+      minBudget: 25000, maxBudget: 40000,
+      roomPreferences: ['3+1', '4+1'], minArea: 120, maxArea: 200,
+      mustHaveFeatures: ['Havuz', 'Eşyalı'], bonusFeatures: ['Deniz Manzarası'],
+      customerName: 'Boris Ivanov', customerPhone: '05321110022', status: 'ACTIVE',
+    },
+    {
+      types: ['SHOP'], listingType: 'SALE',
+      city: 'Antalya', district: 'Manavgat', neighborhood: 'Side',
+      minBudget: 3000000, maxBudget: 6000000,
+      minArea: 40, maxArea: 120,
+      mustHaveFeatures: ['Cadde Cephesi', 'Turist Bölgesi'],
+      customerName: 'Mehmet Ali Çetin', customerPhone: '05321110023', status: 'ACTIVE',
+      note: 'Turistik butik veya hediyelik eşya dükkanı.',
+    },
+
+    // --- ANTALYA – Kaş / Kalkan ---
+    {
+      types: ['VILLA'], listingType: 'SALE',
+      city: 'Antalya', district: 'Kaş',
+      minBudget: 25000000, maxBudget: 50000000,
+      roomPreferences: ['4+1', '5+1'], minArea: 300, maxArea: 800,
+      mustHaveFeatures: ['Deniz Manzarası', 'Havuz', 'Bahçe'],
+      customerName: 'Richard Thompson', customerPhone: '05321110024', status: 'ACTIVE',
+      note: 'İngiliz müşteri, ultra lüks segment, sınır yok.',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'SALE',
+      city: 'Antalya', district: 'Kaş', neighborhood: 'Kalkan',
+      minBudget: 8000000, maxBudget: 14000000,
+      roomPreferences: ['2+1', '3+1'], minArea: 100, maxArea: 180,
+      mustHaveFeatures: ['Deniz Manzarası'], bonusFeatures: ['Teraslı'],
+      customerName: 'Elif Arıkan', customerPhone: '05321110025', status: 'ACTIVE',
+    },
+
+    // --- ANTALYA – Kemer / Beldibi ---
+    {
+      types: ['APARTMENT'], listingType: 'RENT',
+      city: 'Antalya', district: 'Kemer', neighborhood: 'Çamyuva',
+      minBudget: 18000, maxBudget: 28000,
+      roomPreferences: ['2+1', '3+1'], minArea: 90, maxArea: 140,
+      mustHaveFeatures: ['Eşyalı', 'Site İçi'], bonusFeatures: ['Havuz'],
+      customerName: 'Anna Kowalski', customerPhone: '05321110026', status: 'ACTIVE',
+    },
+    {
+      types: ['VILLA'], listingType: 'RENT',
+      city: 'Antalya', district: 'Kemer', neighborhood: 'Beldibi',
+      minBudget: 60000, maxBudget: 100000,
+      roomPreferences: ['4+1', '5+1'], minArea: 250, maxArea: 500,
+      mustHaveFeatures: ['Havuz', 'Eşyalı', 'Bahçe'],
+      customerName: 'Alexei Volkov', customerPhone: '05321110027', status: 'ACTIVE',
+      note: 'Yaz sezonu kiralık, 3 ay.',
+    },
+
+    // --- ANTALYA – Döşemealtı ---
+    {
+      types: ['LAND'], listingType: 'SALE',
+      city: 'Antalya', district: 'Döşemealtı', neighborhood: 'Yeniköy',
+      minBudget: 4000000, maxBudget: 8000000,
+      minArea: 2000, maxArea: 10000,
+      mustHaveFeatures: ['İmarlı'], bonusFeatures: ['Yola Cephe'],
+      customerName: 'Recep Güler', customerPhone: '05321110028', status: 'ACTIVE',
+      note: 'Sanayi veya tarım arazisi.',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'SALE',
+      city: 'Antalya', district: 'Döşemealtı', neighborhood: 'Altınkale',
+      minBudget: 2500000, maxBudget: 4000000,
+      roomPreferences: ['3+1'], minArea: 110, maxArea: 150,
+      mustHaveFeatures: ['Bahçe Kullanımı'],
+      customerName: 'Zeynep Güneş', customerPhone: '05321110029', status: 'ACTIVE',
+    },
+
+    // --- ANTALYA – Serik / Belek ---
+    {
+      types: ['VILLA', 'LAND'], listingType: 'SALE',
+      city: 'Antalya', district: 'Serik', neighborhood: 'Belek',
+      minBudget: 15000000, maxBudget: 25000000,
+      minArea: 500, maxArea: 3000,
+      mustHaveFeatures: ['Deniz Manzarası'],
+      customerName: 'François Dupont', customerPhone: '05321110030', status: 'ACTIVE',
+      note: 'Golf bölgesi yakını, tatil yatırımı.',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'SALE',
+      city: 'Antalya', district: 'Serik', neighborhood: 'Boğazkent',
+      minBudget: 3000000, maxBudget: 5000000,
+      roomPreferences: ['2+1', '3+1'], minArea: 90, maxArea: 130,
+      bonusFeatures: ['Site İçi', 'Havuz'],
+      customerName: 'Didem Aşık', customerPhone: '05321110031', status: 'ACTIVE',
+    },
+
+    // --- ANTALYA – Merkez Çeşitli ---
+    {
+      types: ['OFFICE'], listingType: 'RENT',
+      city: 'Antalya', district: 'Muratpaşa', neighborhood: 'Meltem',
+      minBudget: 30000, maxBudget: 55000,
+      minArea: 100, maxArea: 300,
+      mustHaveFeatures: ['Asansör', 'Otopark'], bonusFeatures: ['AVM İçi', 'Güvenlik'],
+      customerName: 'Kıvanç Erdem', customerPhone: '05321110032', status: 'ACTIVE',
+      note: 'Sigorta şirketi için ofis, A sınıfı bina.',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'SALE',
+      city: 'Antalya', district: 'Konyaaltı', neighborhood: 'Liman',
+      minBudget: 4000000, maxBudget: 6500000,
+      roomPreferences: ['2+1'], minArea: 85, maxArea: 120,
+      mustHaveFeatures: ['Deniz Manzarası', 'Asansör'],
+      customerName: 'Suna Akdoğan', customerPhone: '05321110033', status: 'ACTIVE',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'RENT',
+      city: 'Antalya', district: 'Kepez', neighborhood: 'Pınarbaşı',
+      minBudget: 11000, maxBudget: 15000,
+      roomPreferences: ['2+1', '3+1'], minArea: 80, maxArea: 120,
+      bonusFeatures: ['Doğalgaz', 'Balkon'],
+      customerName: 'Yusuf Kılınç', customerPhone: '05321110034', status: 'ACTIVE',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'SALE',
+      city: 'Antalya', district: 'Muratpaşa', neighborhood: 'Bahçelievler',
+      minBudget: 7000000, maxBudget: 11000000,
+      roomPreferences: ['3+1', '4+1'], minArea: 140, maxArea: 200,
+      mustHaveFeatures: ['Asansör', 'Otopark', 'Güvenlik'],
+      customerName: 'Bülent Kaya', customerPhone: '05321110035', status: 'ACTIVE',
+    },
+
+    // --- DİĞER ŞEHİRLER ---
+    // İstanbul
+    {
+      types: ['APARTMENT'], listingType: 'SALE',
+      city: 'İstanbul', district: 'Kadıköy', neighborhood: 'Moda',
+      minBudget: 9000000, maxBudget: 12000000,
+      roomPreferences: ['3+1'], minArea: 120, maxArea: 180,
+      mustHaveFeatures: ['Asansör'], bonusFeatures: ['Deniz Manzarası', 'Otopark'],
+      customerName: 'Selin Öztürk', customerPhone: '05339990001', status: 'ACTIVE',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'SALE',
+      city: 'İstanbul', district: 'Beşiktaş', neighborhood: 'Levent',
+      minBudget: 15000000, maxBudget: 25000000,
+      roomPreferences: ['3+1', '4+1'], minArea: 160, maxArea: 250,
+      mustHaveFeatures: ['Asansör', 'Otopark', 'Güvenlik'], bonusFeatures: ['Boğaz Manzarası'],
+      customerName: 'Alp Tekin', customerPhone: '05339990002', status: 'ACTIVE',
+      note: 'Yönetici profili, prestijli adres şart.',
+    },
+    {
+      types: ['OFFICE'], listingType: 'SALE',
+      city: 'İstanbul', district: 'Şişli', neighborhood: 'Esentepe',
+      minBudget: 20000000, maxBudget: 35000000,
+      minArea: 200, maxArea: 500,
+      mustHaveFeatures: ['Asansör', 'Otopark'],
+      customerName: 'Mediha Çetin', customerPhone: '05339990003', status: 'ACTIVE',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'RENT',
+      city: 'İstanbul', district: 'Ataşehir', neighborhood: 'Küçükbakkalköy',
+      minBudget: 35000, maxBudget: 50000,
+      roomPreferences: ['3+1'], minArea: 130, maxArea: 180,
+      mustHaveFeatures: ['Otopark', 'Asansör'], bonusFeatures: ['Eşyalı'],
+      customerName: 'David Kim', customerPhone: '05339990004', status: 'ACTIVE',
+      note: 'Expat, şirketi karşılıyor.',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'SALE',
+      city: 'İstanbul', district: 'Sarıyer', neighborhood: 'Tarabya',
+      minBudget: 30000000, maxBudget: 60000000,
+      roomPreferences: ['5+1'], minArea: 300, maxArea: 600,
+      mustHaveFeatures: ['Boğaz Manzarası', 'Otopark', 'Güvenlik'],
+      customerName: 'Nermin Başaran', customerPhone: '05339990005', status: 'ACTIVE',
+    },
+
+    // İzmir
+    {
+      types: ['APARTMENT'], listingType: 'SALE',
+      city: 'İzmir', district: 'Karşıyaka', neighborhood: 'Bostanlı',
+      minBudget: 5000000, maxBudget: 8000000,
+      roomPreferences: ['3+1'], minArea: 120, maxArea: 160,
+      mustHaveFeatures: ['Asansör', 'Otopark'], bonusFeatures: ['Deniz Manzarası'],
+      customerName: 'Oya Kınalı', customerPhone: '05339990006', status: 'ACTIVE',
+    },
+    {
+      types: ['VILLA'], listingType: 'SALE',
+      city: 'İzmir', district: 'Çeşme', neighborhood: 'Alaçatı',
+      minBudget: 15000000, maxBudget: 30000000,
+      roomPreferences: ['3+1', '4+1'], minArea: 200, maxArea: 400,
+      mustHaveFeatures: ['Havuz', 'Bahçe'], bonusFeatures: ['Deniz Manzarası'],
+      customerName: 'Pınar Aksoy', customerPhone: '05339990007', status: 'ACTIVE',
+      note: 'Alaçatı merkeze yürüme mesafesi.',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'RENT',
+      city: 'İzmir', district: 'Konak', neighborhood: 'Alsancak',
+      minBudget: 20000, maxBudget: 30000,
+      roomPreferences: ['2+1'], minArea: 80, maxArea: 110,
+      mustHaveFeatures: ['Eşyalı'], bonusFeatures: ['Deniz Manzarası', 'Balkon'],
+      customerName: 'Can Ercan', customerPhone: '05339990008', status: 'CLOSED',
+    },
+
+    // Ankara
+    {
+      types: ['APARTMENT'], listingType: 'SALE',
+      city: 'Ankara', district: 'Çankaya', neighborhood: 'Kavaklıdere',
+      minBudget: 7000000, maxBudget: 11000000,
+      roomPreferences: ['3+1'], minArea: 130, maxArea: 180,
+      mustHaveFeatures: ['Asansör', 'Güvenlik', 'Otopark'],
+      customerName: 'Tuba Yılmaz', customerPhone: '05339990009', status: 'ACTIVE',
+    },
+    {
+      types: ['OFFICE'], listingType: 'RENT',
+      city: 'Ankara', district: 'Çankaya', neighborhood: 'Söğütözü',
+      minBudget: 25000, maxBudget: 45000,
+      minArea: 80, maxArea: 200,
+      mustHaveFeatures: ['Asansör', 'Otopark'],
+      customerName: 'Oğuz Demirci', customerPhone: '05339990010', status: 'ACTIVE',
+    },
+
+    // Bodrum
+    {
+      types: ['VILLA'], listingType: 'SALE',
+      city: 'Muğla', district: 'Bodrum', neighborhood: 'Yalıkavak',
+      minBudget: 30000000, maxBudget: 70000000,
+      roomPreferences: ['4+1', '5+1'], minArea: 350, maxArea: 800,
+      mustHaveFeatures: ['Deniz Manzarası', 'Havuz', 'Özel İskele'], bonusFeatures: ['Güvenlik'],
+      customerName: 'Marco Rossi', customerPhone: '05339990011', status: 'ACTIVE',
+      note: 'İtalyan yatırımcı, Yalıkavak Marina bölgesi.',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'RENT',
+      city: 'Muğla', district: 'Bodrum', neighborhood: 'Gündoğan',
+      minBudget: 40000, maxBudget: 70000,
+      roomPreferences: ['3+1', '4+1'], minArea: 140, maxArea: 220,
+      mustHaveFeatures: ['Deniz Manzarası', 'Havuz', 'Eşyalı'],
+      customerName: 'Sophie Laurent', customerPhone: '05339990012', status: 'ACTIVE',
+    },
+
+    // Bursa
+    {
+      types: ['APARTMENT'], listingType: 'SALE',
+      city: 'Bursa', district: 'Nilüfer', neighborhood: 'Görükle',
+      minBudget: 4000000, maxBudget: 6500000,
+      roomPreferences: ['3+1', '4+1'], minArea: 130, maxArea: 180,
+      mustHaveFeatures: ['Asansör', 'Otopark'],
+      customerName: 'Sinan Turan', customerPhone: '05339990013', status: 'ACTIVE',
+    },
+    // Antalya ek
+    {
+      types: ['APARTMENT'], listingType: 'SALE',
+      city: 'Antalya', district: 'Alanya', neighborhood: 'Cikcilli',
+      minBudget: 4200000, maxBudget: 7000000,
+      roomPreferences: ['2+1', '3+1'], minArea: 90, maxArea: 140,
+      mustHaveFeatures: ['Site İçi', 'Asansör'], bonusFeatures: ['Havuz', 'Otopark'],
+      customerName: 'Lars Hansen', customerPhone: '05321110036', status: 'ACTIVE',
+      note: 'Danimarkalı emekli, kışları oturacak.',
+    },
+    {
+      types: ['APARTMENT'], listingType: 'RENT',
+      city: 'Antalya', district: 'Konyaaltı', neighborhood: 'Arapsuyu',
+      minBudget: 14000, maxBudget: 20000,
+      roomPreferences: ['2+1'], minArea: 75, maxArea: 105,
+      mustHaveFeatures: ['Eşyalı'], bonusFeatures: ['Balkon', 'Doğalgaz'],
+      customerName: 'Şeyma Avcı', customerPhone: '05321110037', status: 'ACTIVE',
+    },
+  ];
+
+  for (const d of demands) {
+    await prisma.demand.create({ data: { ...d, createdById: ownerId } as any });
+  }
+  console.log(`[seed] ${demands.length} demands created.`);
+}
+
+async function seedAntalyaPortfolios(ownerId: string) {
+  const count = await prisma.portfolio.count();
+  if (count >= 215) {
+    console.log(`[seed] Additional portfolios already present (${count}), skipping.`);
+    return;
+  }
+
+  const data = [
+    // --- Muratpaşa – Kiralık Daireler ---
+    {
+      type: 'APARTMENT', listingType: 'RENT', title: 'Şirinyalı Eşyalı 2+1',
+      city: 'Antalya', district: 'Muratpaşa', neighborhood: 'Şirinyalı',
+      areaSqm: 95, roomCount: '2+1', price: 22000,
+      features: ['Eşyalı', 'Balkon', 'Asansör', 'Site İçi'],
+      visibility: 'PUBLIC', ownerName: 'Taner Şahin', ownerPhone: '05321120001',
+    },
+    {
+      type: 'APARTMENT', listingType: 'RENT', title: 'Muratpaşa Merkez 1+1 Eşyalı',
+      city: 'Antalya', district: 'Muratpaşa', neighborhood: 'Kızılarık',
+      areaSqm: 58, roomCount: '1+1', price: 14000,
+      features: ['Eşyalı', 'Asansör', 'Balkon'],
+      visibility: 'PUBLIC', ownerName: 'Derya Koç', ownerPhone: '05321120002',
+    },
+    {
+      type: 'APARTMENT', listingType: 'RENT', title: 'Bahçelievler Geniş 3+1',
+      city: 'Antalya', district: 'Muratpaşa', neighborhood: 'Bahçelievler',
+      areaSqm: 155, roomCount: '3+1', price: 30000,
+      features: ['Asansör', 'Otopark', 'Güvenlik', 'Balkon', 'Doğalgaz'],
+      visibility: 'PUBLIC', ownerName: 'Faruk Aydın', ownerPhone: '05321120003',
+    },
+    // --- Muratpaşa – Geniş ve Lüks Satılık ---
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Güzeloba 4+1 Site İçi Geniş',
+      city: 'Antalya', district: 'Muratpaşa', neighborhood: 'Güzeloba',
+      areaSqm: 210, roomCount: '4+1', price: 11500000,
+      features: ['Otopark', 'Güvenlik', 'Asansör', 'Havuz', 'Site İçi'],
+      visibility: 'PUBLIC', ownerName: 'Cemal Öztürk', ownerPhone: '05321120004',
+    },
+    {
+      type: 'VILLA', listingType: 'SALE', title: 'Güzeloba Müstakil Villa 5+1',
+      city: 'Antalya', district: 'Muratpaşa', neighborhood: 'Güzeloba',
+      areaSqm: 280, roomCount: '5+1', price: 13500000,
+      features: ['Otopark', 'Güvenlik', 'Havuz', 'Bahçe', 'Kapalı Mutfak'],
+      visibility: 'PUBLIC', ownerName: 'Şule Altan', ownerPhone: '05321120005',
+    },
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Fener Deniz Manzaralı 3+1',
+      city: 'Antalya', district: 'Muratpaşa', neighborhood: 'Fener',
+      areaSqm: 140, roomCount: '3+1', price: 7500000,
+      features: ['Asansör', 'Deniz Manzarası', 'Balkon', 'Otopark'],
+      visibility: 'PUBLIC', ownerName: 'Elif Güneş', ownerPhone: '05321120006',
+    },
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Bahçelievler 3+1 Güvenlikli Site',
+      city: 'Antalya', district: 'Muratpaşa', neighborhood: 'Bahçelievler',
+      areaSqm: 160, roomCount: '3+1', price: 9000000,
+      features: ['Asansör', 'Otopark', 'Güvenlik', 'Site İçi', 'Balkon'],
+      visibility: 'PUBLIC', ownerName: 'Recep Arslan', ownerPhone: '05321120007',
+    },
+    // --- Muratpaşa – Ofis ---
+    {
+      type: 'OFFICE', listingType: 'RENT', title: 'Meltem A Sınıfı Kiralık Ofis 150m²',
+      city: 'Antalya', district: 'Muratpaşa', neighborhood: 'Meltem',
+      areaSqm: 150, roomCount: 'Açık Plan', price: 45000,
+      features: ['Asansör', 'Otopark', 'Güvenlik', 'Klima', 'Yangın Söndürme'],
+      visibility: 'PUBLIC', ownerName: 'Mert Kılıç', ownerPhone: '05321120008',
+    },
+    {
+      type: 'OFFICE', listingType: 'RENT', title: 'Meltem Plaza Kiralık 220m²',
+      city: 'Antalya', district: 'Muratpaşa', neighborhood: 'Meltem',
+      areaSqm: 220, roomCount: 'Açık Plan', price: 52000,
+      features: ['Asansör', 'Otopark', 'Güvenlik', 'Resepsiyon', 'Toplantı Odası'],
+      visibility: 'PUBLIC', ownerName: 'Banu Yücel', ownerPhone: '05321120009',
+    },
+
+    // --- Konyaaltı – Çeşitli ---
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Uncalı 2+1 Site İçi',
+      city: 'Antalya', district: 'Konyaaltı', neighborhood: 'Uncalı',
+      areaSqm: 105, roomCount: '2+1', price: 4800000,
+      features: ['Asansör', 'Site İçi', 'Otopark', 'Balkon'],
+      visibility: 'PUBLIC', ownerName: 'Hüseyin Can', ownerPhone: '05321120010',
+    },
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Uncalı 3+1 Bahçe Katı',
+      city: 'Antalya', district: 'Konyaaltı', neighborhood: 'Uncalı',
+      areaSqm: 130, roomCount: '3+1', price: 5300000,
+      features: ['Asansör', 'Site İçi', 'Otopark', 'Bahçe Kullanımı'],
+      visibility: 'PUBLIC', ownerName: 'Gülsün Polat', ownerPhone: '05321120011',
+    },
+    {
+      type: 'VILLA', listingType: 'SALE', title: 'Hurma Müstakil Havuzlu Villa 4+1',
+      city: 'Antalya', district: 'Konyaaltı', neighborhood: 'Hurma',
+      areaSqm: 300, roomCount: '4+1', price: 16500000,
+      features: ['Havuz', 'Bahçe', 'Otopark', 'Güvenlik', 'Kapalı Mutfak'],
+      visibility: 'PUBLIC', ownerName: 'Serkan Demirtaş', ownerPhone: '05321120012',
+    },
+    {
+      type: 'APARTMENT', listingType: 'RENT', title: 'Sarısu Deniz Manzaralı 3+1',
+      city: 'Antalya', district: 'Konyaaltı', neighborhood: 'Sarısu',
+      areaSqm: 130, roomCount: '3+1', price: 28000,
+      features: ['Deniz Manzarası', 'Balkon', 'Asansör', 'Site İçi'],
+      visibility: 'PUBLIC', ownerName: 'Nesrin Yılmaz', ownerPhone: '05321120013',
+    },
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Liman Bölgesi 2+1 Deniz Manzaralı',
+      city: 'Antalya', district: 'Konyaaltı', neighborhood: 'Liman',
+      areaSqm: 95, roomCount: '2+1', price: 5800000,
+      features: ['Deniz Manzarası', 'Asansör', 'Balkon', 'Otopark'],
+      visibility: 'PUBLIC', ownerName: 'Cengiz Aktaş', ownerPhone: '05321120014',
+    },
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Arapsuyu 2+1 Eşyalı',
+      city: 'Antalya', district: 'Konyaaltı', neighborhood: 'Arapsuyu',
+      areaSqm: 90, roomCount: '2+1', price: 3600000,
+      features: ['Balkon', 'Doğalgaz', 'Eşyalı'],
+      visibility: 'PUBLIC', ownerName: 'Dilek Şimşek', ownerPhone: '05321120015',
+    },
+    {
+      type: 'APARTMENT', listingType: 'RENT', title: 'Arapsuyu 2+1 Balkonlu',
+      city: 'Antalya', district: 'Konyaaltı', neighborhood: 'Arapsuyu',
+      areaSqm: 88, roomCount: '2+1', price: 17000,
+      features: ['Eşyalı', 'Balkon', 'Doğalgaz', 'Asansör'],
+      visibility: 'PUBLIC', ownerName: 'Emre Tunç', ownerPhone: '05321120016',
+    },
+    {
+      type: 'LAND', listingType: 'SALE', title: 'Çakırlar Konut İmarlı Arsa 800m²',
+      city: 'Antalya', district: 'Konyaaltı', neighborhood: 'Çakırlar',
+      areaSqm: 800, roomCount: '-', price: 7200000,
+      features: ['İmarlı', 'Yola Cephe'],
+      visibility: 'PUBLIC', ownerName: 'Atilla Yıldız', ownerPhone: '05321120017',
+    },
+
+    // --- Kepez ---
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Varsak 2+1 Asansörlü',
+      city: 'Antalya', district: 'Kepez', neighborhood: 'Varsak',
+      areaSqm: 100, roomCount: '2+1', price: 2400000,
+      features: ['Asansör', 'Balkon', 'Doğalgaz'],
+      visibility: 'PUBLIC', ownerName: 'Hakan Çelik', ownerPhone: '05321120018',
+    },
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Gülveren 3+1 Otoparklı',
+      city: 'Antalya', district: 'Kepez', neighborhood: 'Gülveren',
+      areaSqm: 120, roomCount: '3+1', price: 2900000,
+      features: ['Otopark', 'Asansör', 'Balkon', 'Doğalgaz'],
+      visibility: 'PUBLIC', ownerName: 'Nurcan Öztürk', ownerPhone: '05321120019',
+    },
+    {
+      type: 'APARTMENT', listingType: 'RENT', title: 'Haşimişcan Eşyalı 2+1',
+      city: 'Antalya', district: 'Kepez', neighborhood: 'Haşimişcan',
+      areaSqm: 85, roomCount: '2+1', price: 13000,
+      features: ['Eşyalı', 'Doğalgaz', 'Balkon'],
+      visibility: 'PUBLIC', ownerName: 'Serap Kaya', ownerPhone: '05321120020',
+    },
+    {
+      type: 'APARTMENT', listingType: 'RENT', title: 'Pınarbaşı 2+1 Doğalgazlı',
+      city: 'Antalya', district: 'Kepez', neighborhood: 'Pınarbaşı',
+      areaSqm: 95, roomCount: '2+1', price: 13500,
+      features: ['Doğalgaz', 'Balkon', 'Asansör'],
+      visibility: 'PUBLIC', ownerName: 'Levent Kaplan', ownerPhone: '05321120021',
+    },
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Kepez 1+1 Yatırımlık',
+      city: 'Antalya', district: 'Kepez', neighborhood: 'Varsak',
+      areaSqm: 65, roomCount: '1+1', price: 1750000,
+      features: ['Asansör'],
+      visibility: 'PUBLIC', ownerName: 'Özkan Demir', ownerPhone: '05321120022',
+    },
+    {
+      type: 'SHOP', listingType: 'RENT', title: 'Varsak Cadde Üstü Dükkan 80m²',
+      city: 'Antalya', district: 'Kepez', neighborhood: 'Varsak',
+      areaSqm: 80, roomCount: '-', price: 20000,
+      features: ['Cadde Cephesi', 'Depo', 'WC'],
+      visibility: 'PUBLIC', ownerName: 'Mevlüt Acar', ownerPhone: '05321120023',
+    },
+
+    // --- Alanya ---
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Mahmutlar Deniz Manzaralı 2+1 Havuzlu Site',
+      city: 'Antalya', district: 'Alanya', neighborhood: 'Mahmutlar',
+      areaSqm: 110, roomCount: '2+1', price: 6500000,
+      features: ['Deniz Manzarası', 'Havuz', 'Site İçi', 'Asansör', 'Otopark'],
+      visibility: 'PUBLIC', ownerName: 'Özgür Taşkın', ownerPhone: '05321120024',
+    },
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Mahmutlar 3+1 Tam Deniz Cephesi',
+      city: 'Antalya', district: 'Alanya', neighborhood: 'Mahmutlar',
+      areaSqm: 130, roomCount: '3+1', price: 7800000,
+      features: ['Deniz Manzarası', 'Havuz', 'Asansör', 'Otopark', 'Eşyalı'],
+      visibility: 'PUBLIC', ownerName: 'Hans Fischer', ownerPhone: '05321120025',
+    },
+    {
+      type: 'VILLA', listingType: 'SALE', title: 'Kargıcak Lüks Villa 5+1 Havuzlu',
+      city: 'Antalya', district: 'Alanya', neighborhood: 'Kargıcak',
+      areaSqm: 420, roomCount: '5+1', price: 25000000,
+      features: ['Havuz', 'Bahçe', 'Deniz Manzarası', 'Güvenlik', 'Otopark', 'Jakuzi'],
+      visibility: 'PUBLIC', ownerName: 'Erol Güneş', ownerPhone: '05321120026',
+    },
+    {
+      type: 'APARTMENT', listingType: 'RENT', title: 'Kestel Eşyalı 2+1 Balkonlu',
+      city: 'Antalya', district: 'Alanya', neighborhood: 'Kestel',
+      areaSqm: 95, roomCount: '2+1', price: 25000,
+      features: ['Eşyalı', 'Balkon', 'Havuz', 'Site İçi'],
+      visibility: 'PUBLIC', ownerName: 'Natalya Petrov', ownerPhone: '05321120027',
+    },
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Oba 2+1 Site İçi Havuzlu',
+      city: 'Antalya', district: 'Alanya', neighborhood: 'Oba',
+      areaSqm: 105, roomCount: '2+1', price: 5200000,
+      features: ['Havuz', 'Site İçi', 'Asansör', 'Balkon'],
+      visibility: 'PUBLIC', ownerName: 'Kadriye Aksoy', ownerPhone: '05321120028',
+    },
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Cikcilli 2+1 Güneşli Daire',
+      city: 'Antalya', district: 'Alanya', neighborhood: 'Cikcilli',
+      areaSqm: 100, roomCount: '2+1', price: 5800000,
+      features: ['Site İçi', 'Asansör', 'Havuz', 'Otopark'],
+      visibility: 'PUBLIC', ownerName: 'Lars Svensson', ownerPhone: '05321120029',
+    },
+    {
+      type: 'LAND', listingType: 'SALE', title: 'Payallar Deniz Manzaralı Arsa 2000m²',
+      city: 'Antalya', district: 'Alanya', neighborhood: 'Payallar',
+      areaSqm: 2000, roomCount: '-', price: 11000000,
+      features: ['Deniz Manzarası', 'İmarlı', 'Yola Cephe'],
+      visibility: 'PUBLIC', ownerName: 'Mehmet Karaca', ownerPhone: '05321120030',
+    },
+
+    // --- Manavgat / Side ---
+    {
+      type: 'VILLA', listingType: 'SALE', title: 'Side Havuzlu Tatil Villası 4+1',
+      city: 'Antalya', district: 'Manavgat', neighborhood: 'Side',
+      areaSqm: 280, roomCount: '4+1', price: 14500000,
+      features: ['Havuz', 'Bahçe', 'Güvenlik', 'Otopark', 'Deniz Manzarası'],
+      visibility: 'PUBLIC', ownerName: 'Suat Çetin', ownerPhone: '05321120031',
+    },
+    {
+      type: 'APARTMENT', listingType: 'RENT', title: 'Evrenseki Havuzlu 3+1 Eşyalı',
+      city: 'Antalya', district: 'Manavgat', neighborhood: 'Evrenseki',
+      areaSqm: 145, roomCount: '3+1', price: 35000,
+      features: ['Havuz', 'Eşyalı', 'Deniz Manzarası', 'Balkon', 'Site İçi'],
+      visibility: 'PUBLIC', ownerName: 'Ahmet Ergin', ownerPhone: '05321120032',
+    },
+    {
+      type: 'SHOP', listingType: 'SALE', title: 'Side Antik Kent Yakını Dükkan 70m²',
+      city: 'Antalya', district: 'Manavgat', neighborhood: 'Side',
+      areaSqm: 70, roomCount: '-', price: 4500000,
+      features: ['Cadde Cephesi', 'Turist Bölgesi', 'Klima'],
+      visibility: 'PUBLIC', ownerName: 'Güven Yıldız', ownerPhone: '05321120033',
+    },
+
+    // --- Kaş / Kalkan ---
+    {
+      type: 'VILLA', listingType: 'SALE', title: "Kaş Denize Nazır Lüks Villa 5+1",
+      city: 'Antalya', district: 'Kaş',
+      areaSqm: 500, roomCount: '5+1', price: 42000000,
+      features: ['Deniz Manzarası', 'Havuz', 'Bahçe', 'Güvenlik', 'Özel İskele'],
+      visibility: 'HIDDEN', ownerName: 'Thomas Webb', ownerPhone: '05321120034',
+    },
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Kalkan Teraslı 3+1 Deniz Manzaralı',
+      city: 'Antalya', district: 'Kaş', neighborhood: 'Kalkan',
+      areaSqm: 145, roomCount: '3+1', price: 11500000,
+      features: ['Deniz Manzarası', 'Teraslı', 'Asansör', 'Havuz'],
+      visibility: 'PUBLIC', ownerName: 'Birsen Koç', ownerPhone: '05321120035',
+    },
+
+    // --- Kemer ---
+    {
+      type: 'APARTMENT', listingType: 'RENT', title: 'Çamyuva Siteli 2+1 Eşyalı',
+      city: 'Antalya', district: 'Kemer', neighborhood: 'Çamyuva',
+      areaSqm: 105, roomCount: '2+1', price: 24000,
+      features: ['Eşyalı', 'Site İçi', 'Havuz', 'Balkon'],
+      visibility: 'PUBLIC', ownerName: 'Ivan Novak', ownerPhone: '05321120036',
+    },
+    {
+      type: 'VILLA', listingType: 'RENT', title: 'Beldibi Yazlık Villa 4+1 Havuzlu',
+      city: 'Antalya', district: 'Kemer', neighborhood: 'Beldibi',
+      areaSqm: 320, roomCount: '4+1', price: 80000,
+      features: ['Havuz', 'Eşyalı', 'Bahçe', 'Deniz Manzarası', 'Otopark'],
+      visibility: 'PUBLIC', ownerName: 'Mustafa Özdemir', ownerPhone: '05321120037',
+    },
+
+    // --- Döşemealtı ---
+    {
+      type: 'LAND', listingType: 'SALE', title: 'Yeniköy Sanayi İmarlı Arsa 3500m²',
+      city: 'Antalya', district: 'Döşemealtı', neighborhood: 'Yeniköy',
+      areaSqm: 3500, roomCount: '-', price: 6500000,
+      features: ['İmarlı', 'Yola Cephe', 'Elektrik Altyapısı'],
+      visibility: 'PUBLIC', ownerName: 'Vedat Çoban', ownerPhone: '05321120038',
+    },
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Altınkale 3+1 Bahçe Kullanımlı',
+      city: 'Antalya', district: 'Döşemealtı', neighborhood: 'Altınkale',
+      areaSqm: 130, roomCount: '3+1', price: 3500000,
+      features: ['Bahçe Kullanımı', 'Otopark', 'Asansör'],
+      visibility: 'PUBLIC', ownerName: 'Gamze Yıldırım', ownerPhone: '05321120039',
+    },
+
+    // --- Serik / Belek ---
+    {
+      type: 'VILLA', listingType: 'SALE', title: 'Belek Golf Bölgesi Villa 4+1',
+      city: 'Antalya', district: 'Serik', neighborhood: 'Belek',
+      areaSqm: 380, roomCount: '4+1', price: 22000000,
+      features: ['Havuz', 'Bahçe', 'Deniz Manzarası', 'Güvenlik', 'Otopark'],
+      visibility: 'PUBLIC', ownerName: 'Pierre Martin', ownerPhone: '05321120040',
+    },
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Boğazkent Siteli 2+1 Havuzlu',
+      city: 'Antalya', district: 'Serik', neighborhood: 'Boğazkent',
+      areaSqm: 100, roomCount: '2+1', price: 4200000,
+      features: ['Site İçi', 'Havuz', 'Asansör', 'Balkon'],
+      visibility: 'PUBLIC', ownerName: 'Aylin Karaçay', ownerPhone: '05321120041',
+    },
+    {
+      type: 'LAND', listingType: 'SALE', title: 'Belek Deniz Manzaralı Turizm Arazisi',
+      city: 'Antalya', district: 'Serik', neighborhood: 'Belek',
+      areaSqm: 1500, roomCount: '-', price: 18000000,
+      features: ['Deniz Manzarası', 'Turizm İmarlı'],
+      visibility: 'HIDDEN', ownerName: 'Ahmad Khalil', ownerPhone: '05321120042',
+    },
+
+    // --- DİĞER ŞEHİRLER – İstanbul ---
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Beşiktaş Levent 4+1 Prestijli',
+      city: 'İstanbul', district: 'Beşiktaş', neighborhood: 'Levent',
+      areaSqm: 200, roomCount: '4+1', price: 22000000,
+      features: ['Asansör', 'Otopark', 'Güvenlik', 'Boğaz Manzarası', 'Kapalı Mutfak'],
+      visibility: 'PUBLIC', ownerName: 'Kaan Büyük', ownerPhone: '05339990020',
+    },
+    {
+      type: 'OFFICE', listingType: 'SALE', title: 'Esentepe Kiralık Ofis 280m²',
+      city: 'İstanbul', district: 'Şişli', neighborhood: 'Esentepe',
+      areaSqm: 280, roomCount: 'Açık Plan', price: 28000000,
+      features: ['Asansör', 'Otopark', 'Güvenlik', 'Klima'],
+      visibility: 'PUBLIC', ownerName: 'Sevinç Yıldırım', ownerPhone: '05339990021',
+    },
+    {
+      type: 'APARTMENT', listingType: 'RENT', title: 'Ataşehir Eşyalı 3+1 Expat',
+      city: 'İstanbul', district: 'Ataşehir', neighborhood: 'Küçükbakkalköy',
+      areaSqm: 155, roomCount: '3+1', price: 45000,
+      features: ['Otopark', 'Asansör', 'Güvenlik', 'Eşyalı', 'Site İçi'],
+      visibility: 'PUBLIC', ownerName: 'Nilgün Erdem', ownerPhone: '05339990022',
+    },
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Tarabya Boğaz Manzaralı 5+1',
+      city: 'İstanbul', district: 'Sarıyer', neighborhood: 'Tarabya',
+      areaSqm: 380, roomCount: '5+1', price: 48000000,
+      features: ['Boğaz Manzarası', 'Otopark', 'Güvenlik', 'Asansör', 'Özel Havuz'],
+      visibility: 'HIDDEN', ownerName: 'Yasemin Başaran', ownerPhone: '05339990023',
+    },
+
+    // --- İzmir ---
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Bostanlı Deniz Manzaralı 3+1',
+      city: 'İzmir', district: 'Karşıyaka', neighborhood: 'Bostanlı',
+      areaSqm: 140, roomCount: '3+1', price: 7200000,
+      features: ['Asansör', 'Otopark', 'Deniz Manzarası', 'Balkon'],
+      visibility: 'PUBLIC', ownerName: 'Ayhan Kınalı', ownerPhone: '05339990024',
+    },
+    {
+      type: 'VILLA', listingType: 'SALE', title: 'Alaçatı Havuzlu Villa 3+1',
+      city: 'İzmir', district: 'Çeşme', neighborhood: 'Alaçatı',
+      areaSqm: 260, roomCount: '3+1', price: 22000000,
+      features: ['Havuz', 'Bahçe', 'Deniz Manzarası', 'Güvenlik'],
+      visibility: 'PUBLIC', ownerName: 'Gökhan Aksoy', ownerPhone: '05339990025',
+    },
+
+    // --- Ankara ---
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Kavaklıdere 3+1 Güvenlikli',
+      city: 'Ankara', district: 'Çankaya', neighborhood: 'Kavaklıdere',
+      areaSqm: 155, roomCount: '3+1', price: 9500000,
+      features: ['Asansör', 'Güvenlik', 'Otopark', 'Doğalgaz'],
+      visibility: 'PUBLIC', ownerName: 'Müge Demirci', ownerPhone: '05339990026',
+    },
+    {
+      type: 'OFFICE', listingType: 'RENT', title: 'Söğütözü Plaza Kiralık 120m²',
+      city: 'Ankara', district: 'Çankaya', neighborhood: 'Söğütözü',
+      areaSqm: 120, roomCount: 'Açık Plan', price: 38000,
+      features: ['Asansör', 'Otopark', 'Güvenlik', 'Klima'],
+      visibility: 'PUBLIC', ownerName: 'Özgür Demirci', ownerPhone: '05339990027',
+    },
+
+    // --- Bodrum ---
+    {
+      type: 'VILLA', listingType: 'SALE', title: 'Yalıkavak Özel İskeleli Ultra Lüks 5+1',
+      city: 'Muğla', district: 'Bodrum', neighborhood: 'Yalıkavak',
+      areaSqm: 550, roomCount: '5+1', price: 58000000,
+      features: ['Deniz Manzarası', 'Havuz', 'Özel İskele', 'Güvenlik', 'Jakuzi', 'Ev Sineması'],
+      visibility: 'HIDDEN', ownerName: 'Renato Ferrari', ownerPhone: '05339990028',
+    },
+    {
+      type: 'APARTMENT', listingType: 'RENT', title: 'Gündoğan Deniz Manzaralı Eşyalı 4+1',
+      city: 'Muğla', district: 'Bodrum', neighborhood: 'Gündoğan',
+      areaSqm: 180, roomCount: '4+1', price: 60000,
+      features: ['Deniz Manzarası', 'Havuz', 'Eşyalı', 'Balkon', 'Güvenlik'],
+      visibility: 'PUBLIC', ownerName: 'Claudia Bernard', ownerPhone: '05339990029',
+    },
+
+    // --- Bursa ---
+    {
+      type: 'APARTMENT', listingType: 'SALE', title: 'Nilüfer Görükle 3+1 Site İçi',
+      city: 'Bursa', district: 'Nilüfer', neighborhood: 'Görükle',
+      areaSqm: 150, roomCount: '3+1', price: 5800000,
+      features: ['Asansör', 'Otopark', 'Site İçi', 'Güvenlik'],
+      visibility: 'PUBLIC', ownerName: 'Leyla Turan', ownerPhone: '05339990030',
+    },
+  ];
+
+  for (const p of data) {
+    await prisma.portfolio.create({ data: { ...p, createdById: ownerId } as any });
+  }
+  console.log(`[seed] ${data.length} additional portfolios created.`);
 }
 
 async function main() {
   const admin = await seedAdmin();
   await seedPortfolios(admin.id);
+  await seedAntalyaPortfolios(admin.id);
   await seedDemands(admin.id);
 }
 

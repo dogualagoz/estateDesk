@@ -51,3 +51,30 @@ iki ayrı katman. Kaynak: `docs/eslestirme-motoru.md` + kullanıcı spesifikasyo
 ## Kapsam dışı (şimdilik)
 Satıcı→talep yönü, MatchFeedback, otomatik eşleştirme/gelen kutusu, tipe göre
 ağırlık profili, komut çubuğu.
+
+---
+
+# Faz 6 — Adres Dropdown + Fiyat Formatlama
+
+## Durum
+- [x] `frontend/src/data/tr-locations.ts` — 81 il, tüm ilçeler, büyük şehirlerde mahalleler
+- [x] `frontend/src/components/ui/LocationDropdown.vue` — aranabilir, kaydırılabilir, single/multi + gruplu mahalle desteği
+- [x] `PortfolioFormView` — fiyat yazarken anlık nokta formatlama; il/ilçe/mahalle tek-seçim dropdown
+- [x] `DemandFormView` — il tek-seçim, ilçe çoklu-seçim, mahalle çoklu-seçim (ilçeye göre gruplu)
+- [x] `frontend/src/types/matching.ts` — MatchCriteria'ya `districts[]` ve `neighborhoods[]` eklendi
+- [x] `frontend/src/types/demand.ts` — Demand ve CreateDemandPayload güncellendi
+- [x] `backend/prisma/schema.prisma` — Demand'e `districts[]` ve `neighborhoods[]` eklendi
+- [x] Migration: `20260528162808_demand_multi_location`
+- [x] `matching.scoring.ts` — locationScore proximity kademe sistemi (0/0.35/0.9/1.0)
+- [x] `matching.service.ts` — MatchPortfoliosDto `districts/neighborhoods` alanları geçiliyor
+- [x] Tarayıcıda manuel test (kullanıcı tarafından)
+
+## Faz 7 — Koordinat Bazlı Konum Puanlaması (Seçenek A)
+
+- [x] `scripts/fetch-district-coords.mjs` — Nominatim ile 375 ilçe koordinatı toplandı (20 şehir)
+- [x] `backend/src/matching/tr-district-coords.ts` — "normalizedCity/normalizedDistrict" → {lat,lng} haritası
+- [x] `matching.constants.ts` — `LOCATION_MAX_KM = 30` sabiti eklendi
+- [x] `matching.scoring.ts` — `haversineKm()` + yeni `locationScore` (koordinat bazlı decay, fallback 0.35)
+- [x] 18/18 test geçiyor
+- [x] API smoke testi: Kadıköy seçimi → Üsküdar 74, Beşiktaş 68, Sarıyer elendi ✓
+- [x] Çoklu ilçe: Kadıköy+Üsküdar → Beşiktaş 80 (en yakın ilçeye mesafe alınıyor) ✓
