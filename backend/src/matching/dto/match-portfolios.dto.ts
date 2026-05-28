@@ -22,6 +22,16 @@ export class MatchPortfoliosDto {
   @IsOptional() @IsString() district?: string;
   @IsOptional() @IsString() neighborhood?: string;
 
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  districts?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  neighborhoods?: string[];
+
   @IsOptional() @Type(() => Number) @IsNumber() @Min(0) minBudget?: number;
   @IsOptional() @Type(() => Number) @IsNumber() @Min(0) maxBudget?: number;
 

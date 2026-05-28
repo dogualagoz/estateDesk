@@ -15,6 +15,8 @@ export interface Demand {
   city?: string | null;
   district?: string | null;
   neighborhood?: string | null;
+  districts?: string[] | null;
+  neighborhoods?: string[] | null;
   minBudget?: string | number | null;
   maxBudget?: string | number | null;
   roomPreferences: string[];
@@ -41,6 +43,8 @@ export interface CreateDemandPayload {
   city?: string;
   district?: string;
   neighborhood?: string;
+  districts?: string[];
+  neighborhoods?: string[];
   minBudget?: number;
   maxBudget?: number;
   roomPreferences?: string[];

@@ -87,6 +87,8 @@ model Demand {
   city            String?
   district        String?
   neighborhood    String?
+  districts       String[]       @default([])
+  neighborhoods   String[]       @default([])
   minBudget       Decimal?       @db.Decimal(14, 2)
   maxBudget       Decimal?       @db.Decimal(14, 2)
   roomPreferences String[]       @default([])

@@ -34,3 +34,10 @@ export const ROOM_ORDER = ['1+0', '1+1', '2+1', '3+1', '4+1', '5+1'];
 
 /** Ordinal oda uzaklığına göre kısmi puan (diminishing returns). */
 export const ROOM_DISTANCE_SCORES = [1.0, 0.6, 0.3, 0.1];
+
+/**
+ * Lokasyon puanlaması için maksimum mesafe (km).
+ * Bu değerde veya üstünde mesafe 0 puan alır; altında doğrusal azalış.
+ * Farklı ilçe tam eşleşmesi 0.85'te kırpılır; mahalle eşleşmesi 0.9–1.0 verir.
+ */
+export const LOCATION_MAX_KM = 30;

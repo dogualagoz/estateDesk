@@ -16,6 +16,12 @@ import {
   type PropertyType,
 } from '@/types/portfolio';
 import { resolveImgUrl } from '@/utils/image';
+import LocationDropdown from '@/components/ui/LocationDropdown.vue';
+import {
+  getCityNames,
+  getDistrictNames,
+  getGroupedNeighborhoods,
+} from '@/data/tr-locations';
 
 const route = useRoute();
 const router = useRouter();
@@ -25,8 +31,8 @@ const form = reactive({
   types: [] as PropertyType[],
   listingType: 'SALE' as ListingType,
   city: '',
-  district: '',
-  neighborhood: '',
+  districts: [] as string[],
+  neighborhoods: [] as string[],
   minBudget: undefined as number | undefined,
   maxBudget: undefined as number | undefined,
   rooms: [] as string[],
@@ -45,6 +51,39 @@ const saving = ref(false);
 const removing = ref(false);
 const customMust = ref('');
 const customBonus = ref('');
+
+const minBudgetDisplay = ref('');
+const maxBudgetDisplay = ref('');
+
+function formatTR(n: number | undefined): string {
+  return n != null ? n.toLocaleString('tr-TR') : '';
+}
+
+function onMinBudgetInput(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const raw = input.value.replace(/[^\d]/g, '');
+  input.value = raw;
+  minBudgetDisplay.value = raw;
+  form.minBudget = raw ? parseInt(raw) : undefined;
+}
+function onMinBudgetBlur(e: Event) {
+  const formatted = formatTR(form.minBudget);
+  minBudgetDisplay.value = formatted;
+  (e.target as HTMLInputElement).value = formatted;
+}
+
+function onMaxBudgetInput(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const raw = input.value.replace(/[^\d]/g, '');
+  input.value = raw;
+  maxBudgetDisplay.value = raw;
+  form.maxBudget = raw ? parseInt(raw) : undefined;
+}
+function onMaxBudgetBlur(e: Event) {
+  const formatted = formatTR(form.maxBudget);
+  maxBudgetDisplay.value = formatted;
+  (e.target as HTMLInputElement).value = formatted;
+}
 
 async function remove() {
   if (!isEdit.value) return;
@@ -102,13 +141,29 @@ function addCustomBonus() {
   customBonus.value = '';
 }
 
+// Konum yardımcıları
+const cityOptions = computed(() => getCityNames());
+const districtOptions = computed(() => form.city ? getDistrictNames(form.city) : []);
+const groupedNeighborhoodOptions = computed(() =>
+  form.city && form.districts.length
+    ? getGroupedNeighborhoods(form.city, form.districts).map((g) => ({ group: g.district, items: g.neighborhoods }))
+    : [],
+);
+
+watch(() => form.city, () => { form.districts = []; form.neighborhoods = []; });
+watch(() => form.districts, () => {
+  // Seçili mahallelerden artık geçersiz olanları temizle
+  const allNeighborhoods = groupedNeighborhoodOptions.value.flatMap((g) => g.items);
+  form.neighborhoods = form.neighborhoods.filter((n) => allNeighborhoods.includes(n));
+}, { deep: true });
+
 // ── Kriterler → canlı eşleştirme ──
 const criteria = computed<MatchCriteria>(() => ({
   types: form.types.length ? form.types : undefined,
   listingType: form.listingType,
   city: form.city.trim() || undefined,
-  district: form.district.trim() || undefined,
-  neighborhood: form.neighborhood.trim() || undefined,
+  districts: form.districts.length ? form.districts : undefined,
+  neighborhoods: form.neighborhoods.length ? form.neighborhoods : undefined,
   minBudget: form.minBudget,
   maxBudget: form.maxBudget,
   roomPreferences: form.rooms.length ? form.rooms : undefined,
@@ -167,8 +222,8 @@ onMounted(async () => {
       types: d.types,
       listingType: d.listingType ?? 'SALE',
       city: d.city ?? '',
-      district: d.district ?? (d.regions?.[0] ?? ''),
-      neighborhood: d.neighborhood ?? '',
+      districts: d.districts?.length ? [...d.districts] : d.district ? [d.district] : [],
+      neighborhoods: d.neighborhoods?.length ? [...d.neighborhoods] : d.neighborhood ? [d.neighborhood] : [],
       minBudget: d.minBudget != null ? Number(d.minBudget) : undefined,
       maxBudget: d.maxBudget != null ? Number(d.maxBudget) : undefined,
       rooms: [...(d.roomPreferences ?? [])],
@@ -181,6 +236,8 @@ onMounted(async () => {
       customerPhone: d.customerPhone,
       status: d.status,
     });
+    minBudgetDisplay.value = formatTR(form.minBudget);
+    maxBudgetDisplay.value = formatTR(form.maxBudget);
   }
   fetchMatches();
 });
@@ -197,9 +254,11 @@ async function submit() {
       types: form.types,
       listingType: form.listingType,
       city: form.city.trim() || undefined,
-      district: form.district.trim() || undefined,
-      neighborhood: form.neighborhood.trim() || undefined,
-      regions: [form.district.trim(), form.neighborhood.trim()].filter(Boolean),
+      districts: form.districts.length ? form.districts : undefined,
+      neighborhoods: form.neighborhoods.length ? form.neighborhoods : undefined,
+      district: form.districts[0] || undefined,
+      neighborhood: form.neighborhoods[0] || undefined,
+      regions: [...form.districts, ...form.neighborhoods].filter(Boolean),
       minBudget: form.minBudget,
       maxBudget: form.maxBudget,
       roomPreferences: form.rooms,
@@ -281,19 +340,38 @@ async function submit() {
           <div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-5">
             <p class="text-label-sm font-semibold uppercase tracking-widest text-on-surface-variant mb-3">Konum</p>
             <div class="space-y-3">
-              <div class="grid grid-cols-2 gap-3">
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-label-sm font-semibold text-on-surface-variant">İl <span class="text-error">(zorunlu filtre)</span></label>
-                  <input class="input" v-model="form.city" placeholder="Antalya" />
-                </div>
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-label-sm font-semibold text-on-surface-variant">İlçe</label>
-                  <input class="input" v-model="form.district" placeholder="Konyaaltı" />
-                </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-label-sm font-semibold text-on-surface-variant">İl <span class="text-error">(zorunlu filtre)</span></label>
+                <LocationDropdown
+                  v-model="form.city"
+                  :options="cityOptions"
+                  placeholder="İl seçin..."
+                />
               </div>
               <div class="flex flex-col gap-1.5">
-                <label class="text-label-sm font-semibold text-on-surface-variant">Mahalle <span class="font-normal text-on-surface-variant/60">(isteğe bağlı)</span></label>
-                <input class="input" v-model="form.neighborhood" placeholder="Liman" />
+                <label class="text-label-sm font-semibold text-on-surface-variant">
+                  İlçe
+                  <span class="font-normal text-on-surface-variant/60 ml-1">(çoklu seçim)</span>
+                </label>
+                <LocationDropdown
+                  v-model="form.districts"
+                  :options="districtOptions"
+                  :multi="true"
+                  :disabled="!form.city"
+                  placeholder="İlçe seçin..."
+                />
+              </div>
+              <div v-if="form.districts.length && groupedNeighborhoodOptions.length" class="flex flex-col gap-1.5">
+                <label class="text-label-sm font-semibold text-on-surface-variant">
+                  Mahalle
+                  <span class="font-normal text-on-surface-variant/60 ml-1">(çoklu seçim, isteğe bağlı)</span>
+                </label>
+                <LocationDropdown
+                  v-model="form.neighborhoods"
+                  :grouped-options="groupedNeighborhoodOptions"
+                  :multi="true"
+                  placeholder="Mahalle seçin..."
+                />
               </div>
             </div>
           </div>
@@ -304,11 +382,19 @@ async function submit() {
             <div class="grid grid-cols-2 gap-3 mb-3">
               <div class="flex flex-col gap-1.5">
                 <label class="text-label-sm font-semibold text-on-surface-variant">Min Bütçe</label>
-                <input class="input" type="number" min="0" v-model.number="form.minBudget" placeholder="₺" />
+                <input class="input" type="text" inputmode="numeric" :value="minBudgetDisplay"
+                  @focus="minBudgetDisplay = form.minBudget?.toString() ?? ''"
+                  @input="onMinBudgetInput"
+                  @blur="onMinBudgetBlur"
+                  placeholder="₺" />
               </div>
               <div class="flex flex-col gap-1.5">
                 <label class="text-label-sm font-semibold text-on-surface-variant">Max Bütçe <span class="text-error">(+%10 esneme)</span></label>
-                <input class="input" type="number" min="0" v-model.number="form.maxBudget" placeholder="₺" />
+                <input class="input" type="text" inputmode="numeric" :value="maxBudgetDisplay"
+                  @focus="maxBudgetDisplay = form.maxBudget?.toString() ?? ''"
+                  @input="onMaxBudgetInput"
+                  @blur="onMaxBudgetBlur"
+                  placeholder="₺" />
               </div>
             </div>
             <div class="grid grid-cols-2 gap-3">

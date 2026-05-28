@@ -12,6 +12,7 @@
  */
 import {
   DimensionKey,
+  LOCATION_MAX_KM,
   MATCH_THRESHOLD,
   NEUTRAL,
   PRICE_STRETCH,
@@ -20,6 +21,7 @@ import {
   TOL,
   WEIGHTS,
 } from './matching.constants';
+import { DISTRICT_COORDS } from './tr-district-coords';
 
 export interface ScoringPortfolio {
   type: string;
@@ -39,6 +41,8 @@ export interface MatchCriteria {
   city?: string;
   district?: string;
   neighborhood?: string;
+  districts?: string[];
+  neighborhoods?: string[];
   minBudget?: number;
   maxBudget?: number;
   roomPreferences?: string[];
@@ -145,15 +149,85 @@ export function areaScore(area: number, minArea?: number, maxArea?: number): num
   return 1;
 }
 
-/** Konum — şehir zaten sert filtre; burada ilçe/mahalle eşleşmesi. */
+// ── Coğrafi mesafe yardımcıları ─────────────────────────────────────────────
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/** İlçe koordinatını DISTRICT_COORDS'tan döner. Key: "normalizedCity/normalizedDistrict". */
+function districtCoord(city: string, district: string): { lat: number; lng: number } | null {
+  const key = `${normalizeText(city)}/${normalizeText(district)}`;
+  return DISTRICT_COORDS[key] ?? null;
+}
+
+/**
+ * Konum yakınlık skoru.
+ *
+ * Puan kademeleri:
+ *   1.0        — ilçe tam eşleşti + mahalle belirtilmemiş veya tam eşleşti
+ *   0.9        — ilçe tam eşleşti, mahalle tercihi var ama farklı
+ *   0..0.85    — farklı ilçe ama koordinat verisi var: haversine mesafeye göre smooth decay
+ *   0.35       — farklı ilçe, koordinat verisi yok (fallback kademesi)
+ *   0          — farklı il veya mesafe >= LOCATION_MAX_KM
+ *
+ * Çoklu ilçe/mahalle tercihi (districts[], neighborhoods[]) önceliklidir;
+ * geriye dönük uyumluluk için tekil district/neighborhood de desteklenir.
+ */
 export function locationScore(p: ScoringPortfolio, c: MatchCriteria): number {
-  const district = normalizeText(c.district);
-  if (!district) return 1; // ilçe belirtilmemiş (boyut zaten pasif olur)
-  if (normalizeText(p.district) !== district) return 0;
-  // İlçe tuttu; mahalle de istenmiş ve tutuyorsa tam, tutmuyorsa hafif düşük.
-  const wantedHood = normalizeText(c.neighborhood);
-  if (wantedHood && normalizeText(p.neighborhood) !== wantedHood) return 0.9;
-  return 1;
+  // 1. Şehir kontrolü
+  if (c.city && normalizeText(p.city) !== normalizeText(c.city)) return 0;
+
+  // 2. İlçe tercihleri — çoklu öncelikli
+  const districtPrefs = (
+    c.districts?.length ? c.districts : c.district ? [c.district] : []
+  ).map(normalizeText).filter(Boolean);
+
+  if (!districtPrefs.length) return 1;
+
+  const pDistrict = normalizeText(p.district);
+
+  // 3. Tam ilçe eşleşmesi → mahalle kontrolüne geç
+  if (districtPrefs.includes(pDistrict)) {
+    const hoodPrefs = (
+      c.neighborhoods?.length ? c.neighborhoods : c.neighborhood ? [c.neighborhood] : []
+    ).map(normalizeText).filter(Boolean);
+    if (!hoodPrefs.length) return 1;
+    return hoodPrefs.includes(normalizeText(p.neighborhood ?? '')) ? 1 : 0.9;
+  }
+
+  // 4. Farklı ilçe — koordinat bazlı mesafe skoru
+  if (c.city) {
+    const pCoord = districtCoord(p.city, p.district);
+    if (pCoord) {
+      // Tercih edilen ilçelerden en yakınını bul
+      let minKm = Infinity;
+      for (const pref of districtPrefs) {
+        // Tercih edilen ilçenin orijinal adını bul (normalizeText geri dönüşümsüz)
+        const prefOriginal = c.districts?.find((d) => normalizeText(d) === pref) ??
+                             (c.district && normalizeText(c.district) === pref ? c.district : pref);
+        const prefCoord = districtCoord(c.city, prefOriginal);
+        if (!prefCoord) continue;
+        const km = haversineKm(pCoord.lat, pCoord.lng, prefCoord.lat, prefCoord.lng);
+        if (km < minKm) minKm = km;
+      }
+      if (minKm < Infinity) {
+        // 0km→0.85, LOCATION_MAX_KM→0, doğrusal azalış; 0.85 tavan ile tam eşleşmeden ayrışır
+        return clamp01((1 - minKm / LOCATION_MAX_KM) * 0.85);
+      }
+    }
+    // Koordinat verisi yok — şehir eşleşmesi kademesi
+    return 0.35;
+  }
+
+  return 0;
 }
 
 /** Bonus özellik örtüşme oranı (capped). */
@@ -183,7 +257,7 @@ export const DIMENSIONS: Dimension[] = [
   {
     key: 'location',
     weight: WEIGHTS.location,
-    isActive: (c) => !!normalizeText(c.district),
+    isActive: (c) => !!(c.districts?.length || normalizeText(c.district) || normalizeText(c.city)),
     score: (p, c) => locationScore(p, c),
   },
   {
