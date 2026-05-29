@@ -11,6 +11,8 @@ export class QueryDemandDto {
   @IsOptional() @Type(() => Number) @IsNumber() @Min(0) minBudget?: number;
   @IsOptional() @Type(() => Number) @IsNumber() @Min(0) maxBudget?: number;
 
+  @IsOptional() @IsString() createdById?: string;
+
   @IsOptional() @IsString() q?: string;
 
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number = 1;

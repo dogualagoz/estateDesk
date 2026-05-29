@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuthUser } from '../auth/decorators/current-user.decorator';
+import { requireOfficeId } from '../common/office.util';
 import { MatchPortfoliosDto } from './dto/match-portfolios.dto';
 import {
   MatchCriteria,
@@ -26,12 +28,13 @@ export interface ScoredPortfolio extends MatchResult {
 export class MatchingService {
   constructor(private prisma: PrismaService) {}
 
-  async matchPortfolios(dto: MatchPortfoliosDto): Promise<ScoredPortfolio[]> {
+  async matchPortfolios(user: AuthUser, dto: MatchPortfoliosDto): Promise<ScoredPortfolio[]> {
+    const officeId = requireOfficeId(user);
     const criteria: MatchCriteria = dto;
 
     // ── Katman 1: kaba DB filtresi (güvenilir alanlar) ──
     // Türkçe normalizasyon gerektiren eşleşmeler (şehir/oda/özellik) bellekte yapılır.
-    const where: Prisma.PortfolioWhereInput = { deletedAt: null };
+    const where: Prisma.PortfolioWhereInput = { deletedAt: null, officeId };
     if (dto.types?.length) where.type = { in: dto.types };
     if (dto.listingType) where.listingType = dto.listingType;
 

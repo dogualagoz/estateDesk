@@ -5,6 +5,7 @@ export interface AuthUser {
   email: string;
   role: 'ADMIN' | 'AGENT';
   fullName: string;
+  officeId: string | null;
 }
 
 export const CurrentUser = createParamDecorator(

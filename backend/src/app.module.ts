@@ -7,6 +7,7 @@ import { join } from 'path';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { OfficeModule } from './office/office.module';
 import { PortfolioModule } from './portfolio/portfolio.module';
 import { DemandModule } from './demand/demand.module';
 import { DashboardModule } from './dashboard/dashboard.module';
@@ -26,6 +27,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
     PrismaModule,
     AuthModule,
     UsersModule,
+    OfficeModule,
     PortfolioModule,
     DemandModule,
     DashboardModule,

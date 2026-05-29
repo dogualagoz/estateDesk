@@ -14,6 +14,8 @@ export class QueryPortfolioDto {
   @IsOptional() @Type(() => Number) @IsNumber() @Min(0) minPrice?: number;
   @IsOptional() @Type(() => Number) @IsNumber() @Min(0) maxPrice?: number;
 
+  @IsOptional() @IsString() createdById?: string;
+
   @IsOptional() @IsString() q?: string;
 
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number = 1;

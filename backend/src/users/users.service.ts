@@ -1,6 +1,8 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuthUser } from '../auth/decorators/current-user.decorator';
+import { requireOfficeId } from '../common/office.util';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -10,6 +12,7 @@ const PUBLIC_FIELDS = {
   fullName: true,
   role: true,
   isActive: true,
+  officeId: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -18,14 +21,42 @@ const PUBLIC_FIELDS = {
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async list() {
-    return this.prisma.user.findMany({
+  /** Aynı ofisteki üyeleri, portföy/talep sayılarıyla birlikte döner. */
+  async list(user: AuthUser) {
+    const officeId = requireOfficeId(user);
+    const members = await this.prisma.user.findMany({
+      where: { officeId },
       select: PUBLIC_FIELDS,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'asc' },
     });
+    return Promise.all(members.map((m) => this.withCounts(m, officeId)));
   }
 
-  async create(dto: CreateUserDto) {
+  /** Aynı ofisteki bir üyenin profili (portföy/talep sayılarıyla). */
+  async getProfile(user: AuthUser, id: string) {
+    const officeId = requireOfficeId(user);
+    const member = await this.prisma.user.findFirst({
+      where: { id, officeId },
+      select: PUBLIC_FIELDS,
+    });
+    if (!member) throw new NotFoundException('User not found');
+    return this.withCounts(member, officeId);
+  }
+
+  private async withCounts<T extends { id: string }>(member: T, officeId: string) {
+    const [portfolioCount, demandCount] = await this.prisma.$transaction([
+      this.prisma.portfolio.count({
+        where: { createdById: member.id, officeId, deletedAt: null },
+      }),
+      this.prisma.demand.count({
+        where: { createdById: member.id, officeId, deletedAt: null },
+      }),
+    ]);
+    return { ...member, portfolioCount, demandCount };
+  }
+
+  async create(user: AuthUser, dto: CreateUserDto) {
+    const officeId = requireOfficeId(user);
     const exists = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (exists) throw new ConflictException('Email already in use');
     const passwordHash = await bcrypt.hash(dto.password, 10);
@@ -36,14 +67,16 @@ export class UsersService {
         passwordHash,
         role: dto.role ?? 'AGENT',
         isActive: dto.isActive ?? true,
+        officeId,
       },
       select: PUBLIC_FIELDS,
     });
   }
 
-  async update(id: string, dto: UpdateUserDto) {
-    const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) throw new NotFoundException('User not found');
+  async update(user: AuthUser, id: string, dto: UpdateUserDto) {
+    const officeId = requireOfficeId(user);
+    const target = await this.prisma.user.findFirst({ where: { id, officeId } });
+    if (!target) throw new NotFoundException('User not found');
 
     const data: any = {};
     if (dto.fullName !== undefined) data.fullName = dto.fullName;
@@ -58,9 +91,10 @@ export class UsersService {
     });
   }
 
-  async deactivate(id: string) {
-    const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) throw new NotFoundException('User not found');
+  async deactivate(user: AuthUser, id: string) {
+    const officeId = requireOfficeId(user);
+    const target = await this.prisma.user.findFirst({ where: { id, officeId } });
+    if (!target) throw new NotFoundException('User not found');
     return this.prisma.user.update({
       where: { id },
       data: { isActive: false },

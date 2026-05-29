@@ -93,20 +93,19 @@ ağırlık profili, komut çubuğu.
 - [ ] Commit
 
 ## 8.2 — Auth: kayıt + JWT officeId
-- [ ] JWT strategy + `AuthUser` decorator'a `officeId`
-- [ ] `POST /auth/register` + RegisterDto, login/register dönüşüne `officeId`
-- [ ] Commit
+- [x] JWT strategy + `AuthUser` decorator'a `officeId`
+- [x] `POST /auth/register` + RegisterDto, login/register dönüşüne `officeId`
 
 ## 8.3 — Office modülü
-- [ ] create office, get my office, members
-- [ ] Davet: create/list/revoke, preview (`GET /invites/:token`), accept
-- [ ] Commit
+- [x] create office, get my office, members
+- [x] Davet: create/list/revoke, preview (`GET /invites/:token`), accept
 
 ## 8.4 — Ofis izolasyonu
-- [ ] Portfolio/Demand: create officeId, list/get/update/delete ofis filtresi + `createdById` filtresi
-- [ ] Users: `GET /users/:id` profil, `GET /users` ofis kapsamı
-- [ ] Dashboard: ofis filtresi
-- [ ] Commit
+- [x] Portfolio/Demand: create officeId, list/get/update/delete ofis filtresi + `createdById` filtresi
+- [x] Users: `GET /users/:id` profil, `GET /users` ofis kapsamı
+- [x] Dashboard + search + matching: ofis filtresi
+- [x] Backend uçtan uca test edildi (izolasyon, davet, 403/404), build + 18/18 test ✓
+- [ ] Commit (8.2–8.4 birlikte)
 
 ## 8.5 — Frontend altyapı
 - [ ] Tipler (office.ts, user.ts), servisler (register, office.service, createdById filtreleri)
