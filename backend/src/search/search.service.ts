@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuthUser } from '../auth/decorators/current-user.decorator';
+import { requireOfficeId } from '../common/office.util';
 import { QuerySearchDto, SearchScope } from './dto/query-search.dto';
 
 // Aranabilir tüm alanların birleştirilip unaccent+lower ile normalize edildiği "arama metni".
@@ -22,7 +24,8 @@ const DEMAND_PHONE = Prisma.raw(`"customerPhone"`);
 export class SearchService {
   constructor(private prisma: PrismaService) {}
 
-  async search(query: QuerySearchDto) {
+  async search(user: AuthUser, query: QuerySearchDto) {
+    const officeId = requireOfficeId(user);
     const limit = query.limit ?? 8;
     const scope: SearchScope = query.scope ?? 'all';
     const terms = query.q.trim().split(/\s+/).filter(Boolean);
@@ -41,24 +44,24 @@ export class SearchService {
       runPortfolio
         ? this.prisma.$queryRaw<any[]>(Prisma.sql`
             SELECT * FROM "Portfolio"
-            WHERE "deletedAt" IS NULL AND ${portfolioWhere}
+            WHERE "deletedAt" IS NULL AND "officeId" = ${officeId} AND ${portfolioWhere}
             ORDER BY "createdAt" DESC LIMIT ${limit}`)
         : Promise.resolve([]),
       runDemand
         ? this.prisma.$queryRaw<any[]>(Prisma.sql`
             SELECT * FROM "Demand"
-            WHERE "deletedAt" IS NULL AND ${demandWhere}
+            WHERE "deletedAt" IS NULL AND "officeId" = ${officeId} AND ${demandWhere}
             ORDER BY "createdAt" DESC LIMIT ${limit}`)
         : Promise.resolve([]),
       runPortfolio
         ? this.prisma.$queryRaw<{ count: number }[]>(Prisma.sql`
             SELECT COUNT(*)::int AS count FROM "Portfolio"
-            WHERE "deletedAt" IS NULL AND ${portfolioWhere}`)
+            WHERE "deletedAt" IS NULL AND "officeId" = ${officeId} AND ${portfolioWhere}`)
         : Promise.resolve([{ count: 0 }]),
       runDemand
         ? this.prisma.$queryRaw<{ count: number }[]>(Prisma.sql`
             SELECT COUNT(*)::int AS count FROM "Demand"
-            WHERE "deletedAt" IS NULL AND ${demandWhere}`)
+            WHERE "deletedAt" IS NULL AND "officeId" = ${officeId} AND ${demandWhere}`)
         : Promise.resolve([{ count: 0 }]),
     ]);
 

@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuthUser } from '../auth/decorators/current-user.decorator';
+import { requireOfficeId } from '../common/office.util';
 import { CreatePortfolioDto } from './dto/create-portfolio.dto';
 import { UpdatePortfolioDto } from './dto/update-portfolio.dto';
 import { QueryPortfolioDto } from './dto/query-portfolio.dto';
@@ -12,12 +14,14 @@ import sharp from 'sharp';
 export class PortfolioService {
   constructor(private prisma: PrismaService) {}
 
-  async list(query: QueryPortfolioDto) {
+  async list(user: AuthUser, query: QueryPortfolioDto) {
+    const officeId = requireOfficeId(user);
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
 
-    const where: Prisma.PortfolioWhereInput = { deletedAt: null };
+    const where: Prisma.PortfolioWhereInput = { deletedAt: null, officeId };
 
+    if (query.createdById) where.createdById = query.createdById;
     if (query.type) where.type = query.type;
     if (query.listingType) where.listingType = query.listingType;
     if (query.city) where.city = { equals: query.city, mode: 'insensitive' };
@@ -57,16 +61,18 @@ export class PortfolioService {
     return { items, total, page, pageSize };
   }
 
-  async get(id: string) {
+  async get(user: AuthUser, id: string) {
+    const officeId = requireOfficeId(user);
     const item = await this.prisma.portfolio.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, officeId },
       include: { createdBy: { select: { id: true, fullName: true } } },
     });
     if (!item) throw new NotFoundException('Portfolio not found');
     return item;
   }
 
-  async create(userId: string, dto: CreatePortfolioDto) {
+  async create(user: AuthUser, dto: CreatePortfolioDto) {
+    const officeId = requireOfficeId(user);
     return this.prisma.portfolio.create({
       data: {
         type: dto.type,
@@ -83,21 +89,22 @@ export class PortfolioService {
         note: dto.note,
         ownerName: dto.ownerName,
         ownerPhone: dto.ownerPhone,
-        createdById: userId,
+        createdById: user.id,
+        officeId,
       },
     });
   }
 
-  async update(id: string, dto: UpdatePortfolioDto) {
-    await this.get(id);
+  async update(user: AuthUser, id: string, dto: UpdatePortfolioDto) {
+    await this.get(user, id);
     return this.prisma.portfolio.update({
       where: { id },
       data: { ...dto },
     });
   }
 
-  async softDelete(id: string) {
-    await this.get(id);
+  async softDelete(user: AuthUser, id: string) {
+    await this.get(user, id);
     await this.prisma.portfolio.update({
       where: { id },
       data: { deletedAt: new Date() },
@@ -105,8 +112,8 @@ export class PortfolioService {
     return { success: true };
   }
 
-  async addImages(id: string, _userId: string, files: Express.Multer.File[]) {
-    const item = await this.get(id);
+  async addImages(user: AuthUser, id: string, files: Express.Multer.File[]) {
+    const item = await this.get(user, id);
     const dir = path.join('/app/uploads/portfolio', id);
     fs.mkdirSync(dir, { recursive: true });
 
@@ -128,8 +135,8 @@ export class PortfolioService {
     });
   }
 
-  async removeImage(id: string, _userId: string, filename: string) {
-    const item = await this.get(id);
+  async removeImage(user: AuthUser, id: string, filename: string) {
+    const item = await this.get(user, id);
     const url = `/uploads/portfolio/${id}/${filename}`;
     const filePath = path.join('/app/uploads/portfolio', id, filename);
 

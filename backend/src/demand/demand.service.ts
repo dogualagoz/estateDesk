@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuthUser } from '../auth/decorators/current-user.decorator';
+import { requireOfficeId } from '../common/office.util';
 import { CreateDemandDto } from './dto/create-demand.dto';
 import { UpdateDemandDto } from './dto/update-demand.dto';
 import { QueryDemandDto } from './dto/query-demand.dto';
@@ -9,12 +11,14 @@ import { QueryDemandDto } from './dto/query-demand.dto';
 export class DemandService {
   constructor(private prisma: PrismaService) {}
 
-  async list(query: QueryDemandDto) {
+  async list(user: AuthUser, query: QueryDemandDto) {
+    const officeId = requireOfficeId(user);
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
 
-    const AND: Prisma.DemandWhereInput[] = [{ deletedAt: null }];
+    const AND: Prisma.DemandWhereInput[] = [{ deletedAt: null, officeId }];
 
+    if (query.createdById) AND.push({ createdById: query.createdById });
     if (query.type) AND.push({ types: { has: query.type } });
     if (query.region) AND.push({ regions: { has: query.region } });
     if (query.roomPreference) AND.push({ roomPreferences: { has: query.roomPreference } });
@@ -58,16 +62,18 @@ export class DemandService {
     return { items, total, page, pageSize };
   }
 
-  async get(id: string) {
+  async get(user: AuthUser, id: string) {
+    const officeId = requireOfficeId(user);
     const item = await this.prisma.demand.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, officeId },
       include: { createdBy: { select: { id: true, fullName: true } } },
     });
     if (!item) throw new NotFoundException('Demand not found');
     return item;
   }
 
-  async create(userId: string, dto: CreateDemandDto) {
+  async create(user: AuthUser, dto: CreateDemandDto) {
+    const officeId = requireOfficeId(user);
     return this.prisma.demand.create({
       data: {
         types: dto.types,
@@ -90,18 +96,19 @@ export class DemandService {
         customerName: dto.customerName,
         customerPhone: dto.customerPhone,
         status: dto.status ?? 'ACTIVE',
-        createdById: userId,
+        createdById: user.id,
+        officeId,
       },
     });
   }
 
-  async update(id: string, dto: UpdateDemandDto) {
-    await this.get(id);
+  async update(user: AuthUser, id: string, dto: UpdateDemandDto) {
+    await this.get(user, id);
     return this.prisma.demand.update({ where: { id }, data: { ...dto } });
   }
 
-  async softDelete(id: string) {
-    await this.get(id);
+  async softDelete(user: AuthUser, id: string) {
+    await this.get(user, id);
     await this.prisma.demand.update({ where: { id }, data: { deletedAt: new Date() } });
     return { success: true };
   }
