@@ -6,8 +6,15 @@ export interface User {
   fullName: string;
   role: Role;
   isActive: boolean;
+  officeId?: string | null;
   createdAt?: string;
   updatedAt?: string;
+}
+
+/** /users/:id profili — üye bilgisi + portföy/talep sayıları. */
+export interface UserProfile extends User {
+  portfolioCount: number;
+  demandCount: number;
 }
 
 export interface CreateUserPayload {

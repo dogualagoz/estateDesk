@@ -10,11 +10,24 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!token.value);
   const isAdmin = computed(() => user.value?.role === 'ADMIN');
+  const hasOffice = computed(() => !!user.value?.officeId);
 
   async function login(email: string, password: string) {
     loading.value = true;
     try {
       const res = await authService.login(email, password);
+      token.value = res.accessToken;
+      user.value = res.user;
+      localStorage.setItem('ed_token', res.accessToken);
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function register(payload: { email: string; fullName: string; password: string }) {
+    loading.value = true;
+    try {
+      const res = await authService.register(payload);
       token.value = res.accessToken;
       user.value = res.user;
       localStorage.setItem('ed_token', res.accessToken);
@@ -38,5 +51,9 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { token, user, loading, isAuthenticated, isAdmin, login, logout, fetchMe };
+  return {
+    token, user, loading,
+    isAuthenticated, isAdmin, hasOffice,
+    login, register, logout, fetchMe,
+  };
 });
