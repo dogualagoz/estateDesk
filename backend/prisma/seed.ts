@@ -22,7 +22,23 @@ async function seedAdmin() {
   return user;
 }
 
-async function seedPortfolios(ownerId: string) {
+async function seedDemoOffice(ownerId: string) {
+  const existing = await prisma.office.findUnique({ where: { ownerId } });
+  if (existing) {
+    console.log(`[seed] Office already exists for owner: ${existing.name}`);
+    return existing;
+  }
+
+  const office = await prisma.office.create({
+    data: { name: process.env.SEED_OFFICE_NAME || 'Demo Ofis', ownerId },
+  });
+  // Sahibi ofise üye olarak da bağla
+  await prisma.user.update({ where: { id: ownerId }, data: { officeId: office.id } });
+  console.log(`[seed] Office created: ${office.name}`);
+  return office;
+}
+
+async function seedPortfolios(ownerId: string, officeId: string) {
   const count = await prisma.portfolio.count();
   if (count > 0) {
     console.log(`[seed] Portfolios already present (${count}), skipping.`);
@@ -1198,12 +1214,12 @@ async function seedPortfolios(ownerId: string) {
   ] as const;
 
   for (const p of data) {
-    await prisma.portfolio.create({ data: { ...p, createdById: ownerId } as any });
+    await prisma.portfolio.create({ data: { ...p, createdById: ownerId, officeId } as any });
   }
   console.log(`[seed] ${data.length} portfolios created.`);
 }
 
-async function seedDemands(ownerId: string) {
+async function seedDemands(ownerId: string, officeId: string) {
   const count = await prisma.demand.count();
   if (count >= 50) {
     console.log(`[seed] Demands already present (${count}), skipping.`);
@@ -1667,12 +1683,12 @@ async function seedDemands(ownerId: string) {
   ];
 
   for (const d of demands) {
-    await prisma.demand.create({ data: { ...d, createdById: ownerId } as any });
+    await prisma.demand.create({ data: { ...d, createdById: ownerId, officeId } as any });
   }
   console.log(`[seed] ${demands.length} demands created.`);
 }
 
-async function seedAntalyaPortfolios(ownerId: string) {
+async function seedAntalyaPortfolios(ownerId: string, officeId: string) {
   const count = await prisma.portfolio.count();
   if (count >= 215) {
     console.log(`[seed] Additional portfolios already present (${count}), skipping.`);
@@ -2083,16 +2099,17 @@ async function seedAntalyaPortfolios(ownerId: string) {
   ];
 
   for (const p of data) {
-    await prisma.portfolio.create({ data: { ...p, createdById: ownerId } as any });
+    await prisma.portfolio.create({ data: { ...p, createdById: ownerId, officeId } as any });
   }
   console.log(`[seed] ${data.length} additional portfolios created.`);
 }
 
 async function main() {
   const admin = await seedAdmin();
-  await seedPortfolios(admin.id);
-  await seedAntalyaPortfolios(admin.id);
-  await seedDemands(admin.id);
+  const office = await seedDemoOffice(admin.id);
+  await seedPortfolios(admin.id, office.id);
+  await seedAntalyaPortfolios(admin.id, office.id);
+  await seedDemands(admin.id, office.id);
 }
 
 main()
