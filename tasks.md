@@ -78,3 +78,45 @@ ağırlık profili, komut çubuğu.
 - [x] 18/18 test geçiyor
 - [x] API smoke testi: Kadıköy seçimi → Üsküdar 74, Beşiktaş 68, Sarıyer elendi ✓
 - [x] Çoklu ilçe: Kadıköy+Üsküdar → Beşiktaş 80 (en yakın ilçeye mesafe alınıyor) ✓
+
+---
+
+# Faz 8 — Ofis + Profil + Kayıt/Davet Sistemi
+
+Çok-kiracılı ofis yapısı, kayıt, paylaşılabilir davet linki, profil sayfaları, ofise göre veri izolasyonu.
+
+## 8.1 — Backend veri katmanı
+- [x] Prisma schema: `Office`, `Invite`, `InviteStatus`, `User.officeId`, `Portfolio/Demand.officeId`
+- [x] Migration (mevcut veriyi Demo Ofis'e backfill ederek)
+- [x] Seed: Demo Ofis + admin owner + portföy/talepleri ofise ata
+- [x] Migration + seed çalıştır, doğrula (1 ofis, eksik officeId yok)
+- [ ] Commit
+
+## 8.2 — Auth: kayıt + JWT officeId
+- [ ] JWT strategy + `AuthUser` decorator'a `officeId`
+- [ ] `POST /auth/register` + RegisterDto, login/register dönüşüne `officeId`
+- [ ] Commit
+
+## 8.3 — Office modülü
+- [ ] create office, get my office, members
+- [ ] Davet: create/list/revoke, preview (`GET /invites/:token`), accept
+- [ ] Commit
+
+## 8.4 — Ofis izolasyonu
+- [ ] Portfolio/Demand: create officeId, list/get/update/delete ofis filtresi + `createdById` filtresi
+- [ ] Users: `GET /users/:id` profil, `GET /users` ofis kapsamı
+- [ ] Dashboard: ofis filtresi
+- [ ] Commit
+
+## 8.5 — Frontend altyapı
+- [ ] Tipler (office.ts, user.ts), servisler (register, office.service, createdById filtreleri)
+- [ ] Auth store (register, hasOffice), router + guard
+- [ ] Commit
+
+## 8.6 — Frontend görünümler
+- [ ] RegisterView, OnboardingView, InviteAcceptView, OfficeView, ProfileView
+- [ ] Sidebar "Ofisim", Topbar kendi profiline link, kartlarda "Ekleyen" linki
+- [ ] Commit
+
+## 8.7 — Doğrulama
+- [ ] type-check + build + end-to-end senaryo
