@@ -68,6 +68,7 @@ export interface DemandQuery {
   status?: DemandStatus;
   minBudget?: number;
   maxBudget?: number;
+  createdById?: string;
   q?: string;
   page?: number;
   pageSize?: number;

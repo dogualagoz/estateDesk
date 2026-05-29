@@ -80,6 +80,7 @@ export interface PortfolioQuery {
   visibility?: PortfolioVisibility;
   minPrice?: number;
   maxPrice?: number;
+  createdById?: string;
   q?: string;
   page?: number;
   pageSize?: number;

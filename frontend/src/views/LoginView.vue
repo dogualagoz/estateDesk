@@ -84,9 +84,15 @@ async function submit() {
       </form>
 
       <!-- Footer -->
-      <footer class="flex items-center justify-center gap-1 text-label-sm text-outline -mt-2">
-        <span class="material-symbols-outlined text-[14px]">verified_user</span>
-        Güvenli bağlantı
+      <footer class="flex flex-col items-center gap-2 -mt-2">
+        <p class="text-label-md text-on-surface-variant">
+          Hesabınız yok mu?
+          <router-link to="/register" class="text-primary font-semibold hover:underline">Kayıt olun</router-link>
+        </p>
+        <span class="flex items-center gap-1 text-label-sm text-outline">
+          <span class="material-symbols-outlined text-[14px]">verified_user</span>
+          Güvenli bağlantı
+        </span>
       </footer>
     </main>
   </div>

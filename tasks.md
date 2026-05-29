@@ -108,14 +108,18 @@ ağırlık profili, komut çubuğu.
 - [ ] Commit (8.2–8.4 birlikte)
 
 ## 8.5 — Frontend altyapı
-- [ ] Tipler (office.ts, user.ts), servisler (register, office.service, createdById filtreleri)
-- [ ] Auth store (register, hasOffice), router + guard
-- [ ] Commit
+- [x] Tipler (office.ts, user.ts, createdById filtreleri), servisler (register, office.service, getProfile)
+- [x] Auth store (register, hasOffice), router + guard (register/onboarding/invite/office/profil)
+- [x] App.vue: onboarding/invite/register'da shell gizli (bare meta)
 
 ## 8.6 — Frontend görünümler
-- [ ] RegisterView, OnboardingView, InviteAcceptView, OfficeView, ProfileView
-- [ ] Sidebar "Ofisim", Topbar kendi profiline link, kartlarda "Ekleyen" linki
-- [ ] Commit
+- [x] RegisterView, OnboardingView, InviteAcceptView, OfficeView, ProfileView
+- [x] AppShell: "Ofisim" linki + kullanıcı alanı kendi profiline tıklanır
+- [x] LoginView'a "Kayıt ol" linki
+- [x] frontend type-check temiz
+- [ ] Commit (8.5–8.6 birlikte)
 
 ## 8.7 — Doğrulama
-- [ ] type-check + build + end-to-end senaryo
+- [x] Backend uçtan uca (curl): izolasyon/davet/403/404 ✓; build + 18/18 test ✓
+- [x] frontend type-check temiz
+- [ ] Tarayıcıda manuel akış testi (kullanıcı tarafından)

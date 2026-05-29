@@ -6,15 +6,14 @@ import { useAuthStore } from '@/stores/auth';
 const auth = useAuthStore();
 const router = useRouter();
 
-const links = computed(() => {
-  const items = [
-    { to: '/',          label: 'Dashboard',  icon: 'dashboard' },
-    { to: '/portfolio', label: 'Portföyler', icon: 'maps_home_work' },
-    { to: '/demand',    label: 'Talepler',   icon: 'ads_click' },
-  ];
-  if (auth.isAdmin) items.push({ to: '/users', label: 'Kullanıcılar', icon: 'group' });
-  return items;
-});
+const links = computed(() => [
+  { to: '/',          label: 'Dashboard',  icon: 'dashboard' },
+  { to: '/portfolio', label: 'Portföyler', icon: 'maps_home_work' },
+  { to: '/demand',    label: 'Talepler',   icon: 'ads_click' },
+  { to: '/office',    label: 'Ofisim',     icon: 'groups' },
+]);
+
+const profilePath = computed(() => (auth.user ? `/users/${auth.user.id}` : '/'));
 
 const initials = computed(() => {
   if (!auth.user?.fullName) return '?';
@@ -75,7 +74,11 @@ function logout() {
 
       <!-- User + Logout -->
       <div class="border-t border-white/10 px-4 py-4">
-        <div class="flex items-center gap-3 mb-3">
+        <router-link
+          :to="profilePath"
+          class="flex items-center gap-3 mb-3 -mx-2 px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors duration-150"
+          title="Profilim — portföy ve taleplerim"
+        >
           <div class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-[13px] font-bold text-on-primary select-none shrink-0">
             {{ initials }}
           </div>
@@ -83,7 +86,7 @@ function logout() {
             <div class="text-label-md font-semibold text-on-primary truncate">{{ auth.user?.fullName }}</div>
             <div class="text-label-sm text-on-primary/60">{{ auth.user?.role === 'ADMIN' ? 'Admin' : 'Danışman' }}</div>
           </div>
-        </div>
+        </router-link>
         <button
           class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-label-md text-on-primary/65 hover:bg-white/10 hover:text-on-primary transition-colors duration-150"
           @click="logout"

@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router';
 import AppShell from '@/components/layout/AppShell.vue';
 
 const route = useRoute();
-const hideShell = computed(() => route.meta?.public === true);
+const hideShell = computed(() => route.meta?.public === true || route.meta?.bare === true);
 </script>
 
 <template>
