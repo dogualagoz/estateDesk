@@ -54,7 +54,7 @@ function logout() {
       <!-- Brand -->
       <div class="px-6 py-5 border-b border-white/10">
         <router-link to="/" class="font-bold text-headline-md text-on-primary tracking-tight">
-          EstateDesk
+          emlakdefter
         </router-link>
       </div>
 
