@@ -25,8 +25,8 @@ function logout() {
 <template>
   <aside class="sidebar">
     <div class="brand-area">
-      <div class="brand-title">EstateDesk</div>
-      <div class="brand-sub">Emlak Yönetimi</div>
+      <div class="brand-title">emlakdefter</div>
+      <div class="brand-sub">Emlak Not Defteri</div>
     </div>
 
     <div class="new-btn-wrap">

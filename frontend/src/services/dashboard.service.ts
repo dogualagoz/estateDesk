@@ -1,13 +1,36 @@
 import { api } from './api';
-import type { Portfolio } from '@/types/portfolio';
-import type { Demand } from '@/types/demand';
+import type { PropertyType, ListingType } from '@/types/portfolio';
+import type { DemandStatus } from '@/types/demand';
+
+export interface NotedPortfolio {
+  id: string;
+  type: PropertyType;
+  listingType: ListingType;
+  city: string;
+  district: string;
+  price: string | number;
+  note: string;
+  updatedAt: string;
+  title?: string | null;
+}
+
+export interface NotedDemand {
+  id: string;
+  customerName: string;
+  minBudget?: string | number | null;
+  maxBudget?: string | number | null;
+  regions: string[];
+  note: string;
+  updatedAt: string;
+  status: DemandStatus;
+}
 
 export interface DashboardStats {
   portfolioCount: number;
   demandCount: number;
   activeDemandCount: number;
-  recentPortfolios: Portfolio[];
-  recentDemands: Demand[];
+  portfoliosWithNotes: NotedPortfolio[];
+  demandsWithNotes: NotedDemand[];
 }
 
 export const dashboardService = {
