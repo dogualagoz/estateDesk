@@ -52,9 +52,10 @@ model Office {
   updatedAt DateTime @updatedAt
 
   members    User[]      @relation("OfficeMembers")
-  portfolios Portfolio[]
-  demands    Demand[]
-  invites    Invite[]
+  portfolios    Portfolio[]
+  demands       Demand[]
+  invites       Invite[]
+  demandMatches DemandMatch[]
 }
 
 model Invite {
@@ -89,8 +90,9 @@ model User {
   ownedOffice Office?  @relation("OfficeOwner")
   sentInvites Invite[] @relation("InviteCreatedBy")
 
-  portfolios Portfolio[]
-  demands    Demand[]
+  portfolios    Portfolio[]
+  demands       Demand[]
+  demandMatches DemandMatch[]
 }
 
 model Portfolio {
@@ -116,6 +118,8 @@ model Portfolio {
 
   officeId String
   office   Office @relation(fields: [officeId], references: [id])
+
+  demandMatches DemandMatch[]
 
   deletedAt DateTime?
   createdAt DateTime  @default(now())
@@ -155,6 +159,8 @@ model Demand {
   officeId String
   office   Office @relation(fields: [officeId], references: [id])
 
+  demandMatches DemandMatch[]
+
   deletedAt DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -164,4 +170,22 @@ model Demand {
   @@index([officeId, status])
   @@index([officeId, deletedAt])
   @@index([listingType, city, status])
+}
+
+model DemandMatch {
+  id          String    @id @default(cuid())
+  demandId    String
+  demand      Demand    @relation(fields: [demandId], references: [id])
+  portfolioId String
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id])
+  officeId    String
+  office      Office    @relation(fields: [officeId], references: [id])
+  pinnedById  String
+  pinnedBy    User      @relation(fields: [pinnedById], references: [id])
+  pinnedAt    DateTime  @default(now())
+
+  @@unique([demandId, portfolioId])
+  @@index([demandId])
+  @@index([portfolioId])
+  @@index([officeId])
 }
