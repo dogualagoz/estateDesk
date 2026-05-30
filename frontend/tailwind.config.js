@@ -1,4 +1,12 @@
 /** @type {import('tailwindcss').Config} */
+
+// ── 🎨 Tema Ana Renkleri ─────────────────────────────────────────
+// Bu iki sabiti değiştirerek uygulamanın rengini tek yerden ayarla.
+// Not: 'primary' ve 'secondary' token'larını günceller; türetilmiş
+// container/fixed token'larını da uyumlu renklerle değiştirmen gerekir.
+const PRIMARY   = '#4e604f'  // Koyu adaçayı yeşili
+const SECONDARY = '#5a605b'  // Nötr gri (ikincil renk — değiştirmek için buraya yaz)
+
 module.exports = {
   content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
   theme: {
@@ -20,7 +28,9 @@ module.exports = {
         'outline':                   '#747872',
         'outline-variant':           '#c3c8c0',
         'surface-tint':              '#516352',
-        'primary':                   '#4e604f',
+
+        // Primary — Adaçayı Yeşili
+        'primary':                   PRIMARY,
         'on-primary':                '#ffffff',
         'primary-container':         '#677967',
         'on-primary-container':      '#f7fff3',
@@ -29,7 +39,9 @@ module.exports = {
         'on-primary-fixed':          '#0f1f12',
         'on-primary-fixed-variant':  '#3a4b3b',
         'inverse-primary':           '#b8ccb7',
-        'secondary':                 '#5a605b',
+
+        // Secondary — ikincil renk
+        'secondary':                 SECONDARY,
         'on-secondary':              '#ffffff',
         'secondary-container':       '#dbe1db',
         'on-secondary-container':    '#5e6460',
@@ -37,14 +49,19 @@ module.exports = {
         'secondary-fixed-dim':       '#c2c8c2',
         'on-secondary-fixed':        '#171d19',
         'on-secondary-fixed-variant':'#424844',
+
+        // Tertiary — Neutral (kullanılmıyor, rezerv)
         'tertiary':                  '#72545b',
         'on-tertiary':               '#ffffff',
         'tertiary-container':        '#8c6c73',
         'on-tertiary-container':     '#fffbff',
+
+        // Error
         'error':                     '#ba1a1a',
         'on-error':                  '#ffffff',
         'error-container':           '#ffdad6',
         'on-error-container':        '#93000a',
+
         'background':                '#f9f9f7',
         'on-background':             '#1a1c1b',
       },

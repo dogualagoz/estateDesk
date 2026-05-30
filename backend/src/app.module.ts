@@ -13,6 +13,7 @@ import { DemandModule } from './demand/demand.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { SearchModule } from './search/search.module';
 import { MatchingModule } from './matching/matching.module';
+import { DemandMatchModule } from './demand-match/demand-match.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 
@@ -33,6 +34,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
     DashboardModule,
     SearchModule,
     MatchingModule,
+    DemandMatchModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

@@ -3,6 +3,7 @@ import { onMounted, reactive, ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
 import { demandService } from '@/services/demand.service';
 import { matchingService } from '@/services/matching.service';
+import { demandMatchService } from '@/services/demandMatch.service';
 import type { CreateDemandPayload, DemandStatus } from '@/types/demand';
 import type { MatchCriteria, ScoredPortfolio, DimensionKey } from '@/types/matching';
 import { DIMENSION_LABELS } from '@/types/matching';
@@ -177,6 +178,70 @@ const results = ref<ScoredPortfolio[]>([]);
 const loading = ref(false);
 let timer: ReturnType<typeof setTimeout> | undefined;
 
+// ── Eşleştirme (pin) state ──
+const activeTab = ref<'pinned' | 'all'>('pinned');
+const pinnedIds = ref<Set<string>>(new Set());
+const pinnedResults = ref<ScoredPortfolio[]>([]);
+const pinnedLoading = ref(false);
+const isDragging = ref(false);
+const isDragOver = ref(false);
+const dragPortfolioId = ref<string | null>(null);
+const justPinnedId = ref<string | null>(null);
+const dropSuccess = ref(false);
+
+async function loadPinnedMatches() {
+  if (!isEdit.value) return;
+  pinnedLoading.value = true;
+  try {
+    pinnedResults.value = await demandMatchService.listPinned(route.params.id as string);
+    pinnedIds.value = new Set(pinnedResults.value.map((r) => r.portfolio.id));
+  } catch {
+    pinnedResults.value = [];
+  } finally {
+    pinnedLoading.value = false;
+  }
+}
+
+async function togglePin(portfolioId: string) {
+  if (!isEdit.value) return;
+  const demandId = route.params.id as string;
+  if (pinnedIds.value.has(portfolioId)) {
+    await demandMatchService.unpin(demandId, portfolioId);
+    pinnedIds.value.delete(portfolioId);
+    pinnedIds.value = new Set(pinnedIds.value);
+    pinnedResults.value = pinnedResults.value.filter((r) => r.portfolio.id !== portfolioId);
+  } else {
+    await demandMatchService.pin(demandId, portfolioId);
+    pinnedIds.value.add(portfolioId);
+    pinnedIds.value = new Set(pinnedIds.value);
+    const matched = results.value.find((r) => r.portfolio.id === portfolioId);
+    if (matched) pinnedResults.value = [matched, ...pinnedResults.value];
+    justPinnedId.value = portfolioId;
+    setTimeout(() => { justPinnedId.value = null; }, 700);
+  }
+}
+
+function onDragStart(portfolioId: string) {
+  if (!isEdit.value) return;
+  isDragging.value = true;
+  dragPortfolioId.value = portfolioId;
+}
+function onDragEnd() {
+  isDragging.value = false;
+  isDragOver.value = false;
+  dragPortfolioId.value = null;
+}
+async function onDrop() {
+  isDragOver.value = false;
+  isDragging.value = false;
+  if (dragPortfolioId.value && !pinnedIds.value.has(dragPortfolioId.value)) {
+    await togglePin(dragPortfolioId.value);
+    dropSuccess.value = true;
+    setTimeout(() => { dropSuccess.value = false; }, 600);
+  }
+  dragPortfolioId.value = null;
+}
+
 async function fetchMatches() {
   loading.value = true;
   try {
@@ -240,6 +305,7 @@ onMounted(async () => {
     maxBudgetDisplay.value = formatTR(form.maxBudget);
   }
   fetchMatches();
+  if (isEdit.value) loadPinnedMatches();
 });
 
 const canSubmit = computed(
@@ -308,7 +374,38 @@ async function submit() {
 
     <div class="flex-1 flex overflow-hidden">
       <!-- ── SOL: Kriterler ── -->
-      <div class="w-[42%] border-r border-outline-variant flex flex-col overflow-hidden bg-surface-container/30">
+      <div
+        class="w-[42%] border-r border-outline-variant flex flex-col overflow-hidden bg-surface-container/30 relative"
+        @dragover.prevent="isDragOver = isDragging"
+        @dragleave="isDragOver = false"
+        @drop.prevent="onDrop"
+      >
+        <!-- Drag-over overlay -->
+        <Transition name="fade">
+          <div
+            v-if="isDragging && isEdit"
+            class="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none transition-colors duration-150"
+            :class="isDragOver ? 'bg-primary/10 border-2 border-dashed border-primary' : 'bg-surface/60'"
+          >
+            <span class="material-symbols-outlined text-[56px] transition-all duration-150" :class="isDragOver ? 'text-primary scale-110' : 'text-on-surface-variant/30'">bookmark_add</span>
+            <p class="text-label-md font-semibold mt-2 transition-colors duration-150" :class="isDragOver ? 'text-primary' : 'text-on-surface-variant/40'">
+              {{ isDragOver ? 'Bırakın — eşleştirilsin' : 'Portföyü buraya sürükleyin' }}
+            </p>
+          </div>
+        </Transition>
+
+        <!-- Drop success flash -->
+        <Transition name="drop-success">
+          <div
+            v-if="dropSuccess"
+            class="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none bg-primary/15 backdrop-blur-[2px]"
+          >
+            <div class="flex flex-col items-center gap-2 px-8 py-6 rounded-2xl bg-primary text-on-primary shadow-xl animate-success-pop">
+              <span class="material-symbols-outlined text-[44px]">bookmark_added</span>
+              <p class="text-label-lg font-bold tracking-tight">Portföy eşleştirildi!</p>
+            </div>
+          </div>
+        </Transition>
         <div class="flex-1 overflow-y-auto px-7 py-6 space-y-4">
           <!-- Tip & ilan tipi -->
           <div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-5">
@@ -499,21 +596,116 @@ async function submit() {
 
       <!-- ── SAĞ: Canlı skorlu portföyler ── -->
       <div class="flex-1 flex flex-col overflow-hidden">
-        <div class="shrink-0 flex items-center justify-between px-7 py-4 border-b border-outline-variant bg-surface">
-          <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-primary text-[20px]">join_inner</span>
-            <h2 class="text-label-md font-semibold text-on-surface">
-              {{ results.length }} uyan portföy
-            </h2>
-            <span v-if="loading" class="material-symbols-outlined text-on-surface-variant text-[16px] animate-spin">progress_activity</span>
-          </div>
-          <div class="flex items-center gap-3 text-label-sm text-on-surface-variant">
-            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-primary inline-block"></span>uyumlu</span>
-            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-error inline-block"></span>eksik</span>
+        <!-- Tab başlıkları -->
+        <div class="shrink-0 border-b border-outline-variant bg-surface">
+          <div class="flex">
+            <button
+              type="button"
+              class="flex-1 flex items-center justify-center gap-2 py-3.5 text-label-md font-semibold border-b-2 transition-all"
+              :class="activeTab === 'pinned' ? 'border-primary text-primary' : 'border-transparent text-on-surface-variant hover:text-on-surface'"
+              @click="activeTab = 'pinned'"
+            >
+              <span class="material-symbols-outlined text-[16px]">bookmark</span>
+              Eşleştirilenler
+              <span
+                v-if="pinnedIds.size > 0"
+                class="px-1.5 py-0.5 rounded-full text-[11px] font-bold leading-none"
+                :class="activeTab === 'pinned' ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface-variant'"
+              >{{ pinnedIds.size }}</span>
+            </button>
+            <button
+              type="button"
+              class="flex-1 flex items-center justify-center gap-2 py-3.5 text-label-md font-semibold border-b-2 transition-all"
+              :class="activeTab === 'all' ? 'border-primary text-primary' : 'border-transparent text-on-surface-variant hover:text-on-surface'"
+              @click="activeTab = 'all'"
+            >
+              <span class="material-symbols-outlined text-[16px]">join_inner</span>
+              Tüm Eşleşmeler
+              <span
+                v-if="results.length > 0"
+                class="px-1.5 py-0.5 rounded-full text-[11px] font-bold leading-none"
+                :class="activeTab === 'all' ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface-variant'"
+              >{{ results.length }}</span>
+              <span v-if="loading" class="material-symbols-outlined text-[14px] animate-spin text-on-surface-variant">progress_activity</span>
+            </button>
           </div>
         </div>
 
         <div class="flex-1 overflow-y-auto px-7 py-6">
+
+          <!-- ── Sekme 1: Eşleştirilenler ── -->
+          <template v-if="activeTab === 'pinned'">
+            <div v-if="!isEdit" class="h-full flex flex-col items-center justify-center text-center">
+              <span class="material-symbols-outlined text-[48px] text-on-surface-variant/30 mb-3">bookmark_add</span>
+              <p class="text-body-md text-on-surface-variant">Eşleştirme için önce talebi kaydedin.</p>
+              <p class="text-label-md text-on-surface-variant/50 mt-1">Kaydettikten sonra portföyleri bu talebe sabitleyebilirsiniz.</p>
+            </div>
+            <div v-else-if="pinnedLoading" class="h-full flex items-center justify-center">
+              <span class="material-symbols-outlined text-[32px] text-on-surface-variant/40 animate-spin">progress_activity</span>
+            </div>
+            <div v-else-if="!pinnedResults.length" class="h-full flex flex-col items-center justify-center text-center">
+              <span class="material-symbols-outlined text-[48px] text-on-surface-variant/30 mb-3">bookmark_border</span>
+              <p class="text-body-md text-on-surface-variant">Henüz eşleştirilen portföy yok.</p>
+              <p class="text-label-md text-on-surface-variant/50 mt-1">Sağ paneldeki portföyleri sürükleyerek veya <span class="material-symbols-outlined text-[12px] align-middle">bookmark_add</span> ikonuna tıklayarak eşleştirin.</p>
+            </div>
+            <div v-else class="grid grid-cols-2 gap-4">
+              <div
+                v-for="r in pinnedResults" :key="r.portfolio.id"
+                class="rounded-2xl overflow-hidden shadow-sm border-2 border-primary/30 flex flex-col bg-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+              >
+                <!-- Görsel -->
+                <div class="relative w-full h-52 bg-surface-container shrink-0">
+                  <img v-if="r.portfolio.images?.length" :src="resolveImgUrl(r.portfolio.images[0])" :alt="r.portfolio.title ?? undefined" class="w-full h-full object-cover" />
+                  <div v-else class="w-full h-full flex flex-col items-center justify-center bg-surface-container">
+                    <span class="material-symbols-outlined text-[48px] text-on-surface-variant/20">apartment</span>
+                  </div>
+                  <div class="absolute top-3 left-3">
+                    <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-black/40 text-white backdrop-blur-sm">{{ LISTING_TYPE_LABELS[r.portfolio.listingType] }}</span>
+                  </div>
+                  <!-- Eşleştirildi rozeti -->
+                  <div class="absolute top-3 right-3">
+                    <span class="flex items-center gap-0.5 px-2 py-1 rounded-md text-[11px] font-bold bg-primary text-on-primary shadow-sm">
+                      <span class="material-symbols-outlined text-[12px]">bookmark</span>
+                      Eşleştirildi
+                    </span>
+                  </div>
+                  <div class="absolute bottom-3 right-3 flex flex-col items-center justify-center w-[52px] h-[52px] rounded-2xl backdrop-blur-md shadow-lg"
+                    :class="r.score >= 80 ? 'bg-primary/90' : r.score >= 60 ? 'bg-primary/75' : 'bg-black/50'">
+                    <span class="text-[22px] font-black leading-none text-white">{{ r.score }}</span>
+                    <span class="text-[9px] font-semibold text-white/70 uppercase tracking-wide leading-none mt-0.5">puan</span>
+                  </div>
+                </div>
+                <!-- Bilgi alanı -->
+                <div class="flex flex-col flex-1 px-4 pt-3.5 pb-4 gap-2">
+                  <h3 class="text-[13px] font-semibold text-on-surface leading-snug line-clamp-2">{{ r.portfolio.title || PROPERTY_TYPE_LABELS[r.portfolio.type] }}</h3>
+                  <p class="text-[18px] font-black text-primary leading-none tracking-tight">{{ fmtPrice(r.portfolio.price) }}</p>
+                  <p class="text-[11px] text-on-surface-variant flex items-center gap-0.5">
+                    <span class="material-symbols-outlined text-[12px] shrink-0">location_on</span>
+                    <span class="truncate">{{ locationOf(r.portfolio) }}</span>
+                  </p>
+                  <div class="flex items-center gap-3 text-[11px] text-on-surface-variant">
+                    <span class="flex items-center gap-0.5 font-medium"><span class="material-symbols-outlined text-[12px]">straighten</span>{{ r.portfolio.areaSqm }} m²</span>
+                    <span class="flex items-center gap-0.5 font-medium"><span class="material-symbols-outlined text-[12px]">door_open</span>{{ r.portfolio.roomCount }}</span>
+                  </div>
+                  <div class="flex items-center justify-between gap-2 mt-auto pt-1">
+                    <a :href="`tel:${r.portfolio.ownerPhone}`"
+                      class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary text-on-primary text-[12px] font-semibold hover:opacity-90 active:scale-[0.98] transition-all">
+                      <span class="material-symbols-outlined text-[14px]">call</span>
+                      {{ r.portfolio.ownerName }}
+                    </a>
+                    <button type="button" @click="togglePin(r.portfolio.id)"
+                      class="p-2 rounded-xl bg-error-container text-on-error-container hover:opacity-80 transition-all"
+                      title="Eşleştirmeyi kaldır">
+                      <span class="material-symbols-outlined text-[16px]">bookmark_remove</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- ── Sekme 2: Tüm eşleşmeler ── -->
+          <template v-else>
           <!-- Boş durum -->
           <div v-if="!results.length" class="h-full flex flex-col items-center justify-center text-center">
             <span class="material-symbols-outlined text-[48px] text-on-surface-variant/40 mb-3">search_off</span>
@@ -525,7 +717,16 @@ async function submit() {
           <div v-else class="grid grid-cols-2 gap-4">
             <div
               v-for="r in results" :key="r.portfolio.id"
-              class="rounded-2xl overflow-hidden shadow-sm border border-outline-variant/50 flex flex-col bg-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+              :draggable="isEdit"
+              @dragstart="onDragStart(r.portfolio.id)"
+              @dragend="onDragEnd"
+              class="rounded-2xl overflow-hidden border flex flex-col hover:-translate-y-0.5 transition-all duration-200 select-none"
+              :class="[
+                pinnedIds.has(r.portfolio.id)
+                  ? 'border-2 border-primary bg-primary/[0.03] shadow-[0_0_0_3px_rgba(78,96,79,0.15),0_2px_8px_rgba(0,0,0,0.08)]'
+                  : 'border border-outline-variant/50 bg-white shadow-sm hover:shadow-md',
+                justPinnedId === r.portfolio.id ? 'animate-pin-pop' : ''
+              ]"
             >
               <!-- Görsel -->
               <div class="relative w-full h-52 bg-surface-container shrink-0">
@@ -546,15 +747,42 @@ async function submit() {
                   </span>
                 </div>
 
-                <!-- Sağ alt: skor (büyük, cam efektli) -->
-                <div class="absolute bottom-3 right-3 flex flex-col items-center justify-center w-[52px] h-[52px] rounded-2xl backdrop-blur-md shadow-lg"
-                  :class="r.score >= 80 ? 'bg-primary/90' : r.score >= 60 ? 'bg-primary/75' : 'bg-black/50'">
+                <!-- Eşleştirildi görsel overlay -->
+                <div v-if="pinnedIds.has(r.portfolio.id)" class="absolute inset-0 bg-primary/10 pointer-events-none" />
+
+                <!-- Sol alt: eşleştirildi şerit rozeti -->
+                <div v-if="pinnedIds.has(r.portfolio.id)"
+                  class="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1.5 py-1.5 bg-primary text-on-primary text-[11px] font-bold tracking-wide">
+                  <span class="material-symbols-outlined text-[13px]">bookmark</span>
+                  EŞLEŞTİRİLDİ
+                </div>
+
+                <!-- Sağ üst: pin butonu -->
+                <div class="absolute top-3 right-3">
+                  <button v-if="isEdit" type="button"
+                    @click.stop="togglePin(r.portfolio.id)"
+                    class="flex items-center justify-center w-9 h-9 rounded-xl backdrop-blur-md shadow-md transition-all duration-150"
+                    :class="pinnedIds.has(r.portfolio.id)
+                      ? 'bg-primary text-on-primary scale-110'
+                      : 'bg-black/40 text-white hover:bg-primary hover:text-on-primary hover:scale-110'"
+                    :title="pinnedIds.has(r.portfolio.id) ? 'Eşleştirmeyi kaldır' : 'Bu talebe eşleştir'">
+                    <span class="material-symbols-outlined text-[18px]">{{ pinnedIds.has(r.portfolio.id) ? 'bookmark' : 'bookmark_add' }}</span>
+                  </button>
+                </div>
+
+                <!-- Skor badge: pinned ise üstte, değilse altta -->
+                <div
+                  class="absolute flex flex-col items-center justify-center w-[52px] h-[52px] rounded-2xl backdrop-blur-md shadow-lg transition-all duration-300"
+                  :class="[
+                    pinnedIds.has(r.portfolio.id) ? 'bottom-10 right-3' : 'bottom-3 right-3',
+                    r.score >= 85 ? 'bg-primary/90' : r.score >= 65 ? 'bg-secondary/90' : 'bg-black/50'
+                  ]">
                   <span class="text-[22px] font-black leading-none text-white">{{ r.score }}</span>
                   <span class="text-[9px] font-semibold text-white/70 uppercase tracking-wide leading-none mt-0.5">puan</span>
                 </div>
               </div>
 
-              <!-- Beyaz bilgi alanı -->
+              <!-- Bilgi alanı -->
               <div class="flex flex-col flex-1 px-4 pt-3.5 pb-4 gap-2">
                 <!-- Başlık -->
                 <h3 class="text-[13px] font-semibold text-on-surface leading-snug line-clamp-2">
@@ -632,8 +860,36 @@ async function submit() {
               </div>
             </div>
           </div>
+          </template>
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active, .fade-leave-active { transition: opacity 0.15s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+.drop-success-enter-active { transition: opacity 0.12s ease-out; }
+.drop-success-leave-active { transition: opacity 0.4s ease-in; }
+.drop-success-enter-from, .drop-success-leave-to { opacity: 0; }
+
+/* Kart pin animasyonu — belirgin halka yayılımı */
+@keyframes pin-pop {
+  0%   { transform: scale(1);    box-shadow: 0 0 0 0px  rgba(78,96,79,0.8), 0 2px 8px rgba(0,0,0,0.08); }
+  20%  { transform: scale(1.07); box-shadow: 0 0 0 8px  rgba(78,96,79,0.35), 0 6px 20px rgba(0,0,0,0.14); }
+  50%  { transform: scale(1.03); box-shadow: 0 0 0 18px rgba(78,96,79,0), 0 4px 14px rgba(0,0,0,0.1); }
+  75%  { transform: scale(0.99); }
+  100% { transform: scale(1);    box-shadow: 0 0 0 0px  rgba(78,96,79,0), 0 2px 8px rgba(0,0,0,0.08); }
+}
+.animate-pin-pop { animation: pin-pop 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+/* Drop success içindeki kart pop */
+@keyframes success-pop {
+  0%   { transform: scale(0.7); opacity: 0; }
+  60%  { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-success-pop { animation: success-pop 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+</style>
