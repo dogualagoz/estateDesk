@@ -15,9 +15,11 @@ import {
   FEATURE_PRESETS,
   type ListingType,
   type PropertyType,
+  type Portfolio,
 } from '@/types/portfolio';
 import { resolveImgUrl } from '@/utils/image';
 import LocationDropdown from '@/components/ui/LocationDropdown.vue';
+import PortfolioDetailModal from '@/components/portfolio/PortfolioDetailModal.vue';
 import {
   getCityNames,
   getDistrictNames,
@@ -266,18 +268,55 @@ function fmtPrice(p: string | number) {
 function locationOf(p: ScoredPortfolio['portfolio']) {
   return [p.neighborhood, p.district, p.city].filter(Boolean).join(', ');
 }
-function scoreBadgeClass(s: number) {
-  if (s >= 80) return 'bg-primary text-on-primary';
-  if (s >= 60) return 'bg-primary-fixed text-on-primary-fixed-variant';
-  return 'bg-surface-container text-on-surface-variant';
-}
 function dimLabel(k: DimensionKey) {
   return DIMENSION_LABELS[k];
 }
-function barColor(score: number) {
-  return score >= 0.6 ? 'bg-primary' : score >= 0.3 ? 'bg-tertiary-container' : 'bg-error';
-}
 const activeBreakdown = (r: ScoredPortfolio) => r.breakdown.filter((b) => b.active);
+
+// ── Skor renk skalası: yeşil (iyi) → kırmızı (zayıf) ──
+/** Kart köşesindeki büyük skor rozeti (0..100). */
+function scoreBadgeBg(s: number) {
+  if (s >= 80) return 'bg-emerald-600/90';
+  if (s >= 60) return 'bg-lime-600/90';
+  if (s >= 40) return 'bg-amber-500/90';
+  if (s >= 20) return 'bg-orange-500/90';
+  return 'bg-red-600/90';
+}
+/** Dimension uyum çubuğunun dolgu rengi (score 0..1). */
+function dimBarColor(score: number) {
+  const s = score * 100;
+  if (s >= 80) return 'bg-emerald-500';
+  if (s >= 60) return 'bg-lime-500';
+  if (s >= 40) return 'bg-amber-500';
+  if (s >= 20) return 'bg-orange-500';
+  return 'bg-red-500';
+}
+/** Dimension yüzde sayısının metin rengi (score 0..1). */
+function dimTextColor(score: number) {
+  const s = score * 100;
+  if (s >= 80) return 'text-emerald-600';
+  if (s >= 60) return 'text-lime-600';
+  if (s >= 40) return 'text-amber-600';
+  if (s >= 20) return 'text-orange-600';
+  return 'text-red-600';
+}
+
+// ── Portföy önizleme modalı ──
+const previewPortfolio = ref<Portfolio | null>(null);
+const previewOrigin = ref<{ x: number; y: number } | null>(null);
+function openPreview(p: Portfolio, ev?: MouseEvent) {
+  const el = ev?.currentTarget as HTMLElement | undefined;
+  if (el) {
+    const r = el.getBoundingClientRect();
+    previewOrigin.value = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  } else {
+    previewOrigin.value = null;
+  }
+  previewPortfolio.value = p;
+}
+function closePreview() {
+  previewPortfolio.value = null;
+}
 
 // ── Yükleme (edit) ──
 onMounted(async () => {
@@ -651,7 +690,8 @@ async function submit() {
             <div v-else class="grid grid-cols-2 gap-4">
               <div
                 v-for="r in pinnedResults" :key="r.portfolio.id"
-                class="rounded-2xl overflow-hidden shadow-sm border-2 border-primary/30 flex flex-col bg-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+                class="rounded-2xl overflow-hidden shadow-sm border-2 border-primary/30 flex flex-col bg-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
+                @click="openPreview(r.portfolio, $event)"
               >
                 <!-- Görsel -->
                 <div class="relative w-full h-52 bg-surface-container shrink-0">
@@ -670,7 +710,7 @@ async function submit() {
                     </span>
                   </div>
                   <div class="absolute bottom-3 right-3 flex flex-col items-center justify-center w-[52px] h-[52px] rounded-2xl backdrop-blur-md shadow-lg"
-                    :class="r.score >= 80 ? 'bg-primary/90' : r.score >= 60 ? 'bg-primary/75' : 'bg-black/50'">
+                    :class="scoreBadgeBg(r.score)">
                     <span class="text-[22px] font-black leading-none text-white">{{ r.score }}</span>
                     <span class="text-[9px] font-semibold text-white/70 uppercase tracking-wide leading-none mt-0.5">puan</span>
                   </div>
@@ -688,12 +728,12 @@ async function submit() {
                     <span class="flex items-center gap-0.5 font-medium"><span class="material-symbols-outlined text-[12px]">door_open</span>{{ r.portfolio.roomCount }}</span>
                   </div>
                   <div class="flex items-center justify-between gap-2 mt-auto pt-1">
-                    <a :href="`tel:${r.portfolio.ownerPhone}`"
+                    <a :href="`tel:${r.portfolio.ownerPhone}`" @click.stop
                       class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary text-on-primary text-[12px] font-semibold hover:opacity-90 active:scale-[0.98] transition-all">
                       <span class="material-symbols-outlined text-[14px]">call</span>
                       {{ r.portfolio.ownerName }}
                     </a>
-                    <button type="button" @click="togglePin(r.portfolio.id)"
+                    <button type="button" @click.stop="togglePin(r.portfolio.id)"
                       class="p-2 rounded-xl bg-error-container text-on-error-container hover:opacity-80 transition-all"
                       title="Eşleştirmeyi kaldır">
                       <span class="material-symbols-outlined text-[16px]">bookmark_remove</span>
@@ -720,7 +760,8 @@ async function submit() {
               :draggable="isEdit"
               @dragstart="onDragStart(r.portfolio.id)"
               @dragend="onDragEnd"
-              class="rounded-2xl overflow-hidden border flex flex-col hover:-translate-y-0.5 transition-all duration-200 select-none"
+              @click="openPreview(r.portfolio, $event)"
+              class="rounded-2xl overflow-hidden border flex flex-col hover:-translate-y-0.5 transition-all duration-200 select-none cursor-pointer"
               :class="[
                 pinnedIds.has(r.portfolio.id)
                   ? 'border-2 border-primary bg-primary/[0.03] shadow-[0_0_0_3px_rgba(78,96,79,0.15),0_2px_8px_rgba(0,0,0,0.08)]'
@@ -775,7 +816,7 @@ async function submit() {
                   class="absolute flex flex-col items-center justify-center w-[52px] h-[52px] rounded-2xl backdrop-blur-md shadow-lg transition-all duration-300"
                   :class="[
                     pinnedIds.has(r.portfolio.id) ? 'bottom-10 right-3' : 'bottom-3 right-3',
-                    r.score >= 85 ? 'bg-primary/90' : r.score >= 65 ? 'bg-secondary/90' : 'bg-black/50'
+                    scoreBadgeBg(r.score)
                   ]">
                   <span class="text-[22px] font-black leading-none text-white">{{ r.score }}</span>
                   <span class="text-[9px] font-semibold text-white/70 uppercase tracking-wide leading-none mt-0.5">puan</span>
@@ -811,31 +852,30 @@ async function submit() {
                 </div>
 
                 <!-- Dimension uyum çubukları -->
-                <div class="grid grid-cols-5 gap-1.5 py-1">
+                <div class="grid grid-cols-5 gap-2 py-1.5">
                   <div v-for="b in activeBreakdown(r)" :key="b.key">
                     <div class="flex items-center justify-between mb-1">
-                      <span class="text-[9px] text-on-surface-variant/70 leading-none">{{ dimLabel(b.key) }}</span>
-                      <span class="text-[9px] font-semibold leading-none"
-                        :class="b.score >= 0.6 ? 'text-primary' : b.score >= 0.3 ? 'text-on-surface-variant' : 'text-error'">
+                      <span class="text-[10px] font-medium text-on-surface-variant/80 leading-none">{{ dimLabel(b.key) }}</span>
+                      <span class="text-[11px] font-bold leading-none" :class="dimTextColor(b.score)">
                         {{ Math.round(b.score * 100) }}
                       </span>
                     </div>
-                    <div class="h-1 rounded-full bg-surface-container overflow-hidden">
-                      <div class="h-full rounded-full transition-all duration-500" :class="barColor(b.score)"
+                    <div class="h-2 rounded-full bg-surface-container overflow-hidden">
+                      <div class="h-full rounded-full transition-all duration-500" :class="dimBarColor(b.score)"
                         :style="{ width: (b.score * 100) + '%' }" />
                     </div>
                   </div>
                 </div>
 
                 <!-- Uyuşan / eksik etiketler -->
-                <div class="flex flex-wrap gap-1">
+                <div class="flex flex-wrap gap-1.5">
                   <span v-for="k in r.reasons" :key="'r'+k"
-                    class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-primary-fixed/80 text-on-primary-fixed-variant">
-                    ✓ {{ dimLabel(k) }}
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-semibold bg-emerald-100 text-emerald-700">
+                    <span class="material-symbols-outlined text-[14px]">check_circle</span>{{ dimLabel(k) }}
                   </span>
                   <span v-for="k in r.gaps" :key="'g'+k"
-                    class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-error-container text-on-error-container">
-                    ✕ {{ dimLabel(k) }}
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-semibold bg-red-100 text-red-700">
+                    <span class="material-symbols-outlined text-[14px]">cancel</span>{{ dimLabel(k) }}
                   </span>
                 </div>
 
@@ -852,7 +892,7 @@ async function submit() {
                 </div>
 
                 <!-- Telefon butonu -->
-                <a :href="`tel:${r.portfolio.ownerPhone}`"
+                <a :href="`tel:${r.portfolio.ownerPhone}`" @click.stop
                   class="mt-auto flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary text-on-primary text-[12px] font-semibold hover:opacity-90 active:scale-[0.98] transition-all">
                   <span class="material-symbols-outlined text-[14px]">call</span>
                   {{ r.portfolio.ownerName }}
@@ -864,6 +904,16 @@ async function submit() {
         </div>
       </div>
     </div>
+
+    <!-- Portföy önizleme modalı -->
+    <PortfolioDetailModal
+      :portfolio="previewPortfolio"
+      :origin="previewOrigin"
+      :can-pin="isEdit"
+      :pinned="!!previewPortfolio && pinnedIds.has(previewPortfolio.id)"
+      @toggle-pin="togglePin"
+      @close="closePreview"
+    />
   </div>
 </template>
 

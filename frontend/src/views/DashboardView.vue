@@ -5,7 +5,7 @@ import { dashboardService, type NotedPortfolio, type NotedDemand, type Dashboard
 import { PROPERTY_TYPE_LABELS } from '@/types/portfolio';
 import type { Portfolio } from '@/types/portfolio';
 import type { Demand } from '@/types/demand';
-import DashboardNoteCard from '@/components/dashboard/DashboardNoteCard.vue';
+import DashboardNoteRow from '@/components/dashboard/DashboardNoteRow.vue';
 import NoteSearchModal from '@/components/dashboard/NoteSearchModal.vue';
 
 const router = useRouter();
@@ -101,7 +101,7 @@ function portfolioSubtitle(p: NotedPortfolio) { return fmtPrice(p.price); }
 function demandSubtitle(d: NotedDemand) {
   const min = d.minBudget ? fmtPrice(d.minBudget) : null;
   const max = d.maxBudget ? fmtPrice(d.maxBudget) : null;
-  if (!min && !max) return '—';
+  if (!min && !max) return '';
   return `${min ?? '0'} – ${max ?? '∞'}`;
 }
 </script>
@@ -120,37 +120,35 @@ function demandSubtitle(d: NotedDemand) {
     <template v-else>
       <div class="dashboard-grid">
 
-        <!-- Ana içerik -->
-        <div class="dashboard-main">
+        <!-- Açık defter: iki sayfa -->
+        <div class="notebook">
 
-          <!-- Defter modülü -->
-          <div class="defter-module">
-
-            <!-- Portföy Notları -->
-            <section class="notes-section">
-              <div class="section-header">
-                <div class="section-title">
-                  <span class="material-symbols-outlined section-icon">maps_home_work</span>
-                  <span>Portföy Notları</span>
-                  <span v-if="notedPortfolios.length" class="section-badge">{{ notedPortfolios.length }}</span>
-                </div>
-                <div class="section-actions">
-                  <button class="icon-btn" title="Tüm Portföyler" @click="router.push('/portfolio')">
-                    <span class="material-symbols-outlined">open_in_new</span>
-                  </button>
-                  <button class="add-note-btn" @click="searchModal = 'portfolio'">
-                    <span class="material-symbols-outlined">add</span>
-                    Not Ekle
-                  </button>
-                </div>
+          <!-- Sol sayfa — Portföy -->
+          <section class="page-col">
+            <header class="col-header">
+              <div class="col-title">
+                <span class="material-symbols-outlined col-icon">maps_home_work</span>
+                <span>Portföyler</span>
+                <span v-if="notedPortfolios.length" class="col-count">{{ notedPortfolios.length }}</span>
               </div>
+              <div class="col-actions">
+                <button class="add-btn" @click="searchModal = 'portfolio'">
+                  <span class="material-symbols-outlined">add</span>
+                  Not
+                </button>
+                <button class="link-btn" title="Tüm Portföyler" @click="router.push('/portfolio')">
+                  <span class="material-symbols-outlined">open_in_new</span>
+                </button>
+              </div>
+            </header>
 
-              <div v-if="pendingPortfolios.length === 0 && notedPortfolios.length === 0" class="notes-empty">
+            <div class="col-list">
+              <div v-if="pendingPortfolios.length === 0 && notedPortfolios.length === 0" class="col-empty">
                 <span class="material-symbols-outlined">sticky_note_2</span>
-                <p>Henüz not yok. "+ Not Ekle" ile başlayın.</p>
+                <p>Henüz not yok. "+ Not" ile başlayın.</p>
               </div>
-              <div v-else class="notes-scroll">
-                <DashboardNoteCard
+              <template v-else>
+                <DashboardNoteRow
                   v-for="p in pendingPortfolios" :key="`pending-p-${p.id}`"
                   :id="p.id" item-type="portfolio" :badge="portfolioBadge(p)"
                   :title="portfolioTitle(p)" :subtitle="portfolioSubtitle(p)"
@@ -159,7 +157,7 @@ function demandSubtitle(d: NotedDemand) {
                   @saved="(n) => onPortfolioSaved(p, n)"
                   @cancelled="pendingPortfolios = pendingPortfolios.filter(x => x.id !== p.id)"
                 />
-                <DashboardNoteCard
+                <DashboardNoteRow
                   v-for="p in notedPortfolios" :key="p.id"
                   :id="p.id" item-type="portfolio" :badge="portfolioBadge(p)"
                   :title="portfolioTitle(p)" :subtitle="portfolioSubtitle(p)"
@@ -167,34 +165,39 @@ function demandSubtitle(d: NotedDemand) {
                   :agent-name="p.agentName ?? undefined"
                   @saved="(n) => onPortfolioNoteUpdated(p, n)"
                 />
-              </div>
-            </section>
+              </template>
+            </div>
+          </section>
 
-            <!-- Talep Notları -->
-            <section class="notes-section">
-              <div class="section-header">
-                <div class="section-title">
-                  <span class="material-symbols-outlined section-icon">ads_click</span>
-                  <span>Talep Notları</span>
-                  <span v-if="notedDemands.length" class="section-badge">{{ notedDemands.length }}</span>
-                </div>
-                <div class="section-actions">
-                  <button class="icon-btn" title="Tüm Talepler" @click="router.push('/demand')">
-                    <span class="material-symbols-outlined">open_in_new</span>
-                  </button>
-                  <button class="add-note-btn" @click="searchModal = 'demand'">
-                    <span class="material-symbols-outlined">add</span>
-                    Not Ekle
-                  </button>
-                </div>
-              </div>
+          <!-- Cilt ayracı -->
+          <div class="spine" />
 
-              <div v-if="pendingDemands.length === 0 && notedDemands.length === 0" class="notes-empty">
+          <!-- Sağ sayfa — Talep -->
+          <section class="page-col">
+            <header class="col-header">
+              <div class="col-title">
+                <span class="material-symbols-outlined col-icon">ads_click</span>
+                <span>Talepler</span>
+                <span v-if="notedDemands.length" class="col-count">{{ notedDemands.length }}</span>
+              </div>
+              <div class="col-actions">
+                <button class="add-btn" @click="searchModal = 'demand'">
+                  <span class="material-symbols-outlined">add</span>
+                  Not
+                </button>
+                <button class="link-btn" title="Tüm Talepler" @click="router.push('/demand')">
+                  <span class="material-symbols-outlined">open_in_new</span>
+                </button>
+              </div>
+            </header>
+
+            <div class="col-list">
+              <div v-if="pendingDemands.length === 0 && notedDemands.length === 0" class="col-empty">
                 <span class="material-symbols-outlined">sticky_note_2</span>
-                <p>Henüz not yok. "+ Not Ekle" ile başlayın.</p>
+                <p>Henüz not yok. "+ Not" ile başlayın.</p>
               </div>
-              <div v-else class="notes-scroll">
-                <DashboardNoteCard
+              <template v-else>
+                <DashboardNoteRow
                   v-for="d in pendingDemands" :key="`pending-d-${d.id}`"
                   :id="d.id" item-type="demand" badge="Talep"
                   :title="d.customerName" :subtitle="demandSubtitle(d)"
@@ -203,7 +206,7 @@ function demandSubtitle(d: NotedDemand) {
                   @saved="(n) => onDemandSaved(d, n)"
                   @cancelled="pendingDemands = pendingDemands.filter(x => x.id !== d.id)"
                 />
-                <DashboardNoteCard
+                <DashboardNoteRow
                   v-for="d in notedDemands" :key="d.id"
                   :id="d.id" item-type="demand" badge="Talep"
                   :title="d.customerName" :subtitle="demandSubtitle(d)"
@@ -211,9 +214,9 @@ function demandSubtitle(d: NotedDemand) {
                   :agent-name="d.agentName ?? undefined"
                   @saved="(n) => onDemandNoteUpdated(d, n)"
                 />
-              </div>
-            </section>
-          </div>
+              </template>
+            </div>
+          </section>
 
         </div>
 
@@ -274,151 +277,154 @@ function demandSubtitle(d: NotedDemand) {
   align-items: start;
 }
 
-.dashboard-main {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+/* ── Açık defter ── */
+.notebook {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  background: #ffffff;
+  border: 1.5px solid #c3c8c0;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
   min-width: 0;
 }
 
-/* ── Defter modülü ── */
-.defter-module {
-  background: #f4f4f2;
-  border-radius: 14px;
-  padding: 12px;
+.spine {
+  background: linear-gradient(to bottom, transparent, #e2e3e1 12%, #e2e3e1 88%, transparent);
+}
+
+.page-col {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  min-width: 0;
 }
 
-/* ── Notes section ── */
-.notes-section {
-  border: 1.5px solid #c3c8c0;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #ffffff;
-}
-
-.section-header {
+/* Sütun başlığı */
+.col-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 13px 18px;
-  background: var(--surface-container-lowest);
-  border-bottom: 1.5px solid var(--outline-variant);
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid #eeeeec;
 }
 
-.section-title {
+.col-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--on-surface);
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1c1b;
+  letter-spacing: 0.02em;
 }
 
-.section-icon {
+.col-icon {
   font-size: 17px;
-  color: var(--primary);
+  color: #4e604f;
 }
 
-.section-badge {
+.col-count {
   font-size: 11px;
   font-weight: 600;
-  color: var(--on-surface-variant);
-  background: var(--surface-container);
+  color: #747872;
+  background: #eeeeec;
   border-radius: 99px;
-  padding: 1px 8px;
-  line-height: 18px;
+  padding: 1px 7px;
 }
 
-.section-actions {
+.col-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
-.icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  background: none;
-  border: none;
-  border-radius: 8px;
-  color: var(--on-surface-variant);
-  cursor: pointer;
-  transition: background 0.12s;
-}
-
-.icon-btn .material-symbols-outlined { font-size: 17px; }
-
-.icon-btn:hover {
-  background: var(--surface-container);
-  color: var(--on-surface);
-}
-
-.add-note-btn {
+.add-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 6px 13px;
+  gap: 3px;
+  padding: 5px 11px;
   background: #4e604f;
   color: #ffffff;
-  border: 1.5px solid #4e604f;
-  border-radius: 8px;
-  font-size: 13px;
+  border: none;
+  border-radius: 7px;
+  font-size: 12px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   transition: background 0.12s, box-shadow 0.12s;
 }
 
-.add-note-btn .material-symbols-outlined { font-size: 15px; color: #ffffff; }
+.add-btn .material-symbols-outlined { font-size: 14px; }
 
-.add-note-btn:hover {
+.add-btn:hover {
   background: #3d4e3e;
-  border-color: #3d4e3e;
-  box-shadow: 0 2px 8px rgba(78, 96, 79, 0.35);
+  box-shadow: 0 2px 6px rgba(78, 96, 79, 0.3);
 }
 
-.add-note-btn:hover {
-  background: color-mix(in srgb, var(--primary) 82%, black);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+.link-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  border-radius: 7px;
+  color: #747872;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
 }
 
-.notes-empty {
+.link-btn .material-symbols-outlined { font-size: 16px; }
+
+.link-btn:hover {
+  background: #eeeeec;
+  color: #1a1c1b;
+}
+
+/* Liste */
+.col-list {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 44px 20px;
-  background: var(--surface-container-low);
-  color: var(--on-surface-variant);
-  font-size: 13px;
-  text-align: center;
-}
-
-.notes-empty .material-symbols-outlined {
-  font-size: 34px;
-  color: var(--outline);
-}
-
-.notes-scroll {
-  display: flex;
-  gap: 14px;
-  padding: 18px 18px 20px;
-  overflow-x: auto;
-  background: #ffffff;
+  padding: 6px;
+  gap: 0;
+  max-height: 560px;
+  overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #c3c8c0 transparent;
 }
 
-.notes-scroll::-webkit-scrollbar { height: 4px; }
-.notes-scroll::-webkit-scrollbar-thumb {
-  background: var(--outline-variant);
-  border-radius: 2px;
+.col-list::-webkit-scrollbar { width: 5px; }
+.col-list::-webkit-scrollbar-thumb {
+  background: #c3c8c0;
+  border-radius: 3px;
+}
+
+/* Satırlar arası ince çizgi */
+.col-list > :deep(.note-row:not(:last-child))::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 12px;
+  bottom: 0;
+  height: 1px;
+  background: #f0f0ee;
+}
+
+.col-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 20px;
+  color: #747872;
+  font-size: 13px;
+  text-align: center;
+}
+
+.col-empty .material-symbols-outlined {
+  font-size: 32px;
+  color: #c3c8c0;
 }
 
 /* ── Stats sidebar ── */
@@ -435,8 +441,8 @@ function demandSubtitle(d: NotedDemand) {
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  background: var(--surface-container-lowest);
-  border: 1.5px solid var(--outline-variant);
+  background: #ffffff;
+  border: 1.5px solid #c3c8c0;
   border-radius: 12px;
   cursor: pointer;
   font-family: inherit;
@@ -451,7 +457,7 @@ function demandSubtitle(d: NotedDemand) {
 
 .stat-icon {
   font-size: 20px;
-  color: var(--primary);
+  color: #4e604f;
   opacity: 0.8;
   flex-shrink: 0;
 }
@@ -465,19 +471,17 @@ function demandSubtitle(d: NotedDemand) {
 .stat-value {
   font-size: 26px;
   font-weight: 700;
-  color: var(--on-surface);
+  color: #1a1c1b;
   line-height: 1;
   letter-spacing: -0.03em;
 }
 
-.stat-value.primary {
-  color: var(--primary);
-}
+.stat-value.primary { color: #4e604f; }
 
 .stat-label {
   font-size: 11px;
   font-weight: 600;
-  color: var(--on-surface-variant);
+  color: #747872;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   white-space: nowrap;
@@ -485,7 +489,7 @@ function demandSubtitle(d: NotedDemand) {
 
 .stat-divider {
   height: 1px;
-  background: var(--outline-variant);
+  background: #c3c8c0;
   margin: 4px 0;
 }
 
@@ -499,6 +503,6 @@ function demandSubtitle(d: NotedDemand) {
 .stat-chip {
   font-size: 14px;
   font-weight: 700;
-  color: var(--primary);
+  color: #4e604f;
 }
 </style>
