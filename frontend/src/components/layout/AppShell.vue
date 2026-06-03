@@ -220,8 +220,11 @@ onUnmounted(() => window.removeEventListener('resize', updateIndicator));
           <!-- Backdrop -->
           <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeAddModal" />
 
-          <!-- Panel -->
-          <div class="relative bg-surface-container-lowest rounded-t-2xl md:rounded-2xl shadow-lg p-6 md:p-8 w-full max-w-none md:max-w-sm pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:pb-8">
+          <!-- Panel (mobilde alttan yukarı kayan sheet) -->
+          <div class="add-sheet relative bg-surface-container-lowest rounded-t-2xl md:rounded-2xl shadow-lg p-6 md:p-8 w-full max-w-none md:max-w-sm pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:pb-8">
+            <!-- Tutma çubuğu (mobil) -->
+            <div class="md:hidden mx-auto -mt-2 mb-4 h-1.5 w-10 rounded-full bg-outline-variant" />
+
             <!-- Close -->
             <button
               class="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant transition-colors"
@@ -270,20 +273,31 @@ onUnmounted(() => window.removeEventListener('resize', updateIndicator));
 </template>
 
 <style>
+/* Backdrop solması */
 .modal-fade-enter-active,
 .modal-fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-.modal-fade-enter-active .relative,
-.modal-fade-leave-active .relative {
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition: opacity 0.25s ease;
 }
 .modal-fade-enter-from,
 .modal-fade-leave-to {
   opacity: 0;
 }
-.modal-fade-enter-from .relative {
-  transform: scale(0.95) translateY(8px);
-  opacity: 0;
+
+/* Panel — mobilde alttan yukarı kayar */
+.modal-fade-enter-active .add-sheet,
+.modal-fade-leave-active .add-sheet {
+  transition: transform 0.34s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.modal-fade-enter-from .add-sheet,
+.modal-fade-leave-to .add-sheet {
+  transform: translateY(100%);
+}
+
+/* Masaüstü — yumuşak ölçek/kayma */
+@media (min-width: 768px) {
+  .modal-fade-enter-from .add-sheet,
+  .modal-fade-leave-to .add-sheet {
+    transform: scale(0.95) translateY(8px);
+  }
 }
 </style>
