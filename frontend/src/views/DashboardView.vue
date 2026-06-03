@@ -24,8 +24,14 @@ onMounted(async () => {
   try {
     const data = await dashboardService.stats();
     stats.value = data;
-    notedPortfolios.value = data.portfoliosWithNotes;
-    notedDemands.value = data.demandsWithNotes;
+    notedPortfolios.value = data.portfoliosWithNotes.map((p: any) => ({
+      ...p,
+      agentName: p.createdBy?.fullName ?? null,
+    }));
+    notedDemands.value = data.demandsWithNotes.map((d: any) => ({
+      ...d,
+      agentName: d.createdBy?.fullName ?? null,
+    }));
   } finally {
     loading.value = false;
   }
@@ -41,7 +47,8 @@ function onSearchSelect(item: Portfolio | Demand) {
     pendingPortfolios.value.unshift({
       id: p.id, type: p.type, listingType: p.listingType,
       city: p.city, district: p.district, price: p.price,
-      note: p.note ?? '', updatedAt: p.updatedAt, title: p.title ?? null, _pending: true,
+      note: p.note ?? '', updatedAt: p.updatedAt, title: p.title ?? null,
+      agentName: p.createdBy?.fullName ?? null, _pending: true,
     });
   } else {
     const d = item as Demand;
@@ -50,7 +57,8 @@ function onSearchSelect(item: Portfolio | Demand) {
       id: d.id, customerName: d.customerName,
       minBudget: d.minBudget, maxBudget: d.maxBudget,
       regions: d.regions, note: d.note ?? '',
-      updatedAt: d.updatedAt, status: d.status, _pending: true,
+      updatedAt: d.updatedAt, status: d.status,
+      agentName: (d as any).createdBy?.fullName ?? null, _pending: true,
     });
   }
 }
@@ -115,89 +123,97 @@ function demandSubtitle(d: NotedDemand) {
         <!-- Ana içerik -->
         <div class="dashboard-main">
 
-          <!-- Portföy Notları -->
-          <section class="notes-section">
-            <div class="section-header">
-              <div class="section-title">
-                <span class="material-symbols-outlined section-icon">maps_home_work</span>
-                <span>Portföy Notları</span>
-                <span v-if="notedPortfolios.length" class="section-badge">{{ notedPortfolios.length }}</span>
-              </div>
-              <div class="section-actions">
-                <button class="icon-btn" title="Tüm Portföyler" @click="router.push('/portfolio')">
-                  <span class="material-symbols-outlined">open_in_new</span>
-                </button>
-                <button class="add-note-btn" @click="searchModal = 'portfolio'">
-                  <span class="material-symbols-outlined">add</span>
-                  Not Ekle
-                </button>
-              </div>
-            </div>
+          <!-- Defter modülü -->
+          <div class="defter-module">
 
-            <div v-if="pendingPortfolios.length === 0 && notedPortfolios.length === 0" class="notes-empty">
-              <span class="material-symbols-outlined">sticky_note_2</span>
-              <p>Henüz not yok. "+ Not Ekle" ile başlayın.</p>
-            </div>
-            <div v-else class="notes-scroll">
-              <DashboardNoteCard
-                v-for="p in pendingPortfolios" :key="`pending-p-${p.id}`"
-                :id="p.id" item-type="portfolio" :badge="portfolioBadge(p)"
-                :title="portfolioTitle(p)" :subtitle="portfolioSubtitle(p)"
-                :note="p.note" :updated-at="p.updatedAt" :initial-edit-open="true"
-                @saved="(n) => onPortfolioSaved(p, n)"
-                @cancelled="pendingPortfolios = pendingPortfolios.filter(x => x.id !== p.id)"
-              />
-              <DashboardNoteCard
-                v-for="p in notedPortfolios" :key="p.id"
-                :id="p.id" item-type="portfolio" :badge="portfolioBadge(p)"
-                :title="portfolioTitle(p)" :subtitle="portfolioSubtitle(p)"
-                :note="p.note" :updated-at="p.updatedAt"
-                @saved="(n) => onPortfolioNoteUpdated(p, n)"
-              />
-            </div>
-          </section>
-
-          <!-- Talep Notları -->
-          <section class="notes-section">
-            <div class="section-header">
-              <div class="section-title">
-                <span class="material-symbols-outlined section-icon">ads_click</span>
-                <span>Talep Notları</span>
-                <span v-if="notedDemands.length" class="section-badge">{{ notedDemands.length }}</span>
+            <!-- Portföy Notları -->
+            <section class="notes-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <span class="material-symbols-outlined section-icon">maps_home_work</span>
+                  <span>Portföy Notları</span>
+                  <span v-if="notedPortfolios.length" class="section-badge">{{ notedPortfolios.length }}</span>
+                </div>
+                <div class="section-actions">
+                  <button class="icon-btn" title="Tüm Portföyler" @click="router.push('/portfolio')">
+                    <span class="material-symbols-outlined">open_in_new</span>
+                  </button>
+                  <button class="add-note-btn" @click="searchModal = 'portfolio'">
+                    <span class="material-symbols-outlined">add</span>
+                    Not Ekle
+                  </button>
+                </div>
               </div>
-              <div class="section-actions">
-                <button class="icon-btn" title="Tüm Talepler" @click="router.push('/demand')">
-                  <span class="material-symbols-outlined">open_in_new</span>
-                </button>
-                <button class="add-note-btn" @click="searchModal = 'demand'">
-                  <span class="material-symbols-outlined">add</span>
-                  Not Ekle
-                </button>
-              </div>
-            </div>
 
-            <div v-if="pendingDemands.length === 0 && notedDemands.length === 0" class="notes-empty">
-              <span class="material-symbols-outlined">sticky_note_2</span>
-              <p>Henüz not yok. "+ Not Ekle" ile başlayın.</p>
-            </div>
-            <div v-else class="notes-scroll">
-              <DashboardNoteCard
-                v-for="d in pendingDemands" :key="`pending-d-${d.id}`"
-                :id="d.id" item-type="demand" badge="Talep"
-                :title="d.customerName" :subtitle="demandSubtitle(d)"
-                :note="d.note" :updated-at="d.updatedAt" :initial-edit-open="true"
-                @saved="(n) => onDemandSaved(d, n)"
-                @cancelled="pendingDemands = pendingDemands.filter(x => x.id !== d.id)"
-              />
-              <DashboardNoteCard
-                v-for="d in notedDemands" :key="d.id"
-                :id="d.id" item-type="demand" badge="Talep"
-                :title="d.customerName" :subtitle="demandSubtitle(d)"
-                :note="d.note" :updated-at="d.updatedAt"
-                @saved="(n) => onDemandNoteUpdated(d, n)"
-              />
-            </div>
-          </section>
+              <div v-if="pendingPortfolios.length === 0 && notedPortfolios.length === 0" class="notes-empty">
+                <span class="material-symbols-outlined">sticky_note_2</span>
+                <p>Henüz not yok. "+ Not Ekle" ile başlayın.</p>
+              </div>
+              <div v-else class="notes-scroll">
+                <DashboardNoteCard
+                  v-for="p in pendingPortfolios" :key="`pending-p-${p.id}`"
+                  :id="p.id" item-type="portfolio" :badge="portfolioBadge(p)"
+                  :title="portfolioTitle(p)" :subtitle="portfolioSubtitle(p)"
+                  :note="p.note" :updated-at="p.updatedAt" :initial-edit-open="true"
+                  :agent-name="p.agentName ?? undefined"
+                  @saved="(n) => onPortfolioSaved(p, n)"
+                  @cancelled="pendingPortfolios = pendingPortfolios.filter(x => x.id !== p.id)"
+                />
+                <DashboardNoteCard
+                  v-for="p in notedPortfolios" :key="p.id"
+                  :id="p.id" item-type="portfolio" :badge="portfolioBadge(p)"
+                  :title="portfolioTitle(p)" :subtitle="portfolioSubtitle(p)"
+                  :note="p.note" :updated-at="p.updatedAt"
+                  :agent-name="p.agentName ?? undefined"
+                  @saved="(n) => onPortfolioNoteUpdated(p, n)"
+                />
+              </div>
+            </section>
+
+            <!-- Talep Notları -->
+            <section class="notes-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <span class="material-symbols-outlined section-icon">ads_click</span>
+                  <span>Talep Notları</span>
+                  <span v-if="notedDemands.length" class="section-badge">{{ notedDemands.length }}</span>
+                </div>
+                <div class="section-actions">
+                  <button class="icon-btn" title="Tüm Talepler" @click="router.push('/demand')">
+                    <span class="material-symbols-outlined">open_in_new</span>
+                  </button>
+                  <button class="add-note-btn" @click="searchModal = 'demand'">
+                    <span class="material-symbols-outlined">add</span>
+                    Not Ekle
+                  </button>
+                </div>
+              </div>
+
+              <div v-if="pendingDemands.length === 0 && notedDemands.length === 0" class="notes-empty">
+                <span class="material-symbols-outlined">sticky_note_2</span>
+                <p>Henüz not yok. "+ Not Ekle" ile başlayın.</p>
+              </div>
+              <div v-else class="notes-scroll">
+                <DashboardNoteCard
+                  v-for="d in pendingDemands" :key="`pending-d-${d.id}`"
+                  :id="d.id" item-type="demand" badge="Talep"
+                  :title="d.customerName" :subtitle="demandSubtitle(d)"
+                  :note="d.note" :updated-at="d.updatedAt" :initial-edit-open="true"
+                  :agent-name="d.agentName ?? undefined"
+                  @saved="(n) => onDemandSaved(d, n)"
+                  @cancelled="pendingDemands = pendingDemands.filter(x => x.id !== d.id)"
+                />
+                <DashboardNoteCard
+                  v-for="d in notedDemands" :key="d.id"
+                  :id="d.id" item-type="demand" badge="Talep"
+                  :title="d.customerName" :subtitle="demandSubtitle(d)"
+                  :note="d.note" :updated-at="d.updatedAt"
+                  :agent-name="d.agentName ?? undefined"
+                  @saved="(n) => onDemandNoteUpdated(d, n)"
+                />
+              </div>
+            </section>
+          </div>
 
         </div>
 
@@ -265,12 +281,22 @@ function demandSubtitle(d: NotedDemand) {
   min-width: 0;
 }
 
+/* ── Defter modülü ── */
+.defter-module {
+  background: #f4f4f2;
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 /* ── Notes section ── */
 .notes-section {
-  border: 1.5px solid var(--outline-variant);
-  border-radius: 14px;
+  border: 1.5px solid #c3c8c0;
+  border-radius: 10px;
   overflow: hidden;
-  background: var(--surface-container-lowest);
+  background: #ffffff;
 }
 
 .section-header {
@@ -336,20 +362,26 @@ function demandSubtitle(d: NotedDemand) {
 .add-note-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 14px;
-  background: var(--primary);
-  color: var(--on-primary);
-  border: none;
+  gap: 5px;
+  padding: 6px 13px;
+  background: #4e604f;
+  color: #ffffff;
+  border: 1.5px solid #4e604f;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: background 0.15s, box-shadow 0.15s;
+  transition: background 0.12s, box-shadow 0.12s;
 }
 
-.add-note-btn .material-symbols-outlined { font-size: 15px; }
+.add-note-btn .material-symbols-outlined { font-size: 15px; color: #ffffff; }
+
+.add-note-btn:hover {
+  background: #3d4e3e;
+  border-color: #3d4e3e;
+  box-shadow: 0 2px 8px rgba(78, 96, 79, 0.35);
+}
 
 .add-note-btn:hover {
   background: color-mix(in srgb, var(--primary) 82%, black);
@@ -378,9 +410,9 @@ function demandSubtitle(d: NotedDemand) {
   gap: 14px;
   padding: 18px 18px 20px;
   overflow-x: auto;
-  background: var(--surface-container-low);
+  background: #ffffff;
   scrollbar-width: thin;
-  scrollbar-color: var(--outline-variant) transparent;
+  scrollbar-color: #c3c8c0 transparent;
 }
 
 .notes-scroll::-webkit-scrollbar { height: 4px; }

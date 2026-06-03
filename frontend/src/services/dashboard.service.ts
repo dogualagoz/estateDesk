@@ -12,6 +12,7 @@ export interface NotedPortfolio {
   note: string;
   updatedAt: string;
   title?: string | null;
+  agentName?: string | null;
 }
 
 export interface NotedDemand {
@@ -23,6 +24,7 @@ export interface NotedDemand {
   note: string;
   updatedAt: string;
   status: DemandStatus;
+  agentName?: string | null;
 }
 
 export interface DashboardStats {

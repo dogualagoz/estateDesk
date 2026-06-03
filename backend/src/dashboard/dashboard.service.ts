@@ -30,6 +30,7 @@ export class DashboardService {
             note: true,
             updatedAt: true,
             title: true,
+            createdBy: { select: { fullName: true } },
           },
         }),
         this.prisma.demand.findMany({
@@ -45,6 +46,7 @@ export class DashboardService {
             note: true,
             updatedAt: true,
             status: true,
+            createdBy: { select: { fullName: true } },
           },
         }),
       ]);
