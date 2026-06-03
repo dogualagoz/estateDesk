@@ -361,7 +361,7 @@ const isPortfolio = () => props.searchType === 'portfolio';
   transition: background 0.1s;
 }
 
-.result-row:hover { background: #f4f4f2; }
+.result-row:hover, .result-row:active { background: #f4f4f2; }
 
 .r-badge {
   display: inline-flex;

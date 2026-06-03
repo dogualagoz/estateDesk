@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted, provide } from 'vue';
-import { useRouter } from 'vue-router';
+import { computed, ref, reactive, onMounted, onUnmounted, watch, nextTick, provide } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
 const auth = useAuthStore();
 const router = useRouter();
+const route = useRoute();
 
 const links = computed(() => [
   { to: '/',          label: 'Dashboard',  icon: 'dashboard' },
@@ -43,13 +44,56 @@ function logout() {
   auth.logout();
   router.push('/login');
 }
+
+// ── Mobil alt bar: kayan aktif gösterge ──
+const navRef = ref<HTMLElement | null>(null);
+// En uzun eşleşen linki aktif kabul et ('/' yalnızca tam eşleşmede)
+const activeIndex = computed(() => {
+  const path = route.path;
+  let best = -1;
+  let bestLen = -1;
+  links.value.forEach((l, i) => {
+    const match = l.to === '/' ? path === '/' : path === l.to || path.startsWith(l.to + '/');
+    if (match && l.to.length > bestLen) {
+      best = i;
+      bestLen = l.to.length;
+    }
+  });
+  return best;
+});
+
+const indicator = reactive({ x: 0, w: 0, visible: false });
+
+function updateIndicator() {
+  const nav = navRef.value;
+  if (!nav) return;
+  // querySelectorAll DOM (v-for) sırasını verir; offsetLeft görsel konumu yansıtır
+  const tabs = nav.querySelectorAll<HTMLElement>('[data-tab]');
+  const el = tabs[activeIndex.value];
+  if (!el) {
+    indicator.visible = false;
+    return;
+  }
+  indicator.x = el.offsetLeft;
+  indicator.w = el.offsetWidth;
+  indicator.visible = true;
+}
+
+watch(activeIndex, () => nextTick(updateIndicator));
+onMounted(() => {
+  nextTick(updateIndicator);
+  // İkon/font yüklenmesi sonrası konumu düzelt
+  setTimeout(updateIndicator, 250);
+  window.addEventListener('resize', updateIndicator);
+});
+onUnmounted(() => window.removeEventListener('resize', updateIndicator));
 </script>
 
 <template>
   <div class="flex min-h-screen bg-background text-on-background font-sans antialiased">
 
-    <!-- Sidebar -->
-    <aside class="w-60 shrink-0 flex flex-col bg-primary text-on-primary fixed top-0 left-0 h-screen z-50">
+    <!-- Sidebar (masaüstü) -->
+    <aside class="w-60 shrink-0 hidden md:flex flex-col bg-primary text-on-primary fixed top-0 left-0 h-screen z-50">
 
       <!-- Brand -->
       <div class="px-6 py-5 border-b border-white/10">
@@ -97,24 +141,87 @@ function logout() {
       </div>
     </aside>
 
+    <!-- Mobil üst bar -->
+    <header class="md:hidden fixed top-0 inset-x-0 z-40 h-14 flex items-center justify-between px-4 bg-primary text-on-primary">
+      <router-link to="/" class="font-bold text-headline-md text-on-primary tracking-tight">
+        emlakdefter
+      </router-link>
+      <router-link
+        :to="profilePath"
+        class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-[13px] font-bold text-on-primary select-none active:scale-95 transition-transform"
+        title="Profilim"
+      >
+        {{ initials }}
+      </router-link>
+    </header>
+
     <!-- Main Content -->
-    <main class="flex-1 pl-60 min-w-0">
+    <main class="flex-1 md:pl-60 min-w-0 pt-14 md:pt-0 pb-24 md:pb-0">
       <slot />
     </main>
+
+    <!-- Mobil alt navigasyon -->
+    <nav
+      ref="navRef"
+      class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-primary text-on-primary rounded-t-2xl shadow-[0_-6px_24px_rgba(0,0,0,0.18)]"
+      style="padding-bottom: env(safe-area-inset-bottom)"
+    >
+      <div class="relative flex items-stretch justify-around px-1.5 pt-1.5">
+        <!-- Kayan aktif gösterge -->
+        <span
+          class="absolute top-1.5 bottom-1.5 left-0 rounded-2xl bg-white/15 pointer-events-none transition-[transform,width,opacity] duration-300 ease-[cubic-bezier(0.34,1.2,0.64,1)]"
+          :style="{
+            transform: `translateX(${indicator.x}px)`,
+            width: `${indicator.w}px`,
+            opacity: indicator.visible ? 1 : 0,
+          }"
+        />
+
+        <router-link
+          v-for="(l, i) in links"
+          :key="l.to"
+          :to="l.to"
+          data-tab
+          class="relative z-10 flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors duration-200"
+          :class="[
+            { 'order-2': i >= 2 },
+            activeIndex === i ? 'text-on-primary font-semibold' : 'text-on-primary/60',
+          ]"
+        >
+          <span
+            class="material-symbols-outlined text-[22px] transition-transform duration-300 ease-[cubic-bezier(0.34,1.2,0.64,1)]"
+            :class="activeIndex === i ? '-translate-y-0.5 scale-110' : ''"
+            :style="{ fontVariationSettings: `'FILL' ${activeIndex === i ? 1 : 0}, 'wght' 500, 'GRAD' 0, 'opsz' 24` }"
+          >{{ l.icon }}</span>
+          {{ l.label }}
+        </router-link>
+
+        <!-- Ortada yükseltilmiş Yeni Ekle (FAB) -->
+        <button
+          class="order-1 relative z-10 w-16 shrink-0 flex items-start justify-center"
+          aria-label="Yeni Ekle"
+          @click="openAddModal"
+        >
+          <span class="absolute -top-6 w-14 h-14 rounded-full bg-on-primary text-primary flex items-center justify-center shadow-lg ring-4 ring-primary active:scale-90 transition-transform duration-200">
+            <span class="material-symbols-outlined text-[28px]">add</span>
+          </span>
+        </button>
+      </div>
+    </nav>
 
     <!-- Add Modal -->
     <Teleport to="body">
       <Transition name="modal-fade">
         <div
           v-if="showAddModal"
-          class="fixed inset-0 z-[200] flex items-center justify-center p-4"
+          class="fixed inset-0 z-[200] flex items-end md:items-center justify-center md:p-4"
           @click.self="closeAddModal"
         >
           <!-- Backdrop -->
           <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeAddModal" />
 
           <!-- Panel -->
-          <div class="relative bg-surface-container-lowest rounded-2xl shadow-lg p-8 w-full max-w-sm">
+          <div class="relative bg-surface-container-lowest rounded-t-2xl md:rounded-2xl shadow-lg p-6 md:p-8 w-full max-w-none md:max-w-sm pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:pb-8">
             <!-- Close -->
             <button
               class="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant transition-colors"

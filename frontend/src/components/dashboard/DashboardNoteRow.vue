@@ -147,7 +147,8 @@ function fmtDate(d: string) {
   transition: background 0.12s;
 }
 
-.note-row:hover {
+.note-row:hover,
+.note-row:active {
   background: #f4f4f2;
 }
 

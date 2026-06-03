@@ -132,11 +132,11 @@ onMounted(load);
         </div>
 
         <form class="flex flex-wrap items-end gap-stack-md" @submit.prevent="createInvite">
-          <div class="field flex-1 min-w-[220px]">
+          <div class="field flex-1 min-w-0 sm:min-w-[220px]">
             <label for="inviteEmail">E-posta</label>
             <input id="inviteEmail" class="input" type="email" v-model="inviteEmail" placeholder="danisman@ornek.com" required />
           </div>
-          <button class="btn primary" type="submit" :disabled="creatingInvite">
+          <button class="btn primary w-full sm:w-auto" type="submit" :disabled="creatingInvite">
             <span class="material-symbols-outlined text-[18px]">link</span>
             {{ creatingInvite ? 'Oluşturuluyor…' : 'Davet Linki Oluştur' }}
           </button>

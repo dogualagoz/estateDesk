@@ -182,6 +182,8 @@ let timer: ReturnType<typeof setTimeout> | undefined;
 
 // ── Eşleştirme (pin) state ──
 const activeTab = ref<'pinned' | 'all'>('pinned');
+// Mobil: tek seferde tek panel göster (sekmeli geçiş)
+const mobilePanel = ref<'form' | 'matches'>('form');
 const pinnedIds = ref<Set<string>>(new Set());
 const pinnedResults = ref<ScoredPortfolio[]>([]);
 const pinnedLoading = ref(false);
@@ -392,9 +394,9 @@ async function submit() {
 </script>
 
 <template>
-  <div class="h-screen flex flex-col overflow-hidden">
+  <div class="flex flex-col md:h-[100dvh] md:overflow-hidden">
     <!-- Header -->
-    <div class="shrink-0 flex items-center gap-3 px-8 py-5 border-b border-outline-variant bg-surface">
+    <div class="shrink-0 flex items-center gap-3 px-4 md:px-8 py-5 border-b border-outline-variant bg-surface">
       <button
         class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors"
         @click="router.back()"
@@ -411,10 +413,38 @@ async function submit() {
       </div>
     </div>
 
+    <!-- Mobil panel sekmeleri -->
+    <div class="md:hidden shrink-0 flex border-b border-outline-variant bg-surface">
+      <button
+        type="button"
+        class="flex-1 flex items-center justify-center gap-2 py-3 text-label-md font-semibold border-b-2 transition-all active:bg-surface-container"
+        :class="mobilePanel === 'form' ? 'border-primary text-primary' : 'border-transparent text-on-surface-variant'"
+        @click="mobilePanel = 'form'"
+      >
+        <span class="material-symbols-outlined text-[18px]">tune</span>
+        Kriterler
+      </button>
+      <button
+        type="button"
+        class="flex-1 flex items-center justify-center gap-2 py-3 text-label-md font-semibold border-b-2 transition-all active:bg-surface-container"
+        :class="mobilePanel === 'matches' ? 'border-primary text-primary' : 'border-transparent text-on-surface-variant'"
+        @click="mobilePanel = 'matches'"
+      >
+        <span class="material-symbols-outlined text-[18px]">join_inner</span>
+        Eşleşmeler
+        <span
+          v-if="results.length > 0"
+          class="px-1.5 py-0.5 rounded-full text-[11px] font-bold leading-none"
+          :class="mobilePanel === 'matches' ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface-variant'"
+        >{{ results.length }}</span>
+      </button>
+    </div>
+
     <div class="flex-1 flex overflow-hidden">
       <!-- ── SOL: Kriterler ── -->
       <div
-        class="w-[42%] border-r border-outline-variant flex flex-col overflow-hidden bg-surface-container/30 relative"
+        class="w-full md:w-[42%] border-r border-outline-variant flex flex-col overflow-hidden bg-surface-container/30 relative"
+        :class="{ 'hidden md:flex': mobilePanel !== 'form' }"
         @dragover.prevent="isDragOver = isDragging"
         @dragleave="isDragOver = false"
         @drop.prevent="onDrop"
@@ -445,7 +475,7 @@ async function submit() {
             </div>
           </div>
         </Transition>
-        <div class="flex-1 overflow-y-auto px-7 py-6 space-y-4">
+        <div class="flex-1 overflow-y-auto px-4 md:px-7 py-6 space-y-4">
           <!-- Tip & ilan tipi -->
           <div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-5">
             <p class="text-label-sm font-semibold uppercase tracking-widest text-on-surface-variant mb-3">Mülk & İlan Tipi</p>
@@ -619,7 +649,7 @@ async function submit() {
         </div>
 
         <!-- Alt bar -->
-        <div class="shrink-0 flex items-center gap-3 px-7 py-4 border-t border-outline-variant bg-surface">
+        <div class="shrink-0 flex items-center gap-3 px-4 md:px-7 py-4 border-t border-outline-variant bg-surface">
           <button v-if="isEdit" type="button" class="btn danger" @click="remove" :disabled="removing">
             <span class="material-symbols-outlined text-[18px]">delete</span>
             {{ removing ? 'Siliniyor…' : 'Sil' }}
@@ -634,7 +664,10 @@ async function submit() {
       </div>
 
       <!-- ── SAĞ: Canlı skorlu portföyler ── -->
-      <div class="flex-1 flex flex-col overflow-hidden">
+      <div
+        class="flex-1 flex flex-col overflow-hidden"
+        :class="{ 'hidden md:flex': mobilePanel !== 'matches' }"
+      >
         <!-- Tab başlıkları -->
         <div class="shrink-0 border-b border-outline-variant bg-surface">
           <div class="flex">
@@ -670,7 +703,7 @@ async function submit() {
           </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto px-7 py-6">
+        <div class="flex-1 overflow-y-auto px-4 md:px-7 py-6">
 
           <!-- ── Sekme 1: Eşleştirilenler ── -->
           <template v-if="activeTab === 'pinned'">
@@ -687,7 +720,7 @@ async function submit() {
               <p class="text-body-md text-on-surface-variant">Henüz eşleştirilen portföy yok.</p>
               <p class="text-label-md text-on-surface-variant/50 mt-1">Sağ paneldeki portföyleri sürükleyerek veya <span class="material-symbols-outlined text-[12px] align-middle">bookmark_add</span> ikonuna tıklayarak eşleştirin.</p>
             </div>
-            <div v-else class="grid grid-cols-2 gap-4">
+            <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div
                 v-for="r in pinnedResults" :key="r.portfolio.id"
                 class="rounded-2xl overflow-hidden shadow-sm border-2 border-primary/30 flex flex-col bg-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
@@ -754,7 +787,7 @@ async function submit() {
           </div>
 
           <!-- Kartlar: 2'li dikey grid -->
-          <div v-else class="grid grid-cols-2 gap-4">
+          <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div
               v-for="r in results" :key="r.portfolio.id"
               :draggable="isEdit"

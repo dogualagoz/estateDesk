@@ -94,10 +94,10 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="h-screen flex flex-col overflow-hidden">
+  <div class="flex flex-col md:h-screen md:overflow-hidden">
 
     <!-- ── Header ── -->
-    <div class="shrink-0 flex items-center justify-between px-8 py-5 border-b border-outline-variant bg-surface">
+    <div class="shrink-0 flex items-center justify-between gap-2 px-4 md:px-8 py-5 border-b border-outline-variant bg-surface">
       <div class="flex items-center gap-3">
         <button
           class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors"
@@ -115,14 +115,14 @@ onMounted(load);
           <div class="h-5 w-48 bg-surface-container rounded animate-pulse" />
         </div>
       </div>
-      <div v-if="item" class="flex gap-2">
+      <div v-if="item" class="flex gap-2 shrink-0">
         <button class="btn" @click="router.push(`/portfolio/${item.id}/edit`)">
           <span class="material-symbols-outlined text-[18px]">edit</span>
-          Düzenle
+          <span class="hidden sm:inline">Düzenle</span>
         </button>
         <button class="btn danger" @click="remove">
           <span class="material-symbols-outlined text-[18px]">delete</span>
-          Sil
+          <span class="hidden sm:inline">Sil</span>
         </button>
       </div>
     </div>
@@ -135,13 +135,13 @@ onMounted(load);
       Portföy bulunamadı.
     </div>
 
-    <!-- ── Body: iki eşit sütun ── -->
-    <div v-else class="flex-1 flex overflow-hidden">
+    <!-- ── Body: mobilde dikey istif, masaüstünde iki sütun ── -->
+    <div v-else class="flex-1 flex flex-col md:flex-row md:overflow-hidden">
 
       <!-- ────────────────────────────────────────────────────
            Sol: Görsel Panel
       ──────────────────────────────────────────────────── -->
-      <div class="w-1/2 border-r border-outline-variant flex flex-col overflow-hidden">
+      <div class="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-outline-variant flex flex-col overflow-hidden">
 
         <!-- hidden file input -->
         <input
@@ -155,7 +155,7 @@ onMounted(load);
 
         <!-- Ana görsel alanı -->
         <div
-          class="relative flex-1 flex flex-col justify-end p-8 overflow-hidden transition-all duration-700"
+          class="relative flex-1 min-h-[260px] md:min-h-0 flex flex-col justify-end p-8 overflow-hidden transition-all duration-700"
           :style="mainImage ? {} : { background: gradient }"
         >
           <!-- Arka plan görseli -->
@@ -277,10 +277,10 @@ onMounted(load);
       <!-- ────────────────────────────────────────────────────
            Sağ: Detay Bölümleri (read-only)
       ──────────────────────────────────────────────────── -->
-      <div class="w-1/2 flex flex-col overflow-hidden">
+      <div class="w-full md:w-1/2 flex flex-col md:overflow-hidden">
 
         <!-- Kaydırılabilir içerik -->
-        <div class="flex-1 overflow-y-auto px-8 py-6 space-y-4">
+        <div class="flex-1 md:overflow-y-auto px-4 md:px-8 py-6 space-y-4">
 
           <!-- Bölüm 1: Temel Bilgiler -->
           <div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6">
@@ -432,7 +432,7 @@ onMounted(load);
         </div>
 
         <!-- ── Alt bar ── -->
-        <div class="shrink-0 flex items-center justify-end gap-3 px-8 py-4 border-t border-outline-variant bg-surface">
+        <div class="shrink-0 flex items-center justify-end gap-3 px-4 md:px-8 py-4 border-t border-outline-variant bg-surface">
           <button type="button" class="btn" @click="router.push('/portfolio')">
             <span class="material-symbols-outlined text-[18px]">arrow_back</span>
             Geri Dön

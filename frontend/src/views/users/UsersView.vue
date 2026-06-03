@@ -104,46 +104,74 @@ onMounted(load);
       </div>
       <div v-if="loading" class="empty">Yükleniyor…</div>
       <div v-else-if="!items.length" class="empty">Kullanıcı bulunamadı</div>
-      <table v-else class="table">
-        <thead>
-          <tr>
-            <th>Ad Soyad</th>
-            <th>E-posta</th>
-            <th>Rol</th>
-            <th>Durum</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="u in items" :key="u.id">
-            <td>
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center text-[12px] font-bold shrink-0">
-                  {{ u.fullName.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase() }}
+      <template v-else>
+        <!-- Masaüstü: tablo -->
+        <table class="table hidden md:table">
+          <thead>
+            <tr>
+              <th>Ad Soyad</th>
+              <th>E-posta</th>
+              <th>Rol</th>
+              <th>Durum</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="u in items" :key="u.id">
+              <td>
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center text-[12px] font-bold shrink-0">
+                    {{ u.fullName.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase() }}
+                  </div>
+                  <span class="font-medium text-on-surface">{{ u.fullName }}</span>
                 </div>
-                <span class="font-medium text-on-surface">{{ u.fullName }}</span>
+              </td>
+              <td class="text-on-surface-variant">{{ u.email }}</td>
+              <td>
+                <span class="tag primary">{{ u.role === 'ADMIN' ? 'Admin' : 'Danışman' }}</span>
+              </td>
+              <td>
+                <span :class="['tag', u.isActive ? 'success' : 'danger']">
+                  {{ u.isActive ? 'Aktif' : 'Pasif' }}
+                </span>
+              </td>
+              <td>
+                <button
+                  class="btn ghost text-[13px] py-1.5 px-3"
+                  @click="toggleActive(u)"
+                >
+                  {{ u.isActive ? 'Pasife al' : 'Aktif et' }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Mobil: kart listesi -->
+        <div class="md:hidden divide-y divide-surface-container">
+          <div v-for="u in items" :key="u.id" class="p-stack-md flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center text-[13px] font-bold shrink-0">
+              {{ u.fullName.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase() }}
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="font-medium text-on-surface truncate">{{ u.fullName }}</div>
+              <div class="text-label-sm text-on-surface-variant truncate">{{ u.email }}</div>
+              <div class="flex items-center gap-1.5 mt-1.5">
+                <span class="tag primary">{{ u.role === 'ADMIN' ? 'Admin' : 'Danışman' }}</span>
+                <span :class="['tag', u.isActive ? 'success' : 'danger']">
+                  {{ u.isActive ? 'Aktif' : 'Pasif' }}
+                </span>
               </div>
-            </td>
-            <td class="text-on-surface-variant">{{ u.email }}</td>
-            <td>
-              <span class="tag primary">{{ u.role === 'ADMIN' ? 'Admin' : 'Danışman' }}</span>
-            </td>
-            <td>
-              <span :class="['tag', u.isActive ? 'success' : 'danger']">
-                {{ u.isActive ? 'Aktif' : 'Pasif' }}
-              </span>
-            </td>
-            <td>
-              <button
-                class="btn ghost text-[13px] py-1.5 px-3"
-                @click="toggleActive(u)"
-              >
-                {{ u.isActive ? 'Pasife al' : 'Aktif et' }}
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            </div>
+            <button
+              class="btn ghost text-[13px] py-2 px-3 shrink-0"
+              @click="toggleActive(u)"
+            >
+              {{ u.isActive ? 'Pasife al' : 'Aktif et' }}
+            </button>
+          </div>
+        </div>
+      </template>
     </div>
   </div>
 </template>

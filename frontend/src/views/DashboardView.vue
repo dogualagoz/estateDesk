@@ -110,7 +110,7 @@ function demandSubtitle(d: NotedDemand) {
   <div class="page">
     <div class="page-header">
       <div>
-        <h1 class="text-headline-lg font-semibold tracking-tight text-on-surface">Defter</h1>
+        <h1 class="text-headline-lg-mobile md:text-headline-lg font-semibold tracking-tight text-on-surface">Defter</h1>
         <p class="text-label-md text-on-surface-variant mt-1">Hızlı notlar ve özet</p>
       </div>
     </div>
@@ -388,7 +388,8 @@ function demandSubtitle(d: NotedDemand) {
   flex-direction: column;
   padding: 6px;
   gap: 0;
-  max-height: 560px;
+  /* ~5 not satırı görünür, kalanı kaydırılır (portföy ve talep ayrı ayrı) */
+  max-height: 336px;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #c3c8c0 transparent;
@@ -504,5 +505,52 @@ function demandSubtitle(d: NotedDemand) {
   font-size: 14px;
   font-weight: 700;
   color: #4e604f;
+}
+
+/* ── Mobil (≤767px) ── */
+@media (max-width: 767px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  /* Açık defter tek sütuna iner; iki sayfa alt alta */
+  .notebook {
+    grid-template-columns: 1fr;
+  }
+
+  .spine { display: none; }
+
+  /* İki sayfa arasında yatay ayraç */
+  .page-col:first-child {
+    border-bottom: 1px solid #eeeeec;
+  }
+
+  /* Mobilde de ~5 satır görünür, kalanı kaydırılır */
+  .col-list {
+    max-height: 336px;
+  }
+
+  /* İstatistikler: yatay kart ızgarası */
+  .stats-sidebar {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .stat-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 12px;
+  }
+
+  .stat-value { font-size: 22px; }
+
+  .stat-divider,
+  .stat-row {
+    grid-column: 1 / -1;
+  }
 }
 </style>

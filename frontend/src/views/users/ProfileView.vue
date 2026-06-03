@@ -49,6 +49,11 @@ async function load(id: string) {
   }
 }
 
+function logout() {
+  auth.logout();
+  router.push('/login');
+}
+
 onMounted(() => load(route.params.id as string));
 watch(() => route.params.id, (id) => id && load(id as string));
 </script>
@@ -82,6 +87,15 @@ watch(() => route.params.id, (id) => id && load(id as string));
             {{ profile.portfolioCount }} portföy · {{ profile.demandCount }} talep
           </p>
         </div>
+        <!-- Mobilde çıkış (masaüstünde sidebar'da var) -->
+        <button
+          v-if="isSelf"
+          class="btn ghost danger md:hidden shrink-0 self-start"
+          title="Çıkış Yap"
+          @click="logout"
+        >
+          <span class="material-symbols-outlined text-[20px]">logout</span>
+        </button>
       </div>
 
       <!-- Sekmeler -->

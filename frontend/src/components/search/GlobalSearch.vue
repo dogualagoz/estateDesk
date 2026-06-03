@@ -117,7 +117,7 @@ onBeforeUnmount(() => {
           <button
             v-for="p in results!.portfolios"
             :key="p.id"
-            class="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-surface-container transition-colors duration-100"
+            class="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-surface-container active:bg-surface-container transition-colors duration-100"
             @click="goTo(`/portfolio/${p.id}`)"
           >
             <span class="material-symbols-outlined text-primary text-[20px] shrink-0">maps_home_work</span>
@@ -139,7 +139,7 @@ onBeforeUnmount(() => {
           <button
             v-for="d in results!.demands"
             :key="d.id"
-            class="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-surface-container transition-colors duration-100"
+            class="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-surface-container active:bg-surface-container transition-colors duration-100"
             @click="goTo(`/demand/${d.id}`)"
           >
             <span class="material-symbols-outlined text-primary text-[20px] shrink-0">ads_click</span>
@@ -157,7 +157,7 @@ onBeforeUnmount(() => {
 
         <!-- Tüm sonuçlar -->
         <button
-          class="w-full flex items-center justify-center gap-1 px-4 py-3 border-t border-outline-variant text-label-md font-medium text-primary hover:bg-surface-container transition-colors duration-100"
+          class="w-full flex items-center justify-center gap-1 px-4 py-3 border-t border-outline-variant text-label-md font-medium text-primary hover:bg-surface-container active:bg-surface-container transition-colors duration-100"
           @click="goToResults"
         >
           Tüm sonuçları gör

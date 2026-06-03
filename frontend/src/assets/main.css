@@ -8,6 +8,11 @@
 @layer base {
   html, body, #app {
     @apply h-full font-sans antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    overscroll-behavior-y: none;
   }
 
   a {

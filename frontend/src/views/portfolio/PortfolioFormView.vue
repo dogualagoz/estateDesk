@@ -308,10 +308,10 @@ async function submit() {
 </script>
 
 <template>
-  <div class="h-screen flex flex-col overflow-hidden">
+  <div class="flex flex-col md:h-screen md:overflow-hidden">
 
     <!-- ── Header ── -->
-    <div class="shrink-0 flex items-center gap-3 px-8 py-5 border-b border-outline-variant bg-surface">
+    <div class="shrink-0 flex items-center gap-3 px-4 md:px-8 py-5 border-b border-outline-variant bg-surface">
       <button
         class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors"
         @click="router.back()"
@@ -328,11 +328,11 @@ async function submit() {
       </div>
     </div>
 
-    <!-- ── Body: iki eşit sütun ── -->
-    <div class="flex-1 flex overflow-hidden">
+    <!-- ── Body: mobilde dikey istif, masaüstünde iki sütun ── -->
+    <div class="flex-1 flex flex-col md:flex-row md:overflow-hidden">
 
       <!-- ── Sol: Canlı Önizleme ── -->
-      <div class="w-1/2 border-r border-outline-variant bg-surface-container/40 flex flex-col overflow-hidden">
+      <div class="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-outline-variant bg-surface-container/40 flex flex-col overflow-hidden">
 
         <!-- hidden file input -->
         <input
@@ -346,7 +346,7 @@ async function submit() {
 
         <!-- Gradient / Fotoğraf alanı -->
         <div
-          class="relative flex-1 flex flex-col justify-end p-8 transition-all duration-700 overflow-hidden"
+          class="relative flex-1 min-h-[260px] md:min-h-0 flex flex-col justify-end p-8 transition-all duration-700 overflow-hidden"
           :style="allPreviewUrls.length ? {} : { background: previewGradient }"
           @dragover.prevent="isDragging = true"
           @dragleave.prevent="isDragging = false"
@@ -509,11 +509,11 @@ async function submit() {
       </div>
 
       <!-- ── Sağ: Form ── -->
-      <div class="w-1/2 flex flex-col overflow-hidden">
+      <div class="w-full md:w-1/2 flex flex-col md:overflow-hidden">
 
         <!-- Step göstergesi -->
-        <div class="shrink-0 px-8 pt-5 pb-4">
-          <div class="flex items-start">
+        <div class="shrink-0 px-4 md:px-8 pt-5 pb-4 overflow-x-auto">
+          <div class="flex items-start min-w-[300px]">
             <template v-for="(s, i) in STEPS" :key="i">
               <div v-if="i > 0" class="flex-1 h-0.5 mt-[15px] mx-1 rounded-full transition-colors duration-500"
                    :class="stepsDone[i - 1] ? 'bg-primary' : 'bg-outline-variant'" />
@@ -539,7 +539,7 @@ async function submit() {
         </div>
 
         <!-- Kaydırılabilir bölümler -->
-        <div class="flex-1 overflow-y-auto px-8 pb-4 space-y-4">
+        <div class="flex-1 md:overflow-y-auto px-4 md:px-8 pb-4 space-y-4">
 
           <!-- ── Bölüm 1: Temel Bilgiler (her zaman açık) ── -->
           <div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6">
@@ -749,7 +749,7 @@ async function submit() {
         </div>
 
         <!-- ── Alt bar ── -->
-        <div class="shrink-0 flex items-center justify-end gap-3 px-8 py-4 border-t border-outline-variant bg-surface">
+        <div class="shrink-0 flex items-center justify-end gap-3 px-4 md:px-8 py-4 border-t border-outline-variant bg-surface">
           <button type="button" class="btn" @click="router.back()">İptal</button>
           <button type="button" class="btn primary" @click="submit" :disabled="saving || !canSubmit">
             <span class="material-symbols-outlined text-[18px]">{{ saving ? 'hourglass_empty' : 'save' }}</span>

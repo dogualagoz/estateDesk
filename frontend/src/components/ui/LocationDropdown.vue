@@ -141,10 +141,10 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
           {{ val }}
           <button
             type="button"
-            class="text-on-surface-variant hover:text-error ml-0.5"
+            class="text-on-surface-variant hover:text-error active:text-error ml-0.5 p-0.5 -mr-1"
             @click.stop="remove(val)"
           >
-            <span class="material-symbols-outlined text-[14px]">close</span>
+            <span class="material-symbols-outlined text-[16px]">close</span>
           </button>
         </span>
         <span v-if="!selectedValues.length" class="text-on-surface-variant/50 text-label-sm select-none">
@@ -162,10 +162,10 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
         <button
           v-if="displayText"
           type="button"
-          class="text-on-surface-variant hover:text-error ml-1"
+          class="text-on-surface-variant hover:text-error active:text-error ml-1 p-1 -mr-1"
           @click.stop="clearSingle"
         >
-          <span class="material-symbols-outlined text-[16px]">close</span>
+          <span class="material-symbols-outlined text-[18px]">close</span>
         </button>
       </template>
 
@@ -206,7 +206,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
         </div>
 
         <!-- Seçenekler listesi -->
-        <div class="overflow-y-auto max-h-52 py-1.5">
+        <div class="overflow-y-auto max-h-64 py-1.5">
           <!-- Gruplu -->
           <template v-if="groupedOptions">
             <template v-if="hasResults">
@@ -218,7 +218,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
                   v-for="item in group.items"
                   :key="item"
                   type="button"
-                  class="w-full text-left px-4 py-1.5 text-label-md text-on-surface hover:bg-surface-container transition-colors flex items-center justify-between"
+                  class="w-full text-left px-4 py-2.5 text-label-md text-on-surface hover:bg-surface-container active:bg-surface-container transition-colors flex items-center justify-between"
                   :class="selectedValues.includes(item) ? 'bg-primary-fixed/40' : ''"
                   @click.stop="select(item)"
                 >
