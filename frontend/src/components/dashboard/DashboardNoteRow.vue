@@ -170,7 +170,7 @@ function fmtDate(d: string) {
 .age-dot.age-normal { background: #c3c8c0; }
 .age-dot.age-stale  { background: #e8a040; }
 .age-dot.age-old    { background: #d9534f; }
-
+/* oooyoy */
 .row-body {
   flex: 1;
   min-width: 0;
