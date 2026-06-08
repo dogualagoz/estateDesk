@@ -25,19 +25,22 @@ export interface OfficeMember {
 
 export interface Invite {
   id: string;
-  email: string;
+  email?: string | null;
   token: string;
   status: InviteStatus;
   expiresAt: string;
+  expiresInSeconds: number;
+  expiresInDays: number;
   createdAt: string;
   link: string;
 }
 
 export interface InvitePreview {
-  email: string;
   officeName: string;
   invitedByName: string;
   status: InviteStatus;
   expiresAt: string;
+  expiresInSeconds: number;
+  expiresInDays: number;
   valid: boolean;
 }

@@ -40,8 +40,7 @@ async function createInvite() {
   inviteError.value = null;
   creatingInvite.value = true;
   try {
-    const invite = await officeService.createInvite(inviteEmail.value.trim());
-    inviteEmail.value = '';
+    const invite = await officeService.createInvite();
     // Listede varsa güncelle, yoksa başa ekle
     const idx = invites.value.findIndex((i) => i.id === invite.id);
     if (idx >= 0) invites.value[idx] = invite;
@@ -127,41 +126,38 @@ onMounted(load);
         <div>
           <h2 class="text-body-lg font-semibold text-on-surface">Danışman Davet Et</h2>
           <p class="text-label-md text-on-surface-variant mt-1">
-            E-posta girin; oluşan davet linkini ilgili kişiyle paylaşın.
+            Davet linki oluşturun ve ilgili kişiyle paylaşın. Davet linki 14 gün geçerlidir.
           </p>
         </div>
 
-        <form class="flex flex-wrap items-end gap-stack-md" @submit.prevent="createInvite">
-          <div class="field flex-1 min-w-0 sm:min-w-[220px]">
-            <label for="inviteEmail">E-posta</label>
-            <input id="inviteEmail" class="input" type="email" v-model="inviteEmail" placeholder="danisman@ornek.com" required />
-          </div>
-          <button class="btn primary w-full sm:w-auto" type="submit" :disabled="creatingInvite">
+        <div class="flex gap-stack-md">
+          <button class="btn primary" :disabled="creatingInvite" @click="createInvite">
             <span class="material-symbols-outlined text-[18px]">link</span>
             {{ creatingInvite ? 'Oluşturuluyor…' : 'Davet Linki Oluştur' }}
           </button>
-        </form>
+        </div>
         <p v-if="inviteError" class="error-msg">{{ inviteError }}</p>
 
-        <!-- Bekleyen davetler -->
+        <!-- Aktif davet linkleri -->
         <div v-if="invites.length" class="flex flex-col gap-stack-sm pt-stack-md border-t border-outline-variant">
-          <p class="text-label-md font-medium text-on-surface">Bekleyen davetler</p>
+          <p class="text-label-md font-medium text-on-surface">Aktif davet linkleri ({{ invites.length }})</p>
           <div
             v-for="inv in invites"
             :key="inv.id"
             class="flex items-center gap-3 flex-wrap p-stack-md rounded-lg bg-surface-container-low"
           >
             <div class="min-w-0 flex-1">
-              <p class="font-medium text-on-surface truncate">{{ inv.email }}</p>
               <p class="text-label-sm text-on-surface-variant truncate">{{ inv.link }}</p>
+              <p class="text-label-xs text-on-surface-variant mt-0.5" v-if="inv.expiresInDays">
+                {{ inv.expiresInDays }} gün kaldı
+              </p>
             </div>
             <button class="btn ghost text-[13px] py-1.5 px-3" @click="copyLink(inv)">
               <span class="material-symbols-outlined text-[16px]">{{ copiedToken === inv.token ? 'check' : 'content_copy' }}</span>
-              {{ copiedToken === inv.token ? 'Kopyalandı' : 'Linki Kopyala' }}
+              {{ copiedToken === inv.token ? 'Kopyalandı' : 'Kopyala' }}
             </button>
             <button class="btn ghost text-[13px] py-1.5 px-3 text-error" @click="revokeInvite(inv.id)">
               <span class="material-symbols-outlined text-[16px]">close</span>
-              İptal
             </button>
           </div>
         </div>

@@ -6,6 +6,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
 import { requireOfficeId } from '../common/office.util';
@@ -16,7 +18,7 @@ const INVITE_TTL_DAYS = 7;
 
 @Injectable()
 export class OfficeService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private jwt: JwtService) {}
 
   /** Yeni ofis kurar; kurucu ofis yöneticisi (ADMIN) ve üyesi olur. */
   async createOffice(user: AuthUser, dto: CreateOfficeDto) {
@@ -80,26 +82,30 @@ export class OfficeService {
     );
   }
 
-  /** Yöneticinin e-posta ile davet linki üretmesi. */
+  /** Yöneticinin davet linki üretmesi (email isteğe bağlı). */
   async createInvite(user: AuthUser, dto: CreateInviteDto) {
     const officeId = requireOfficeId(user);
-    const email = dto.email.toLowerCase().trim();
+    const email = dto.email?.toLowerCase().trim();
 
-    const existingUser = await this.prisma.user.findUnique({ where: { email } });
-    if (existingUser?.officeId === officeId) {
-      throw new ConflictException('Bu kişi zaten ofisinizde');
+    // E-posta varsa, o kişinin daha önce davet alıp almadığını kontrol et
+    if (email) {
+      const existingUser = await this.prisma.user.findUnique({ where: { email } });
+      if (existingUser?.officeId === officeId) {
+        throw new ConflictException('Bu kişi zaten ofisinizde');
+      }
+
+      const now = new Date();
+      let existingInvite = await this.prisma.invite.findFirst({
+        where: { officeId, email, status: 'PENDING' },
+      });
+
+      if (existingInvite && existingInvite.expiresAt > now) {
+        return this.toInviteResponse(existingInvite);
+      }
     }
 
     const now = new Date();
-    let invite = await this.prisma.invite.findFirst({
-      where: { officeId, email, status: 'PENDING' },
-    });
-
-    if (invite && invite.expiresAt > now) {
-      return this.toInviteResponse(invite);
-    }
-
-    invite = await this.prisma.invite.create({
+    const invite = await this.prisma.invite.create({
       data: {
         email,
         officeId,
@@ -139,13 +145,19 @@ export class OfficeService {
     });
     if (!invite) throw new NotFoundException('Davet bulunamadı');
 
-    const valid = invite.status === 'PENDING' && invite.expiresAt > new Date();
+    const now = new Date();
+    const valid = invite.status === 'PENDING' && invite.expiresAt > now;
+    const expiresInMs = invite.expiresAt.getTime() - now.getTime();
+    const expiresInSeconds = Math.max(0, Math.floor(expiresInMs / 1000));
+    const expiresInDays = Math.floor(expiresInSeconds / (24 * 3600));
+
     return {
-      email: invite.email,
       officeName: invite.office.name,
       invitedByName: invite.invitedBy.fullName,
       status: invite.status,
       expiresAt: invite.expiresAt,
+      expiresInSeconds,
+      expiresInDays,
       valid,
     };
   }
@@ -159,10 +171,8 @@ export class OfficeService {
     if (invite.status !== 'PENDING' || invite.expiresAt < new Date()) {
       throw new BadRequestException('Davet artık geçerli değil');
     }
-    if (invite.email.toLowerCase() !== user.email.toLowerCase()) {
-      throw new ForbiddenException('Bu davet farklı bir e-posta adresine gönderilmiş');
-    }
 
+    // E-posta kısıtlaması yok — herkes davet linki ile katılabilir
     await this.prisma.$transaction([
       this.prisma.user.update({
         where: { id: user.id },
@@ -170,28 +180,90 @@ export class OfficeService {
       }),
       this.prisma.invite.update({
         where: { id: invite.id },
-        data: { status: 'ACCEPTED', acceptedAt: new Date() },
+        data: { status: 'ACCEPTED', acceptedAt: new Date(), acceptedByEmail: user.email },
       }),
     ]);
 
     return this.getOfficeSummary(invite.officeId);
   }
 
+  /** Davet linki ile kayıt ol ve ofise katıl (public). */
+  async registerWithInvite(
+    token: string,
+    dto: { email: string; password: string; fullName: string },
+  ) {
+    const invite = await this.prisma.invite.findUnique({ where: { token } });
+    if (!invite) throw new NotFoundException('Davet bulunamadı');
+    if (invite.status !== 'PENDING' || invite.expiresAt < new Date()) {
+      throw new BadRequestException('Davet artık geçerli değil');
+    }
+
+    const email = dto.email.toLowerCase().trim();
+    const existing = await this.prisma.user.findUnique({ where: { email } });
+    if (existing) throw new ConflictException('Bu e-posta zaten kayıtlı');
+
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+
+    const user = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.user.create({
+        data: {
+          email,
+          fullName: dto.fullName,
+          passwordHash,
+          role: Role.AGENT,
+          officeId: invite.officeId,
+        },
+      });
+
+      await tx.invite.update({
+        where: { id: invite.id },
+        data: { status: 'ACCEPTED', acceptedAt: new Date(), acceptedByEmail: email },
+      });
+
+      return created;
+    });
+
+    return this.buildSession(user);
+  }
+
+  private buildSession(user: any) {
+    const payload = { sub: user.id, email: user.email, role: user.role, officeId: user.officeId };
+    const accessToken = this.jwt.sign(payload);
+
+    return {
+      accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+        officeId: user.officeId,
+      },
+    };
+  }
+
   private toInviteResponse(invite: {
     id: string;
-    email: string;
+    email?: string | null;
     token: string;
     status: string;
     expiresAt: Date;
     createdAt: Date;
   }) {
     const base = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const now = new Date();
+    const expiresInMs = invite.expiresAt.getTime() - now.getTime();
+    const expiresInSeconds = Math.max(0, Math.floor(expiresInMs / 1000));
+    const expiresInDays = Math.floor(expiresInSeconds / (24 * 3600));
+
     return {
       id: invite.id,
       email: invite.email,
       token: invite.token,
       status: invite.status,
       expiresAt: invite.expiresAt,
+      expiresInSeconds,
+      expiresInDays,
       createdAt: invite.createdAt,
       link: `${base}/invite/${invite.token}`,
     };

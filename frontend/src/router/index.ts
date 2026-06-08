@@ -16,8 +16,14 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/invite/:token',
-    name: 'invite',
-    component: () => import('@/views/InviteAcceptView.vue'),
+    name: 'invite.preview',
+    component: () => import('@/views/InvitePreviewView.vue'),
+    meta: { public: true },
+  },
+  {
+    path: '/invite/:token/register',
+    name: 'invite.register',
+    component: () => import('@/views/InviteRegisterView.vue'),
     meta: { public: true },
   },
   {
@@ -114,7 +120,8 @@ router.beforeEach((to) => {
     auth.isAuthenticated &&
     !auth.hasOffice &&
     to.name !== 'onboarding' &&
-    to.name !== 'invite'
+    to.name !== 'invite.preview' &&
+    to.name !== 'invite.register'
   ) {
     return { name: 'onboarding' };
   }
