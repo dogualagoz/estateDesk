@@ -42,6 +42,15 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('ed_token');
   }
 
+  function setToken(newToken: string) {
+    token.value = newToken;
+    localStorage.setItem('ed_token', newToken);
+  }
+
+  function setUser(newUser: User) {
+    user.value = newUser;
+  }
+
   async function fetchMe() {
     if (!token.value) return;
     try {
@@ -54,6 +63,6 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     token, user, loading,
     isAuthenticated, isAdmin, hasOffice,
-    login, register, logout, fetchMe,
+    login, register, logout, setToken, setUser, fetchMe,
   };
 });

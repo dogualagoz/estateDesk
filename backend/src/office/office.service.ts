@@ -246,8 +246,8 @@ export class OfficeService {
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
 
-    const user = await this.prisma.$transaction(async (tx) => {
-      const created = await tx.user.create({
+    return this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
         data: {
           email,
           fullName: dto.fullName,
@@ -262,10 +262,8 @@ export class OfficeService {
         data: { status: 'ACCEPTED', acceptedAt: new Date(), acceptedByEmail: email },
       });
 
-      return created;
+      return this.buildSession(user);
     });
-
-    return this.buildSession(user);
   }
 
   private buildSession(user: any) {
