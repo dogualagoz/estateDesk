@@ -44,8 +44,8 @@ async function submit() {
     auth.setUser(result.user);
     auth.setToken(result.accessToken);
 
-    // Redirect to dashboard
-    router.push('/');
+    // Redirect to success screen
+    router.push({ name: 'invite.success' });
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Kayıt başarısız';
   } finally {
