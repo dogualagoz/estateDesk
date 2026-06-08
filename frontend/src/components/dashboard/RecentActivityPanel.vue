@@ -10,159 +10,69 @@ const props = defineProps<{
 }>();
 
 const router = useRouter();
+
+const typeInitial = (types: string[] | undefined): string => {
+  if (!types?.length) return 'T';
+  const type = types[0];
+  if (type === 'APARTMENT') return 'D';
+  if (type === 'VILLA') return 'V';
+  if (type === 'LAND') return 'A';
+  if (type === 'SHOP') return 'Ş';
+  if (type === 'OFFICE') return 'O';
+  return type[0];
+};
 </script>
 
 <template>
-  <div class="recent-activity-panel">
-    <h2>Son Eklenenler</h2>
+  <div class="space-y-4">
+    <h2 class="text-headline-lg-mobile md:text-headline-lg font-semibold tracking-tight text-on-surface">Son Eklenenler</h2>
 
-    <div class="activity-grid">
-      <div class="column">
-        <h3>Portföyler</h3>
-        <div v-if="portfolios.length === 0" class="empty">Henüz portföy yok</div>
-        <div v-else class="list">
-          <div v-for="p in portfolios" :key="p.id" class="activity-item" @click="router.push(`/portfolio/${p.id}`)">
-            <div class="item-header">
-              <span class="type">{{ PROPERTY_TYPE_LABELS[p.type] }}</span>
-              <span class="date">{{ formatDate(p.createdAt) }}</span>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+      <!-- Portföyler -->
+      <div>
+        <h3 class="text-label-sm text-on-surface-variant uppercase tracking-widest font-semibold mb-3">Portföyler</h3>
+        <div v-if="portfolios.length === 0" class="text-label-md text-on-surface-variant text-center py-4">Henüz portföy yok</div>
+        <div v-else class="space-y-0">
+          <div
+            v-for="p in portfolios"
+            :key="p.id"
+            class="flex items-center gap-3 py-3 px-2 -mx-2 rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors border-b border-surface-container last:border-0 group"
+            @click="router.push(`/portfolio/${p.id}`)"
+          >
+            <div class="w-8 h-8 rounded-lg bg-primary-fixed text-on-primary-fixed text-label-sm font-bold flex items-center justify-center shrink-0">
+              D
             </div>
-            <div class="item-title">{{ p.title || `${p.city}, ${p.district}` }}</div>
-            <div class="item-meta">
-              <span class="price">{{ fmtPrice(Number(p.price)) }}</span>
-              <span class="agent">{{ p.createdBy?.fullName }}</span>
+            <div class="flex-1 min-w-0">
+              <div class="text-[13px] font-semibold text-on-surface truncate">{{ p.title || `${p.city}, ${p.district}` }}</div>
+              <div class="text-label-sm text-on-surface-variant">{{ p.createdBy?.fullName }} · {{ formatDate(p.createdAt) }}</div>
             </div>
+            <div class="text-label-sm font-semibold text-primary shrink-0">{{ fmtPrice(Number(p.price)) }}</div>
           </div>
         </div>
       </div>
 
-      <div class="column">
-        <h3>Talepler</h3>
-        <div v-if="demands.length === 0" class="empty">Henüz talep yok</div>
-        <div v-else class="list">
-          <div v-for="d in demands" :key="d.id" class="activity-item" @click="router.push(`/demand/${d.id}`)">
-            <div class="item-header">
-              <span class="type">{{ d.types && d.types.length ? d.types.map((t: any) => PROPERTY_TYPE_LABELS[t]).join(', ') : 'Talep' }}</span>
-              <span class="date">{{ formatDate(d.createdAt) }}</span>
+      <!-- Talepler -->
+      <div>
+        <h3 class="text-label-sm text-on-surface-variant uppercase tracking-widest font-semibold mb-3">Talepler</h3>
+        <div v-if="demands.length === 0" class="text-label-md text-on-surface-variant text-center py-4">Henüz talep yok</div>
+        <div v-else class="space-y-0">
+          <div
+            v-for="d in demands"
+            :key="d.id"
+            class="flex items-center gap-3 py-3 px-2 -mx-2 rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors border-b border-surface-container last:border-0 group"
+            @click="router.push(`/demand/${d.id}`)"
+          >
+            <div class="w-8 h-8 rounded-lg bg-secondary-fixed text-on-secondary-fixed text-label-sm font-bold flex items-center justify-center shrink-0">
+              {{ typeInitial(d.types) }}
             </div>
-            <div class="item-title">{{ d.customerName }}</div>
-            <div class="item-meta">
-              <span class="budget">{{ fmtPrice(Number(d.minBudget || 0)) }} - {{ fmtPrice(Number(d.maxBudget || 0)) }}</span>
-              <span class="agent">{{ d.createdBy?.fullName }}</span>
+            <div class="flex-1 min-w-0">
+              <div class="text-[13px] font-semibold text-on-surface truncate">{{ d.customerName }}</div>
+              <div class="text-label-sm text-on-surface-variant">{{ d.createdBy?.fullName }} · {{ formatDate(d.createdAt) }}</div>
             </div>
+            <div class="text-label-sm font-semibold text-primary shrink-0">{{ fmtPrice(Number(d.minBudget || 0)) }}</div>
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.recent-activity-panel {
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: 2rem;
-  margin-bottom: 2rem;
-}
-
-.recent-activity-panel h2 {
-  margin: 0 0 1rem 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.activity-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-}
-
-.column h3 {
-  margin: 0 0 0.75rem 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.empty {
-  padding: 1rem;
-  text-align: center;
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
-}
-
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.activity-item {
-  padding: 0.75rem;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.activity-item:hover {
-  background-color: var(--color-bg-secondary);
-  border-color: var(--color-primary);
-}
-
-.item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.type {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.date {
-  font-size: 0.75rem;
-  color: var(--color-text-secondary);
-}
-
-.item-title {
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: 0.5rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 0.95rem;
-}
-
-.item-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
-  color: var(--color-text-secondary);
-}
-
-.price,
-.budget {
-  font-weight: 600;
-  color: var(--color-primary);
-}
-
-.agent {
-  text-align: right;
-}
-
-@media (max-width: 767px) {
-  .activity-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-}
-</style>

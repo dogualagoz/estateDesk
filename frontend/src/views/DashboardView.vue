@@ -125,13 +125,15 @@ function demandSubtitle(d: NotedDemand) {
     <div v-if="loading" class="empty">Yükleniyor…</div>
 
     <template v-else>
-      <PendingMatchesPanel :items="pendingMatches" :loading="pendingMatchesLoading" />
-      <RecentActivityPanel :portfolios="stats?.recentPortfolios ?? []" :demands="stats?.recentDemands ?? []" />
-
       <div class="dashboard-grid">
 
-        <!-- Açık defter: iki sayfa -->
-        <div class="notebook">
+        <!-- Sol kolon: tüm bölümler -->
+        <div class="dashboard-left">
+          <PendingMatchesPanel :items="pendingMatches" :loading="pendingMatchesLoading" />
+          <RecentActivityPanel :portfolios="stats?.recentPortfolios ?? []" :demands="stats?.recentDemands ?? []" />
+
+          <!-- Açık defter: iki sayfa -->
+          <div class="notebook">
 
           <!-- Sol sayfa — Portföy -->
           <section class="page-col">
@@ -228,9 +230,10 @@ function demandSubtitle(d: NotedDemand) {
             </div>
           </section>
 
+          </div>
         </div>
 
-        <!-- İstatistik sütunu -->
+        <!-- İstatistik sütunu (sağ kolon) -->
         <aside class="stats-sidebar">
           <button class="stat-card" @click="router.push('/portfolio')">
             <span class="material-symbols-outlined stat-icon">maps_home_work</span>
@@ -293,6 +296,13 @@ function demandSubtitle(d: NotedDemand) {
   grid-template-columns: 1fr 212px;
   gap: 24px;
   align-items: start;
+}
+
+.dashboard-left {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  min-width: 0;
 }
 
 /* ── Açık defter ── */
