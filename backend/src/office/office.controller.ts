@@ -42,4 +42,10 @@ export class OfficeController {
   revokeInvite(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.office.revokeInvite(user, id);
   }
+
+  @Roles(Role.ADMIN)
+  @Delete('members/:id')
+  removeMember(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.office.removeMember(user, id);
+  }
 }

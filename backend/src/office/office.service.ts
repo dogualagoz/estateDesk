@@ -82,6 +82,27 @@ export class OfficeService {
     );
   }
 
+  /** Ofisten üye çıkart (ADMIN tarafından). */
+  async removeMember(user: AuthUser, memberId: string) {
+    const officeId = requireOfficeId(user);
+
+    const member = await this.prisma.user.findUnique({ where: { id: memberId } });
+    if (!member || member.officeId !== officeId) {
+      throw new NotFoundException('Kullanıcı bu ofisin üyesi değil');
+    }
+
+    if (member.id === user.id) {
+      throw new BadRequestException('Kendi kendinizi çıkartamazsınız');
+    }
+
+    await this.prisma.user.update({
+      where: { id: memberId },
+      data: { officeId: null },
+    });
+
+    return { success: true };
+  }
+
   /** Yöneticinin davet linki üretmesi (email isteğe bağlı). */
   async createInvite(user: AuthUser, dto: CreateInviteDto) {
     const officeId = requireOfficeId(user);
