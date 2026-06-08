@@ -48,4 +48,9 @@ export class OfficeController {
   removeMember(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.office.removeMember(user, id);
   }
+
+  @Delete('leave')
+  leaveOffice(@CurrentUser() user: AuthUser) {
+    return this.office.leaveOffice(user);
+  }
 }

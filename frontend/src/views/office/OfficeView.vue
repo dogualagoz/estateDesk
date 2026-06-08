@@ -87,6 +87,20 @@ async function removeMember(member: OfficeMember) {
   }
 }
 
+async function leaveOffice() {
+  if (!confirm('Ofisten çıkmak istediğinizden emin misiniz?')) {
+    return;
+  }
+
+  try {
+    await officeService.leaveOffice();
+    await auth.fetchMe();
+    router.push('/onboarding');
+  } catch (e: any) {
+    alert(e?.response?.data?.message || 'İşlem başarısız');
+  }
+}
+
 function openProfile(id: string) {
   router.push({ name: 'profile', params: { id } });
 }
@@ -148,6 +162,20 @@ onMounted(load);
           </div>
         </button>
       </div>
+
+      <!-- Ofisten çık -->
+      <section class="card flex flex-col gap-stack-md">
+        <div>
+          <h2 class="text-body-lg font-semibold text-on-surface">Ofisten Çık</h2>
+          <p class="text-label-md text-on-surface-variant mt-1">
+            Bu ofisten ayrılın. Yeni bir ofis oluşturup katabilirsiniz.
+          </p>
+        </div>
+        <button class="btn ghost text-error w-fit" @click="leaveOffice">
+          <span class="material-symbols-outlined text-[18px]">logout</span>
+          Ofisten Çık
+        </button>
+      </section>
 
       <!-- Davet yönetimi (yalnız yönetici) -->
       <section v-if="auth.isAdmin" class="card flex flex-col gap-gutter">

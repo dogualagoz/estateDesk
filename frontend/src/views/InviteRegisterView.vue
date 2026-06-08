@@ -23,9 +23,6 @@ const invitePreview = ref<InvitePreview | null>(null);
 onMounted(async () => {
   try {
     invitePreview.value = await officeService.previewInvite(token);
-    if (!invitePreview.value.valid) {
-      error.value = 'Bu davetin süresi dolmuş veya iptal edilmiş.';
-    }
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Davet bulunamadı';
   } finally {
@@ -67,25 +64,52 @@ async function submit() {
       </div>
 
       <template v-else>
-        <!-- Başlık -->
-        <header class="flex flex-col items-center gap-2 text-center pt-2">
-          <div class="w-14 h-14 bg-surface-container rounded-xl flex items-center justify-center text-primary mb-2">
-            <span class="material-symbols-outlined text-[28px]" style="font-variation-settings:'FILL' 1">person_add</span>
+        <!-- Preview hatası (token bulunamadı vs) -->
+        <template v-if="error && !invitePreview">
+          <header class="flex flex-col items-center gap-2 text-center pt-2">
+            <span class="material-symbols-outlined text-[40px] text-error">link_off</span>
+            <h1 class="text-headline-md font-semibold text-on-surface">Davet geçersiz</h1>
+            <p class="text-label-md text-on-surface-variant">{{ error }}</p>
+          </header>
+          <div class="flex gap-2 pt-2">
+            <router-link to="/login" class="btn secondary w-full">Giriş sayfası</router-link>
+            <router-link to="/register" class="btn primary w-full">Kayıt ol</router-link>
           </div>
-          <h1 class="text-headline-lg font-semibold tracking-tight text-on-surface">Hesap Oluştur</h1>
-          <p class="text-label-md text-on-surface-variant">{{ invitePreview?.officeName || 'Ofise Katıl' }}</p>
-        </header>
+        </template>
 
-        <!-- Davet info banner -->
-        <div v-if="invitePreview" class="bg-primary-container rounded-lg p-stack-md text-center">
-          <p class="text-label-sm text-on-surface-variant mb-1">
-            <strong>{{ invitePreview.invitedByName }}</strong> tarafından davet edildiyseniz:
-          </p>
-          <p class="text-label-lg font-semibold text-on-surface">{{ invitePreview.officeName }}</p>
-        </div>
+        <!-- Davet süresi dolmuş/iptal edilmiş -->
+        <template v-else-if="invitePreview && !invitePreview.valid">
+          <header class="flex flex-col items-center gap-2 text-center pt-2">
+            <span class="material-symbols-outlined text-[40px] text-error">schedule</span>
+            <h1 class="text-headline-md font-semibold text-on-surface">Davet süresi dolmuş</h1>
+            <p class="text-label-md text-on-surface-variant">Bu davetin süresi dolmuş veya iptal edilmiş.</p>
+          </header>
+          <div class="flex gap-2 pt-2">
+            <router-link to="/login" class="btn secondary w-full">Giriş yap</router-link>
+            <router-link to="/register" class="btn primary w-full">Kayıt ol</router-link>
+          </div>
+        </template>
 
-        <!-- Form veya hata -->
-        <template v-if="!error || invitePreview?.valid">
+        <!-- Başarılı preview: kayıt formu -->
+        <template v-else-if="invitePreview">
+          <!-- Başlık -->
+          <header class="flex flex-col items-center gap-2 text-center pt-2">
+            <div class="w-14 h-14 bg-surface-container rounded-xl flex items-center justify-center text-primary mb-2">
+              <span class="material-symbols-outlined text-[28px]" style="font-variation-settings:'FILL' 1">person_add</span>
+            </div>
+            <h1 class="text-headline-lg font-semibold tracking-tight text-on-surface">Hesap Oluştur</h1>
+            <p class="text-label-md text-on-surface-variant">{{ invitePreview.officeName }}</p>
+          </header>
+
+          <!-- Davet info banner -->
+          <div class="bg-primary-container rounded-lg p-stack-md text-center">
+            <p class="text-label-sm text-on-surface-variant mb-1">
+              <strong>{{ invitePreview.invitedByName }}</strong> tarafından davet edildiyseniz:
+            </p>
+            <p class="text-label-lg font-semibold text-on-surface">{{ invitePreview.officeName }}</p>
+          </div>
+
+          <!-- Kayıt formu -->
           <form class="flex flex-col gap-stack-md" @submit.prevent="submit">
             <div class="field full">
               <label for="fullName">Ad Soyad</label>
@@ -138,17 +162,6 @@ async function submit() {
             Zaten hesabınız var mı?
             <router-link to="/login" class="text-primary font-semibold hover:underline">Giriş yapın</router-link>
           </footer>
-        </template>
-
-        <!-- Davet süresi dolmuş -->
-        <template v-else>
-          <div class="flex flex-col gap-stack-md text-center bg-error-container rounded-lg p-stack-md">
-            <p class="text-label-md font-semibold text-error">{{ error }}</p>
-            <div class="flex gap-2 pt-2">
-              <router-link to="/login" class="btn secondary w-full text-sm">Giriş yap</router-link>
-              <router-link to="/register" class="btn primary w-full text-sm">Kayıt ol</router-link>
-            </div>
-          </div>
         </template>
       </template>
     </main>

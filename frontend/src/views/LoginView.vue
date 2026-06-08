@@ -26,12 +26,15 @@ async function submit() {
         await auth.fetchMe();
         router.push('/');
       } catch (e: any) {
-        // Davet kabul başarısız, ama login başarılı. Dashboard'a git
+        // Davet kabul başarısız, ama login başarılı
         console.error('Invite acceptance failed:', e);
-        router.push('/');
+        // Kullanıcıya ofis varsa dashboard, yoksa onboarding
+        router.push(auth.hasOffice ? '/' : '/onboarding');
       }
     } else {
-      const redirect = (route.query.redirect as string) || '/';
+      // Ofisi varsa dashboard, yoksa onboarding
+      const destination = auth.hasOffice ? '/' : '/onboarding';
+      const redirect = (route.query.redirect as string) || destination;
       router.push(redirect);
     }
   } catch (e: any) {

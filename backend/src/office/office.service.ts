@@ -103,6 +103,27 @@ export class OfficeService {
     return { success: true };
   }
 
+  /** Ofisten çıkma — kimliği doğrulanmış kullanıcı kendisini çıkartır. */
+  async leaveOffice(user: AuthUser) {
+    const officeId = requireOfficeId(user);
+
+    // Kurucu kendisini çıkartamaz (ofisini daha sonra silebilir)
+    const office = await this.prisma.office.findUnique({
+      where: { id: officeId },
+      select: { ownerId: true },
+    });
+    if (office?.ownerId === user.id) {
+      throw new BadRequestException('Ofis kurucusu ofisten çıkalamaz');
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { officeId: null },
+    });
+
+    return { success: true };
+  }
+
   /** Yöneticinin davet linki üretmesi (email isteğe bağlı). */
   async createInvite(user: AuthUser, dto: CreateInviteDto) {
     const officeId = requireOfficeId(user);

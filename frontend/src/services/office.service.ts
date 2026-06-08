@@ -21,4 +21,7 @@ export const officeService = {
     api.post<any>(`/invites/${token}/register`, payload).then((r) => r.data),
   acceptInvite: (token: string) =>
     api.post<OfficeSummary>(`/invites/${token}/accept`).then((r) => r.data),
+
+  leaveOffice: () =>
+    api.delete<{ success: boolean }>('/offices/leave').then((r) => r.data),
 };

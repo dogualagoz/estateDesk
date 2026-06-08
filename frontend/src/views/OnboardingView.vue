@@ -38,7 +38,7 @@ function goToInvite() {
     error.value = 'Lütfen geçerli bir davet linki veya kodu girin';
     return;
   }
-  router.push({ name: 'invite', params: { token } });
+  router.push({ name: 'invite.preview', params: { token } });
 }
 
 function logout() {
