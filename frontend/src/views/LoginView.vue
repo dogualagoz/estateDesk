@@ -19,17 +19,21 @@ async function submit() {
   try {
     await auth.login(email.value.trim(), password.value);
 
-    // Davet token'ı varsa otomatik olarak daveti kabul et
+    // Davet token'ı varsa
     if (inviteToken.value) {
-      try {
-        await officeService.acceptInvite(inviteToken.value);
-        await auth.fetchMe();
-        router.push('/');
-      } catch (e: any) {
-        // Davet kabul başarısız, ama login başarılı
-        console.error('Invite acceptance failed:', e);
-        // Kullanıcıya ofis varsa dashboard, yoksa onboarding
-        router.push(auth.hasOffice ? '/' : '/onboarding');
+      // Officesiz kullanıcı → InviteAcceptView'a yönlendir (confirm ekranı)
+      // Offisli kullanıcı → direkt acceptInvite() yap
+      if (!auth.hasOffice) {
+        router.push({ name: 'invite.accept', params: { token: inviteToken.value } });
+      } else {
+        try {
+          await officeService.acceptInvite(inviteToken.value);
+          await auth.fetchMe();
+          router.push('/');
+        } catch (e: any) {
+          console.error('Invite acceptance failed:', e);
+          router.push('/');
+        }
       }
     } else {
       // Ofisi varsa dashboard, yoksa onboarding

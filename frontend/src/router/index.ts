@@ -27,6 +27,12 @@ const routes: RouteRecordRaw[] = [
     meta: { public: true },
   },
   {
+    path: '/invite/:token/accept',
+    name: 'invite.accept',
+    component: () => import('@/views/InviteAcceptView.vue'),
+    meta: { public: true },
+  },
+  {
     path: '/invite/success',
     name: 'invite.success',
     component: () => import('@/views/InviteSuccessView.vue'),

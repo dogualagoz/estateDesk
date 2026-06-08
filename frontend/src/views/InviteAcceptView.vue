@@ -10,137 +10,117 @@ const router = useRouter();
 const auth = useAuthStore();
 
 const token = route.params.token as string;
-const preview = ref<InvitePreview | null>(null);
-const loadError = ref<string | null>(null);
-const loading = ref(true);
-
-// Girişsiz kullanıcı için kayıt formu (e-posta davete kilitli)
-const fullName = ref('');
-const password = ref('');
+const invitePreview = ref<InvitePreview | null>(null);
 const error = ref<string | null>(null);
-const busy = ref(false);
+const loading = ref(true);
+const accepting = ref(false);
 
 onMounted(async () => {
   try {
-    preview.value = await officeService.previewInvite(token);
+    invitePreview.value = await officeService.previewInvite(token);
+    if (!invitePreview.value.valid) {
+      error.value = 'Bu davetin süresi dolmuş veya iptal edilmiş.';
+    }
   } catch (e: any) {
-    loadError.value = e?.response?.data?.message || 'Davet bulunamadı';
+    error.value = e?.response?.data?.message || 'Davet bulunamadı';
   } finally {
     loading.value = false;
   }
 });
 
-async function acceptAsCurrentUser() {
+async function acceptInvite() {
   error.value = null;
-  busy.value = true;
+  accepting.value = true;
   try {
     await officeService.acceptInvite(token);
     await auth.fetchMe();
     router.push('/');
   } catch (e: any) {
-    error.value = e?.response?.data?.message || 'Davet kabul edilemedi';
+    error.value = e?.response?.data?.message || 'Ofise katılma başarısız';
   } finally {
-    busy.value = false;
-  }
-}
-
-async function registerAndAccept() {
-  error.value = null;
-  busy.value = true;
-  try {
-    await auth.register({
-      fullName: fullName.value.trim(),
-      email: preview.value!.email,
-      password: password.value,
-    });
-    await officeService.acceptInvite(token);
-    await auth.fetchMe();
-    router.push('/');
-  } catch (e: any) {
-    error.value = e?.response?.data?.message || 'İşlem başarısız';
-  } finally {
-    busy.value = false;
+    accepting.value = false;
   }
 }
 </script>
 
 <template>
   <div class="min-h-screen bg-background flex items-center justify-center px-margin-mobile py-margin-desktop">
-    <main class="w-full max-w-[440px] bg-surface-container-lowest rounded-xl shadow-md border border-outline-variant p-stack-lg flex flex-col gap-gutter relative overflow-hidden">
+    <main class="w-full max-w-[480px] bg-surface-container-lowest rounded-xl shadow-md border border-outline-variant p-stack-lg flex flex-col gap-gutter relative overflow-hidden">
       <div class="absolute top-0 left-0 right-0 h-1 bg-primary rounded-t-xl"></div>
 
-      <div v-if="loading" class="empty py-8">Yükleniyor…</div>
-
-      <template v-else-if="loadError || !preview">
-        <header class="flex flex-col items-center gap-2 text-center pt-2">
-          <span class="material-symbols-outlined text-[40px] text-error">link_off</span>
-          <h1 class="text-headline-md font-semibold text-on-surface">Davet geçersiz</h1>
-          <p class="text-label-md text-on-surface-variant">{{ loadError || 'Bu davet artık kullanılamıyor.' }}</p>
-        </header>
-        <router-link to="/login" class="btn primary w-full">Giriş sayfasına dön</router-link>
-      </template>
+      <div v-if="loading" class="empty py-12">
+        <p class="text-label-md text-on-surface-variant">Davet yükleniyor…</p>
+      </div>
 
       <template v-else>
-        <header class="flex flex-col items-center gap-2 text-center pt-2">
-          <div class="w-14 h-14 bg-surface-container rounded-xl flex items-center justify-center text-primary mb-1">
-            <span class="material-symbols-outlined text-[28px]" style="font-variation-settings:'FILL' 1">domain</span>
+        <!-- Başlık -->
+        <header class="flex flex-col items-center gap-3 text-center pt-2">
+          <div class="w-16 h-16 bg-surface-container rounded-xl flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined text-[32px]" style="font-variation-settings:'FILL' 1">domain</span>
           </div>
-          <h1 class="text-headline-md font-semibold text-on-surface">{{ preview.officeName }}</h1>
-          <p class="text-label-md text-on-surface-variant">
-            <strong>{{ preview.invitedByName }}</strong> sizi bu ofise davet etti
-          </p>
+          <div>
+            <h1 class="text-headline-md font-semibold text-on-surface">Ofiye Katılın</h1>
+            <p class="text-label-md text-on-surface-variant mt-1">
+              <strong>{{ invitePreview?.invitedByName }}</strong> sizi davet etti
+            </p>
+          </div>
         </header>
 
-        <!-- Davet artık geçerli değil -->
-        <div v-if="!preview.valid" class="flex flex-col gap-stack-md text-center">
-          <p class="error-msg">Bu davetin süresi dolmuş veya iptal edilmiş.</p>
-          <router-link to="/login" class="btn">Giriş sayfasına dön</router-link>
-        </div>
+        <!-- Davet süresi dolmuş -->
+        <template v-if="error && !invitePreview?.valid">
+          <div class="flex flex-col gap-stack-md text-center bg-error-container rounded-lg p-stack-md">
+            <p class="text-label-md font-semibold text-error">{{ error }}</p>
+            <div class="flex gap-2 pt-2">
+              <router-link to="/" class="btn secondary w-full">Dashboard'a Git</router-link>
+              <router-link to="/onboarding" class="btn primary w-full">Ofis Yönet</router-link>
+            </div>
+          </div>
+        </template>
 
-        <!-- Girişli kullanıcı: zaten ofiste -->
-        <div v-else-if="auth.isAuthenticated && auth.hasOffice" class="flex flex-col gap-stack-md text-center">
-          <p class="text-label-md text-on-surface-variant">
-            Zaten bir ofistesiniz. Yeni bir ofise katılmak için önce mevcut ofisinizden ayrılmanız gerekir.
-          </p>
-          <router-link to="/" class="btn primary">Panele dön</router-link>
-        </div>
+        <!-- Başarılı preview -->
+        <template v-else-if="invitePreview?.valid">
+          <!-- Office bilgisi -->
+          <div class="bg-primary-container rounded-lg p-stack-md text-center">
+            <p class="text-label-sm text-on-surface-variant mb-2">Katılacağınız ofis:</p>
+            <p class="text-headline-sm font-semibold text-on-surface">{{ invitePreview.officeName }}</p>
+          </div>
 
-        <!-- Girişli, ofissiz: doğrudan katıl -->
-        <div v-else-if="auth.isAuthenticated" class="flex flex-col gap-stack-md">
-          <p class="text-label-md text-on-surface-variant text-center">
-            <strong>{{ auth.user?.email }}</strong> hesabıyla bu ofise katılacaksınız.
-          </p>
+          <!-- Davet süresi -->
+          <div class="flex items-center justify-between bg-surface-container rounded-lg p-stack-md">
+            <div>
+              <p class="text-label-sm text-on-surface-variant">Davet süresi</p>
+              <p class="text-label-lg font-semibold text-on-surface">{{ invitePreview.expiresInDays }} gün kaldı</p>
+            </div>
+          </div>
+
+          <!-- Error message -->
           <p v-if="error" class="error-msg text-center">{{ error }}</p>
-          <button class="btn primary w-full h-12 font-semibold" :disabled="busy" @click="acceptAsCurrentUser">
-            {{ busy ? 'Katılınıyor…' : 'Ofise Katıl' }}
-          </button>
-        </div>
 
-        <!-- Girişsiz: e-posta kilitli kayıt -->
-        <form v-else class="flex flex-col gap-stack-md" @submit.prevent="registerAndAccept">
-          <div class="field full">
-            <label>E-posta</label>
-            <input class="input h-12 opacity-70" :value="preview.email" disabled />
-          </div>
-          <div class="field full">
-            <label for="fullName">Ad Soyad</label>
-            <input id="fullName" class="input h-12" v-model="fullName" placeholder="Adınız Soyadınız" required minlength="2" autofocus />
-          </div>
-          <div class="field full">
-            <label for="password">Şifre belirleyin</label>
-            <input id="password" class="input h-12" type="password" v-model="password" placeholder="En az 6 karakter" required minlength="6" />
-          </div>
-          <p v-if="error" class="error-msg text-center">{{ error }}</p>
-          <button class="btn primary w-full h-12 font-semibold gap-2" :disabled="busy" type="submit">
-            {{ busy ? 'Katılınıyor…' : 'Kayıt Ol ve Katıl' }}
+          <!-- Katıl butonu -->
+          <button
+            class="btn primary w-full h-12 text-[15px] font-semibold gap-2"
+            :disabled="accepting"
+            @click="acceptInvite"
+          >
+            {{ accepting ? 'Katılınıyor…' : 'Ofiye Katıl' }}
             <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
           </button>
-          <p class="text-center text-label-md text-on-surface-variant">
-            Zaten hesabınız var mı?
-            <router-link to="/login" class="text-primary font-semibold hover:underline">Giriş yapın</router-link>
-          </p>
-        </form>
+
+          <!-- Geri git -->
+          <router-link to="/" class="btn secondary w-full text-center">
+            Şimdi Katılmak İstemiyorum
+          </router-link>
+        </template>
       </template>
     </main>
   </div>
 </template>
+
+<style scoped>
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+</style>
