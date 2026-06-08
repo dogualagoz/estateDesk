@@ -17,6 +17,7 @@ const inviteEmail = ref('');
 const inviteError = ref<string | null>(null);
 const creatingInvite = ref(false);
 const copiedToken = ref<string | null>(null);
+const removingMemberId = ref<string | null>(null);
 
 function initials(name: string) {
   return name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
@@ -70,6 +71,22 @@ async function revokeInvite(id: string) {
   invites.value = invites.value.filter((i) => i.id !== id);
 }
 
+async function removeMember(member: OfficeMember) {
+  if (!confirm(`${member.fullName} adlı danışmanı ofisten çıkartmak istediğinizden emin misiniz?`)) {
+    return;
+  }
+
+  removingMemberId.value = member.id;
+  try {
+    await officeService.removeMember(member.id);
+    members.value = members.value.filter((m) => m.id !== member.id);
+  } catch (e: any) {
+    alert(e?.response?.data?.message || 'İşlem başarısız');
+  } finally {
+    removingMemberId.value = null;
+  }
+}
+
 function openProfile(id: string) {
   router.push({ name: 'profile', params: { id } });
 }
@@ -99,7 +116,7 @@ onMounted(load);
         <button
           v-for="m in members"
           :key="m.id"
-          class="card flex items-center gap-4 text-left hover:border-primary transition-colors cursor-pointer"
+          class="card flex items-center gap-4 text-left hover:border-primary transition-colors cursor-pointer group relative"
           @click="openProfile(m.id)"
         >
           <div class="w-11 h-11 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center text-[14px] font-bold shrink-0">
@@ -115,9 +132,20 @@ onMounted(load);
               {{ m.portfolioCount }} portföy · {{ m.demandCount }} talep
             </p>
           </div>
-          <span class="tag" :class="m.role === 'ADMIN' ? 'primary' : ''">
-            {{ m.role === 'ADMIN' ? 'Yönetici' : 'Danışman' }}
-          </span>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="tag" :class="m.role === 'ADMIN' ? 'primary' : ''">
+              {{ m.role === 'ADMIN' ? 'Yönetici' : 'Danışman' }}
+            </span>
+            <button
+              v-if="auth.isAdmin && m.id !== auth.user?.id"
+              class="btn ghost px-2 py-2 text-error opacity-0 group-hover:opacity-100 transition-opacity"
+              :disabled="removingMemberId === m.id"
+              @click.stop="removeMember(m)"
+              title="Danışmanı çıkart"
+            >
+              <span class="material-symbols-outlined text-[20px]">delete</span>
+            </button>
+          </div>
         </button>
       </div>
 

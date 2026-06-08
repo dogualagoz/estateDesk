@@ -6,6 +6,8 @@ export const officeService = {
     api.post<OfficeSummary>('/offices', { name }).then((r) => r.data),
   me: () => api.get<OfficeSummary>('/offices/me').then((r) => r.data),
   members: () => api.get<OfficeMember[]>('/offices/me/members').then((r) => r.data),
+  removeMember: (memberId: string) =>
+    api.delete<{ success: boolean }>(`/offices/members/${memberId}`).then((r) => r.data),
 
   createInvite: () =>
     api.post<Invite>('/offices/invites', {}).then((r) => r.data),

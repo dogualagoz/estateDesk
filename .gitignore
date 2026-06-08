@@ -12,6 +12,7 @@ build/
 coverage/
 .cache/
 .turbo/
+DEPLOYMENT.md
 
 # Prisma
 backend/prisma/migrations/dev.db*
