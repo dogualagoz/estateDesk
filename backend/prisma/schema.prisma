@@ -59,17 +59,18 @@ model Office {
 }
 
 model Invite {
-  id          String       @id @default(cuid())
-  email       String
-  token       String       @unique @default(cuid())
-  status      InviteStatus @default(PENDING)
-  officeId    String
-  office      Office       @relation(fields: [officeId], references: [id])
-  invitedById String
-  invitedBy   User         @relation("InviteCreatedBy", fields: [invitedById], references: [id])
-  expiresAt   DateTime
-  acceptedAt  DateTime?
-  createdAt   DateTime     @default(now())
+  id              String       @id @default(cuid())
+  email           String?
+  token           String       @unique @default(cuid())
+  status          InviteStatus @default(PENDING)
+  officeId        String
+  office          Office       @relation(fields: [officeId], references: [id])
+  invitedById     String
+  invitedBy       User         @relation("InviteCreatedBy", fields: [invitedById], references: [id])
+  expiresAt       DateTime
+  acceptedAt      DateTime?
+  acceptedByEmail String?
+  createdAt       DateTime     @default(now())
 
   @@index([officeId, status])
   @@index([token])

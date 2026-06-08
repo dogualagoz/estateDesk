@@ -2,15 +2,11 @@ import { Body, Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
 import { OfficeService } from './office.service';
 import { Public } from '../auth/decorators/public.decorator';
 import { CurrentUser, AuthUser } from '../auth/decorators/current-user.decorator';
-import { AuthService } from '../auth/auth.service';
 import { RegisterDto } from '../auth/dto/register.dto';
 
 @Controller('invites')
 export class InviteController {
-  constructor(
-    private readonly office: OfficeService,
-    private readonly auth: AuthService,
-  ) {}
+  constructor(private readonly office: OfficeService) {}
 
   @Public()
   @Get(':token')
