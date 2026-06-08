@@ -12,10 +12,18 @@ export class AuthService {
 
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    if (!user || !user.isActive) throw new UnauthorizedException('Invalid credentials');
+    if (!user) {
+      throw new UnauthorizedException('Bu e-posta adresine kayıtlı hesap bulunamadı');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Hesabınız deaktif edilmiştir. Lütfen destek ekibi ile iletişime geçin');
+    }
 
     const ok = await bcrypt.compare(dto.password, user.passwordHash);
-    if (!ok) throw new UnauthorizedException('Invalid credentials');
+    if (!ok) {
+      throw new UnauthorizedException('Şifre yanlış. Lütfen kontrol edip tekrar deneyin');
+    }
 
     return this.buildSession(user);
   }
