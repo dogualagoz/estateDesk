@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import type { PendingMatchItem } from '@/services/dashboard.service';
-import { PROPERTY_TYPE_LABELS } from '@/data/property-types';
+import { PROPERTY_TYPE_LABELS } from '@/types/portfolio';
 import { fmtPrice } from '@/utils/format';
 
 const props = withDefaults(
