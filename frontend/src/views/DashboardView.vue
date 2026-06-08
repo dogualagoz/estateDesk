@@ -1,22 +1,28 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { dashboardService, type NotedPortfolio, type NotedDemand, type DashboardStats } from '@/services/dashboard.service';
+import { dashboardService, type NotedPortfolio, type NotedDemand, type DashboardStats, type PendingMatchItem } from '@/services/dashboard.service';
+import { fmtPrice } from '@/utils/format';
 import { PROPERTY_TYPE_LABELS } from '@/types/portfolio';
 import type { Portfolio } from '@/types/portfolio';
 import type { Demand } from '@/types/demand';
 import DashboardNoteRow from '@/components/dashboard/DashboardNoteRow.vue';
 import NoteSearchModal from '@/components/dashboard/NoteSearchModal.vue';
+import PendingMatchesPanel from '@/components/dashboard/PendingMatchesPanel.vue';
+import RecentActivityPanel from '@/components/dashboard/RecentActivityPanel.vue';
 
 const router = useRouter();
 const stats = ref<DashboardStats | null>(null);
 const loading = ref(true);
+const pendingMatchesLoading = ref(true);
 
 const notedPortfolios = ref<NotedPortfolio[]>([]);
 const notedDemands = ref<NotedDemand[]>([]);
 
 const pendingPortfolios = ref<(NotedPortfolio & { _pending: true })[]>([]);
 const pendingDemands = ref<(NotedDemand & { _pending: true })[]>([]);
+
+const pendingMatches = ref<PendingMatchItem[]>([]);
 
 const searchModal = ref<'portfolio' | 'demand' | null>(null);
 
@@ -34,6 +40,13 @@ onMounted(async () => {
     }));
   } finally {
     loading.value = false;
+  }
+
+  try {
+    const matches = await dashboardService.pendingMatches();
+    pendingMatches.value = matches;
+  } finally {
+    pendingMatchesLoading.value = false;
   }
 });
 
@@ -89,12 +102,6 @@ function onDemandNoteUpdated(item: NotedDemand, newNote: string) {
   if (idx >= 0) notedDemands.value.splice(idx, 1, { ...item, note: newNote, updatedAt: new Date().toISOString() });
 }
 
-function fmtPrice(p: string | number | null | undefined) {
-  if (p == null) return '—';
-  const n = typeof p === 'string' ? parseFloat(p) : p;
-  return new Intl.NumberFormat('tr-TR').format(n) + ' ₺';
-}
-
 function portfolioBadge(p: NotedPortfolio) { return PROPERTY_TYPE_LABELS[p.type] ?? p.type; }
 function portfolioTitle(p: NotedPortfolio) { return `${p.city} / ${p.district}`; }
 function portfolioSubtitle(p: NotedPortfolio) { return fmtPrice(p.price); }
@@ -118,6 +125,9 @@ function demandSubtitle(d: NotedDemand) {
     <div v-if="loading" class="empty">Yükleniyor…</div>
 
     <template v-else>
+      <PendingMatchesPanel :items="pendingMatches" :loading="pendingMatchesLoading" />
+      <RecentActivityPanel :portfolios="stats?.recentPortfolios ?? []" :demands="stats?.recentDemands ?? []" />
+
       <div class="dashboard-grid">
 
         <!-- Açık defter: iki sayfa -->
@@ -253,6 +263,14 @@ function demandSubtitle(d: NotedDemand) {
           <div class="stat-row">
             <span class="stat-label">Notlu Talep</span>
             <span class="stat-chip">{{ notedDemands.length }}</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Pinli Eşleştirme</span>
+            <span class="stat-chip">{{ stats?.pinnedMatchCount ?? '—' }}</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Kapanan Talep</span>
+            <span class="stat-chip">{{ stats?.closedDemandCount ?? '—' }}</span>
           </div>
         </aside>
 

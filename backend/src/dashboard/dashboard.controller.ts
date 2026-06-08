@@ -10,4 +10,9 @@ export class DashboardController {
   stats(@CurrentUser() user: AuthUser) {
     return this.dashboard.stats(user);
   }
+
+  @Get('pending-matches')
+  pendingMatches(@CurrentUser() user: AuthUser) {
+    return this.dashboard.pendingMatches(user);
+  }
 }
