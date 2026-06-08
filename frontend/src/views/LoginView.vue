@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { officeService } from '@/services/office.service';
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -11,12 +12,28 @@ const email = ref('');
 const password = ref('');
 const error = ref<string | null>(null);
 
+const inviteToken = computed(() => route.query.invite as string | undefined);
+
 async function submit() {
   error.value = null;
   try {
     await auth.login(email.value.trim(), password.value);
-    const redirect = (route.query.redirect as string) || '/';
-    router.push(redirect);
+
+    // Davet token'ı varsa otomatik olarak daveti kabul et
+    if (inviteToken.value) {
+      try {
+        await officeService.acceptInvite(inviteToken.value);
+        await auth.fetchMe();
+        router.push('/');
+      } catch (e: any) {
+        // Davet kabul başarısız, ama login başarılı. Dashboard'a git
+        console.error('Invite acceptance failed:', e);
+        router.push('/');
+      }
+    } else {
+      const redirect = (route.query.redirect as string) || '/';
+      router.push(redirect);
+    }
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Giriş başarısız';
   }
@@ -35,7 +52,10 @@ async function submit() {
           <span class="material-symbols-outlined text-[28px]" style="font-variation-settings:'FILL' 1">domain</span>
         </div>
         <h1 class="text-headline-lg font-semibold tracking-tight text-primary">EstateDesk</h1>
-        <p class="text-label-md text-on-surface-variant">Yönetim paneline hoş geldiniz</p>
+        <p v-if="inviteToken" class="text-label-md text-on-surface-variant">
+          Davetinizi kabul etmek için giriş yapın
+        </p>
+        <p v-else class="text-label-md text-on-surface-variant">Yönetim paneline hoş geldiniz</p>
       </header>
 
       <!-- Form -->

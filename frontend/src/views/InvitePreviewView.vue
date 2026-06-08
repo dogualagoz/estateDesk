@@ -42,7 +42,7 @@ function handleRegister() {
 }
 
 function handleLogin() {
-  router.push({ name: 'login', query: { redirect: route.fullPath } });
+  router.push({ name: 'login', query: { invite: token } });
 }
 </script>
 
@@ -124,18 +124,16 @@ function handleLogin() {
             </div>
           </div>
 
-          <!-- CTA: Kayıt yap -->
+          <!-- CTA: Kayıt yap / Giriş yap -->
           <div class="flex flex-col gap-stack-md pt-stack-md border-t border-outline-variant">
             <button class="btn primary w-full h-12 font-semibold gap-2" @click="handleRegister">
               <span>Hesap Oluştur</span>
               <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
             </button>
-            <p class="text-center text-label-sm text-on-surface-variant">
-              Zaten hesabınız var mı?
-              <button class="text-primary font-semibold hover:underline bg-transparent border-0 cursor-pointer p-0" @click="handleLogin">
-                Giriş yapın
-              </button>
-            </p>
+            <button class="btn secondary w-full h-12 font-semibold gap-2" @click="handleLogin">
+              <span>Giriş Yap</span>
+              <span class="material-symbols-outlined text-[18px]">login</span>
+            </button>
           </div>
         </template>
       </template>
