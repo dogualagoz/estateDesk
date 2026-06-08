@@ -128,11 +128,11 @@ function handleLogin() {
           <div class="flex flex-col gap-stack-md pt-stack-md border-t border-outline-variant">
             <button class="btn primary w-full h-12 font-semibold gap-2" @click="handleRegister">
               <span>Hesap Oluştur</span>
-              <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+              <span class="material-symbols-outlined text-[18px]">person_add</span>
             </button>
             <button class="btn secondary w-full h-12 font-semibold gap-2" @click="handleLogin">
               <span>Giriş Yap</span>
-              <span class="material-symbols-outlined text-[18px]">login</span>
+              <span class="material-symbols-outlined text-[18px]">person</span>
             </button>
           </div>
         </template>
