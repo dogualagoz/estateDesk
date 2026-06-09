@@ -7,8 +7,11 @@ export const api = axios.create({
   timeout: 30_000,
 });
 
+export const DEMO_TOKEN_KEY = 'ed_demo_token';
+
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('ed_token');
+  // Gerçek oturum yoksa geçici demo oturumunun token'ını kullan
+  const token = localStorage.getItem('ed_token') || sessionStorage.getItem(DEMO_TOKEN_KEY);
   if (token) {
     config.headers = config.headers ?? {};
     (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
@@ -20,9 +23,16 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err?.response?.status === 401) {
-      localStorage.removeItem('ed_token');
-      if (!window.location.pathname.startsWith('/login')) {
-        window.location.href = '/login';
+      const onDemo = window.location.pathname.startsWith('/demo');
+      if (onDemo) {
+        // Demo oturumu düştü → siteye dön, login'e zorlama
+        sessionStorage.removeItem(DEMO_TOKEN_KEY);
+        window.location.href = '/';
+      } else {
+        localStorage.removeItem('ed_token');
+        if (!window.location.pathname.startsWith('/login')) {
+          window.location.href = '/login';
+        }
       }
     }
     return Promise.reject(err);

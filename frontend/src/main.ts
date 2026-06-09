@@ -12,7 +12,7 @@ async function bootstrap() {
   app.directive('reveal', reveal);
 
   const auth = useAuthStore();
-  if (auth.token) {
+  if (auth.token || auth.demoToken) {
     await auth.fetchMe();
   }
 

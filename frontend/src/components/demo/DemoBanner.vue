@@ -15,7 +15,7 @@ function startTour() {
 
 function exitDemo() {
   stop();
-  auth.logout();
+  auth.exitDemo();
   router.push('/');
 }
 
@@ -53,11 +53,11 @@ onMounted(() => {
       Kaydol
     </router-link>
     <button
-      class="shrink-0 p-1.5 rounded-lg text-on-primary-fixed/70 hover:bg-black/5 hover:text-on-primary-fixed transition-colors"
-      title="Demodan çık"
+      class="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-on-primary-fixed/80 text-label-sm font-medium hover:bg-black/5 hover:text-on-primary-fixed transition-colors"
       @click="exitDemo"
     >
-      <span class="material-symbols-outlined text-[18px]">logout</span>
+      <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+      <span class="hidden sm:inline">Siteye Dön</span>
     </button>
   </div>
 </template>

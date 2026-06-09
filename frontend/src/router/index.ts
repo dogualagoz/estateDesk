@@ -55,6 +55,25 @@ const routes: RouteRecordRaw[] = [
     name: 'dashboard',
     component: () => import('@/views/DashboardView.vue'),
   },
+  // ── Demo: geçici, salt-okunur oturumla aynı ekranlar ──
+  {
+    path: '/demo',
+    name: 'demo',
+    component: () => import('@/views/DashboardView.vue'),
+    meta: { demo: true },
+  },
+  {
+    path: '/demo/portfolio',
+    name: 'demo.portfolio',
+    component: () => import('@/views/portfolio/PortfolioListView.vue'),
+    meta: { demo: true },
+  },
+  {
+    path: '/demo/demand',
+    name: 'demo.demand',
+    component: () => import('@/views/demand/DemandListView.vue'),
+    meta: { demo: true },
+  },
   {
     path: '/search',
     name: 'search',
@@ -119,8 +138,24 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore();
+
+  // ── Demo route'ları: geçici oturum yoksa otomatik aç ──
+  if (to.meta.demo) {
+    // Gerçek hesapla girişli kullanıcı demo'ya gitmesin, kendi paneline gitsin
+    if (auth.isRealAuth) {
+      return auth.hasOffice ? { name: 'dashboard' } : { name: 'onboarding' };
+    }
+    if (!auth.isDemoSession) {
+      try {
+        await auth.loginDemo();
+      } catch {
+        return { name: 'landing' };
+      }
+    }
+    return true;
+  }
 
   // Kimliği doğrulanmamış kullanıcı public olmayan sayfalara erişemez
   if (!to.meta.public && !auth.isAuthenticated) {
@@ -128,13 +163,14 @@ router.beforeEach((to) => {
   }
 
   // Girişli kullanıcı davet preview sayfasına girerse direkt accept view'e yönlendir
-  if (auth.isAuthenticated && to.name === 'invite.preview') {
+  if (auth.isRealAuth && to.name === 'invite.preview') {
     return { name: 'invite.accept', params: { token: to.params.token } };
   }
 
-  // Girişli kullanıcı landing/login/register'a giderse uygun yere yönlendir
+  // Gerçek hesapla girişli kullanıcı landing/login/register'a giderse uygun yere yönlendir
+  // (Demo oturumu bunu tetiklemez; demo kullanıcı siteye geri dönebilsin.)
   if (
-    auth.isAuthenticated &&
+    auth.isRealAuth &&
     (to.name === 'landing' || to.name === 'login' || to.name === 'register')
   ) {
     return auth.hasOffice ? { name: 'dashboard' } : { name: 'onboarding' };
@@ -143,7 +179,7 @@ router.beforeEach((to) => {
   // Ofisi olmayan girişli kullanıcı önce onboarding'i tamamlamalı
   // (davet sayfaları hariç — davetle ofise katılabilsin)
   if (
-    auth.isAuthenticated &&
+    auth.isRealAuth &&
     !auth.hasOffice &&
     to.name !== 'onboarding' &&
     to.name !== 'invite.preview' &&
@@ -155,7 +191,7 @@ router.beforeEach((to) => {
   }
 
   // Ofisi olan kullanıcı onboarding'e gitmeye çalışırsa dashboard'a
-  if (auth.isAuthenticated && auth.hasOffice && to.name === 'onboarding') {
+  if (auth.isRealAuth && auth.hasOffice && to.name === 'onboarding') {
     return { name: 'dashboard' };
   }
 

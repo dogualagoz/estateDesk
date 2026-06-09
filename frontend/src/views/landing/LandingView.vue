@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/composables/useToast';
 import LandingNav from '@/components/landing/LandingNav.vue';
 import HeroSection from '@/components/landing/HeroSection.vue';
@@ -15,7 +14,6 @@ import FinalCtaSection from '@/components/landing/FinalCtaSection.vue';
 import LandingFooter from '@/components/landing/LandingFooter.vue';
 
 const router = useRouter();
-const auth = useAuthStore();
 const toast = useToast();
 
 const demoLoading = ref(false);
@@ -24,8 +22,8 @@ async function startDemo() {
   if (demoLoading.value) return;
   demoLoading.value = true;
   try {
-    await auth.loginDemo();
-    router.push({ name: 'dashboard', query: { tour: '1' } });
+    // Demo oturumunu route guard açar; tur "?tour=1" ile başlar
+    await router.push({ name: 'demo', query: { tour: '1' } });
   } catch (e: any) {
     toast.error(e?.response?.data?.message || 'Demo şu anda açılamadı, lütfen tekrar deneyin.');
   } finally {

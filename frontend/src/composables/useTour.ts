@@ -16,35 +16,35 @@ export const TOUR_STORAGE_KEY = 'ed_demo_tour_done';
 
 const steps: TourStep[] = [
   {
-    route: '/dashboard',
+    route: '/demo',
     target: '[data-tour="dashboard-header"]',
     title: 'Kontrol paneliniz',
     body: 'Burası Defter. Günlük özetiniz, hızlı notlarınız ve sizi bekleyen eşleşmeler tek ekranda toplanır.',
     placement: 'bottom',
   },
   {
-    route: '/dashboard',
+    route: '/demo',
     target: '[data-tour="pending-matches"]',
     title: 'Eşleşmesi bekleyen talepler',
     body: 'Her talebin yanında en güçlü portföy eşleşmesi ve yüzdelik skoru çıkar. Renk kodu talebin ne kadar beklediğini gösterir — soğumadan harekete geçin.',
     placement: 'right',
   },
   {
-    route: '/portfolio',
+    route: '/demo/portfolio',
     target: '[data-tour="portfolio-list"]',
     title: 'Portföyleriniz',
     body: 'Tüm ilanlarınız burada. Tipe, bölgeye ve fiyata göre filtreleyin; demo ofisinde 260 örnek portföy sizi bekliyor.',
     placement: 'bottom',
   },
   {
-    route: '/demand',
+    route: '/demo/demand',
     target: '[data-tour="demand-list"]',
     title: 'Müşteri talepleri',
     body: 'Alıcı ve kiracı arayışlarını kaydedin. Her talep kartında o talebe en uygun portföy ve eşleşme skoru otomatik görünür.',
     placement: 'bottom',
   },
   {
-    route: '/demand',
+    route: '/demo/demand',
     target: null,
     title: 'Gerisi sizde',
     body: 'İşte emlakdefter böyle çalışıyor: portföy ve talebi otomatik eşleştirip hiçbir fırsatı kaçırmamanızı sağlar. Kendi ofisinizi kurmaya hazır mısınız?',

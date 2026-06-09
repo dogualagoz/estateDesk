@@ -10,13 +10,24 @@ const router = useRouter();
 const route = useRoute();
 const { confirm } = useConfirm();
 
-const links = computed(() => [
-  { to: '/dashboard', label: 'Dashboard',  icon: 'dashboard' },
-  { to: '/portfolio', label: 'Portföyler', icon: 'maps_home_work' },
-  { to: '/demand',    label: 'Talepler',   icon: 'ads_click' },
-  { to: '/office',    label: 'Ofisim',     icon: 'groups' },
-]);
+const isDemo = computed(() => auth.isDemoSession);
 
+const links = computed(() =>
+  isDemo.value
+    ? [
+        { to: '/demo',           label: 'Dashboard',  icon: 'dashboard' },
+        { to: '/demo/portfolio', label: 'Portföyler', icon: 'maps_home_work' },
+        { to: '/demo/demand',    label: 'Talepler',   icon: 'ads_click' },
+      ]
+    : [
+        { to: '/dashboard', label: 'Dashboard',  icon: 'dashboard' },
+        { to: '/portfolio', label: 'Portföyler', icon: 'maps_home_work' },
+        { to: '/demand',    label: 'Talepler',   icon: 'ads_click' },
+        { to: '/office',    label: 'Ofisim',     icon: 'groups' },
+      ],
+);
+
+const brandPath = computed(() => (isDemo.value ? '/demo' : '/dashboard'));
 const profilePath = computed(() => (auth.user ? `/users/${auth.user.id}` : '/'));
 
 const initials = computed(() => {
@@ -53,6 +64,11 @@ async function logout() {
   if (!ok) return;
   auth.logout();
   router.push('/login');
+}
+
+function exitDemo() {
+  auth.exitDemo();
+  router.push('/');
 }
 
 // ── Mobil alt bar: kayan aktif gösterge ──
@@ -107,7 +123,7 @@ onUnmounted(() => window.removeEventListener('resize', updateIndicator));
 
       <!-- Brand -->
       <div class="px-6 py-5 border-b border-white/10">
-        <router-link to="/dashboard" class="font-bold text-headline-md text-on-primary tracking-tight">
+        <router-link :to="brandPath" class="font-bold text-headline-md text-on-primary tracking-tight">
           emlakdefter
         </router-link>
       </div>
@@ -142,6 +158,15 @@ onUnmounted(() => window.removeEventListener('resize', updateIndicator));
           </div>
         </router-link>
         <button
+          v-if="isDemo"
+          class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-label-md text-on-primary/65 hover:bg-white/10 hover:text-on-primary transition-colors duration-150"
+          @click="exitDemo"
+        >
+          <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+          Siteye Dön
+        </button>
+        <button
+          v-else
           class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-label-md text-on-primary/65 hover:bg-white/10 hover:text-on-primary transition-colors duration-150"
           @click="logout"
         >
@@ -153,7 +178,7 @@ onUnmounted(() => window.removeEventListener('resize', updateIndicator));
 
     <!-- Mobil üst bar -->
     <header class="md:hidden fixed top-0 inset-x-0 z-40 h-14 flex items-center justify-between px-4 bg-primary text-on-primary">
-      <router-link to="/dashboard" class="font-bold text-headline-md text-on-primary tracking-tight">
+      <router-link :to="brandPath" class="font-bold text-headline-md text-on-primary tracking-tight">
         emlakdefter
       </router-link>
       <router-link
@@ -167,7 +192,7 @@ onUnmounted(() => window.removeEventListener('resize', updateIndicator));
 
     <!-- Main Content -->
     <main class="flex-1 md:pl-60 min-w-0 pt-14 md:pt-0 pb-24 md:pb-0">
-      <DemoBanner v-if="auth.user?.isDemo" class="sticky top-14 md:top-0 z-30" />
+      <DemoBanner v-if="isDemo" class="sticky top-14 md:top-0 z-30" />
       <slot />
     </main>
 
@@ -209,6 +234,7 @@ onUnmounted(() => window.removeEventListener('resize', updateIndicator));
 
         <!-- Ortada yükseltilmiş Yeni Ekle (FAB) -->
         <button
+          v-if="!isDemo"
           class="order-1 relative z-10 w-16 shrink-0 flex items-start justify-center"
           aria-label="Yeni Ekle"
           @click="openAddModal"
