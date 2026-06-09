@@ -3,6 +3,7 @@ import { computed, ref, reactive, onMounted, onUnmounted, watch, nextTick, provi
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useConfirm } from '@/composables/useConfirm';
+import DemoBanner from '@/components/demo/DemoBanner.vue';
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -10,7 +11,7 @@ const route = useRoute();
 const { confirm } = useConfirm();
 
 const links = computed(() => [
-  { to: '/',          label: 'Dashboard',  icon: 'dashboard' },
+  { to: '/dashboard', label: 'Dashboard',  icon: 'dashboard' },
   { to: '/portfolio', label: 'Portföyler', icon: 'maps_home_work' },
   { to: '/demand',    label: 'Talepler',   icon: 'ads_click' },
   { to: '/office',    label: 'Ofisim',     icon: 'groups' },
@@ -106,7 +107,7 @@ onUnmounted(() => window.removeEventListener('resize', updateIndicator));
 
       <!-- Brand -->
       <div class="px-6 py-5 border-b border-white/10">
-        <router-link to="/" class="font-bold text-headline-md text-on-primary tracking-tight">
+        <router-link to="/dashboard" class="font-bold text-headline-md text-on-primary tracking-tight">
           emlakdefter
         </router-link>
       </div>
@@ -152,7 +153,7 @@ onUnmounted(() => window.removeEventListener('resize', updateIndicator));
 
     <!-- Mobil üst bar -->
     <header class="md:hidden fixed top-0 inset-x-0 z-40 h-14 flex items-center justify-between px-4 bg-primary text-on-primary">
-      <router-link to="/" class="font-bold text-headline-md text-on-primary tracking-tight">
+      <router-link to="/dashboard" class="font-bold text-headline-md text-on-primary tracking-tight">
         emlakdefter
       </router-link>
       <router-link
@@ -166,6 +167,7 @@ onUnmounted(() => window.removeEventListener('resize', updateIndicator));
 
     <!-- Main Content -->
     <main class="flex-1 md:pl-60 min-w-0 pt-14 md:pt-0 pb-24 md:pb-0">
+      <DemoBanner v-if="auth.user?.isDemo" class="sticky top-14 md:top-0 z-30" />
       <slot />
     </main>
 

@@ -46,6 +46,12 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/',
+    name: 'landing',
+    component: () => import('@/views/landing/LandingView.vue'),
+    meta: { public: true, bare: true },
+  },
+  {
+    path: '/dashboard',
     name: 'dashboard',
     component: () => import('@/views/DashboardView.vue'),
   },
@@ -126,8 +132,11 @@ router.beforeEach((to) => {
     return { name: 'invite.accept', params: { token: to.params.token } };
   }
 
-  // Girişli kullanıcı login/register'a giderse uygun yere yönlendir
-  if (auth.isAuthenticated && (to.name === 'login' || to.name === 'register')) {
+  // Girişli kullanıcı landing/login/register'a giderse uygun yere yönlendir
+  if (
+    auth.isAuthenticated &&
+    (to.name === 'landing' || to.name === 'login' || to.name === 'register')
+  ) {
     return auth.hasOffice ? { name: 'dashboard' } : { name: 'onboarding' };
   }
 

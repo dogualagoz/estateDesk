@@ -36,6 +36,18 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function loginDemo() {
+    loading.value = true;
+    try {
+      const res = await authService.demoLogin();
+      token.value = res.accessToken;
+      user.value = res.user;
+      localStorage.setItem('ed_token', res.accessToken);
+    } finally {
+      loading.value = false;
+    }
+  }
+
   function logout() {
     token.value = null;
     user.value = null;
@@ -63,6 +75,6 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     token, user, loading,
     isAuthenticated, isAdmin, hasOffice,
-    login, register, logout, setToken, setUser, fetchMe,
+    login, register, loginDemo, logout, setToken, setUser, fetchMe,
   };
 });

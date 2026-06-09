@@ -23,6 +23,13 @@ export class AuthController {
     return this.auth.register(dto);
   }
 
+  @Public()
+  @HttpCode(200)
+  @Post('demo')
+  demo() {
+    return this.auth.demoLogin();
+  }
+
   @Get('me')
   me(@CurrentUser() user: AuthUser) {
     return user;

@@ -26,7 +26,7 @@ async function createOffice() {
     await officeService.create(officeName.value.trim());
     await auth.fetchMe();
     toast.success('Ofisiniz oluşturuldu, hoş geldiniz!');
-    router.push('/');
+    router.push('/dashboard');
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Ofis oluşturulamadı';
   } finally {

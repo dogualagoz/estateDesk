@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import type { PendingMatchItem } from '@/services/dashboard.service';
-import { PROPERTY_TYPE_LABELS } from '@/types/portfolio';
+import { PROPERTY_TYPE_LABELS, type PropertyType } from '@/types/portfolio';
 import { fmtPrice } from '@/utils/format';
 
 const props = withDefaults(
@@ -67,7 +67,7 @@ const typeInitial = (types: string[] | undefined): string => {
           <!-- Tip chip + konum -->
           <div class="flex items-center gap-1.5 flex-wrap">
             <span v-if="item.demand.types?.length" class="text-label-sm bg-surface-container text-on-surface-variant px-2 py-0.5 rounded-full">
-              {{ item.demand.types.map((t: any) => PROPERTY_TYPE_LABELS[t]).join(', ') }}
+              {{ item.demand.types.map((t: PropertyType) => PROPERTY_TYPE_LABELS[t]).join(', ') }}
             </span>
             <span v-if="item.demand.regions?.length" class="text-label-sm text-on-surface-variant">{{ item.demand.regions[0] }}</span>
           </div>

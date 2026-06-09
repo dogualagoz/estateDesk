@@ -45,6 +45,18 @@ export class AuthService {
     return this.buildSession(user);
   }
 
+  /** Şifresiz, salt-okunur demo oturumu açar. Landing'deki "Demo'yu İncele" çağırır. */
+  async demoLogin() {
+    const user = await this.prisma.user.findFirst({
+      where: { isDemo: true, isActive: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    if (!user) {
+      throw new UnauthorizedException('Demo hesabı bulunamadı');
+    }
+    return this.buildSession(user);
+  }
+
   private async buildSession(user: User) {
     const payload = { sub: user.id, email: user.email, role: user.role };
     const accessToken = await this.jwt.signAsync(payload);
@@ -57,6 +69,7 @@ export class AuthService {
         fullName: user.fullName,
         role: user.role,
         officeId: user.officeId,
+        isDemo: user.isDemo,
       },
     };
   }

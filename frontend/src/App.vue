@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import AppShell from '@/components/layout/AppShell.vue';
 import ToastContainer from '@/components/ui/ToastContainer.vue';
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue';
+import TourOverlay from '@/components/demo/TourOverlay.vue';
 
 const route = useRoute();
 const hideShell = computed(() => route.meta?.public === true || route.meta?.bare === true);
@@ -18,4 +19,5 @@ const hideShell = computed(() => route.meta?.public === true || route.meta?.bare
   <!-- Global overlay'ler: her sayfada erişilebilir -->
   <ToastContainer />
   <ConfirmDialog />
+  <TourOverlay />
 </template>

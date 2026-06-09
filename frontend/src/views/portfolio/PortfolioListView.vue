@@ -97,7 +97,7 @@ onMounted(load);
 <template>
   <div class="page">
     <!-- Page Header -->
-    <div class="page-header">
+    <div class="page-header" data-tour="portfolio-list">
       <div>
         <h1 class="text-headline-lg-mobile md:text-headline-lg font-semibold tracking-tight text-on-surface">Portföy Yönetimi</h1>
         <p class="text-label-md text-on-surface-variant mt-1">Toplam {{ total }} ilan</p>

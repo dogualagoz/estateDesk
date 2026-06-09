@@ -37,7 +37,7 @@ async function acceptInvite() {
     await officeService.acceptInvite(token);
     await auth.fetchMe();
     toast.success(`${invitePreview.value?.officeName ?? 'Ofise'} katıldınız!`);
-    router.push('/');
+    router.push('/dashboard');
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Ofise katılma başarısız';
   } finally {
@@ -74,7 +74,7 @@ async function acceptInvite() {
           <div class="flex flex-col gap-stack-md text-center bg-error-container rounded-lg p-stack-md">
             <p class="text-label-md font-semibold text-error">{{ error }}</p>
             <div class="flex gap-2 pt-2">
-              <router-link to="/" class="btn secondary w-full">Dashboard'a Git</router-link>
+              <router-link to="/dashboard" class="btn secondary w-full">Dashboard'a Git</router-link>
               <router-link to="/onboarding" class="btn primary w-full">Ofis Yönet</router-link>
             </div>
           </div>
@@ -110,7 +110,7 @@ async function acceptInvite() {
           </button>
 
           <!-- Geri git -->
-          <router-link to="/" class="btn secondary w-full text-center">
+          <router-link to="/dashboard" class="btn secondary w-full text-center">
             Şimdi Katılmak İstemiyorum
           </router-link>
         </template>

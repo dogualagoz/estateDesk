@@ -29,15 +29,15 @@ async function submit() {
         try {
           await officeService.acceptInvite(inviteToken.value);
           await auth.fetchMe();
-          router.push('/');
+          router.push('/dashboard');
         } catch (e: any) {
           console.error('Invite acceptance failed:', e);
-          router.push('/');
+          router.push('/dashboard');
         }
       }
     } else {
       // Ofisi varsa dashboard, yoksa onboarding
-      const destination = auth.hasOffice ? '/' : '/onboarding';
+      const destination = auth.hasOffice ? '/dashboard' : '/onboarding';
       const redirect = (route.query.redirect as string) || destination;
       router.push(redirect);
     }

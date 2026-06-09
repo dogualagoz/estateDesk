@@ -16,6 +16,7 @@ import { MatchingModule } from './matching/matching.module';
 import { DemandMatchModule } from './demand-match/demand-match.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
+import { DemoReadOnlyGuard } from './common/demo-read-only.guard';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: DemoReadOnlyGuard },
   ],
 })
 export class AppModule {}

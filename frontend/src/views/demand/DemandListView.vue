@@ -127,7 +127,7 @@ onMounted(load);
 <template>
   <div class="page">
     <!-- Header -->
-    <div class="page-header">
+    <div class="page-header" data-tour="demand-list">
       <div>
         <h1 class="text-headline-lg-mobile md:text-headline-lg font-semibold tracking-tight text-on-surface">Müşteri Talepleri</h1>
         <p class="text-label-md text-on-surface-variant mt-1">Aktif alıcı ve kiracı arayışları</p>

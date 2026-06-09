@@ -6,6 +6,7 @@ export interface User {
   fullName: string;
   role: Role;
   isActive: boolean;
+  isDemo?: boolean;
   officeId?: string | null;
   createdAt?: string;
   updatedAt?: string;

@@ -17,5 +17,6 @@ export const authService = {
     api.post<LoginResponse>('/auth/login', { email, password }).then((r) => r.data),
   register: (payload: RegisterPayload) =>
     api.post<LoginResponse>('/auth/register', payload).then((r) => r.data),
+  demoLogin: () => api.post<LoginResponse>('/auth/demo').then((r) => r.data),
   me: () => api.get<User>('/auth/me').then((r) => r.data),
 };

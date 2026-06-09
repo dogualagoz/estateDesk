@@ -115,7 +115,7 @@ function demandSubtitle(d: NotedDemand) {
 
 <template>
   <div class="page">
-    <div class="page-header">
+    <div class="page-header" data-tour="dashboard-header">
       <div>
         <h1 class="text-headline-lg-mobile md:text-headline-lg font-semibold tracking-tight text-on-surface">Defter</h1>
         <p class="text-label-md text-on-surface-variant mt-1">Hızlı notlar ve özet</p>
@@ -129,7 +129,9 @@ function demandSubtitle(d: NotedDemand) {
 
         <!-- Sol kolon: tüm bölümler -->
         <div class="dashboard-left">
-          <PendingMatchesPanel :items="pendingMatches" :loading="pendingMatchesLoading" />
+          <div data-tour="pending-matches">
+            <PendingMatchesPanel :items="pendingMatches" :loading="pendingMatchesLoading" />
+          </div>
           <RecentActivityPanel :portfolios="stats?.recentPortfolios ?? []" :demands="stats?.recentDemands ?? []" />
 
           <!-- Açık defter: iki sayfa -->

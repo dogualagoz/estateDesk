@@ -38,6 +38,38 @@ async function seedDemoOffice(ownerId: string) {
   return office;
 }
 
+async function seedDemoUser(officeId: string) {
+  const email = process.env.SEED_DEMO_EMAIL || 'demo@estatedesk.local';
+  const password = process.env.SEED_DEMO_PASSWORD || 'demo1234';
+  const fullName = process.env.SEED_DEMO_NAME || 'Demo Danışman';
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    // Demo kullanıcının ofise bağlı ve isDemo işaretli olduğundan emin ol
+    await prisma.user.update({
+      where: { id: existing.id },
+      data: { officeId, isDemo: true, isActive: true },
+    });
+    console.log(`[seed] Demo user already exists: ${email}`);
+    return existing;
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  const user = await prisma.user.create({
+    data: {
+      email,
+      passwordHash,
+      fullName,
+      role: Role.AGENT,
+      isActive: true,
+      isDemo: true,
+      officeId,
+    },
+  });
+  console.log(`[seed] Demo user created: ${user.email}`);
+  return user;
+}
+
 async function seedPortfolios(ownerId: string, officeId: string) {
   const count = await prisma.portfolio.count();
   if (count > 0) {
@@ -2107,6 +2139,7 @@ async function seedAntalyaPortfolios(ownerId: string, officeId: string) {
 async function main() {
   const admin = await seedAdmin();
   const office = await seedDemoOffice(admin.id);
+  await seedDemoUser(office.id);
   await seedPortfolios(admin.id, office.id);
   await seedAntalyaPortfolios(admin.id, office.id);
   await seedDemands(admin.id, office.id);

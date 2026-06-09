@@ -6,7 +6,7 @@ const router = useRouter();
 
 onMounted(async () => {
   await new Promise(resolve => setTimeout(resolve, 2000));
-  router.push('/');
+  router.push('/dashboard');
 });
 </script>
 

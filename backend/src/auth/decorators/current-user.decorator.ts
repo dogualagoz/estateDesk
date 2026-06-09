@@ -6,6 +6,7 @@ export interface AuthUser {
   role: 'ADMIN' | 'AGENT';
   fullName: string;
   officeId: string | null;
+  isDemo: boolean;
 }
 
 export const CurrentUser = createParamDecorator(
