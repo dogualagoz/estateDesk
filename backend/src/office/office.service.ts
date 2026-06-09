@@ -267,16 +267,23 @@ export class OfficeService {
       throw new BadRequestException('Davet artık geçerli değil');
     }
 
-    // E-posta kısıtlaması yok — herkes davet linki ile katılabilir
+    // Paylaşılan link (email yok) çok kullanımlıdır: PENDING kalır, takımdaki
+    // herkes aynı linkle katılabilir. Kişiye özel davet ise tek kullanımlıktır.
+    const isShared = invite.email === null;
+
     await this.prisma.$transaction([
       this.prisma.user.update({
         where: { id: user.id },
         data: { officeId: invite.officeId, role: Role.AGENT },
       }),
-      this.prisma.invite.update({
-        where: { id: invite.id },
-        data: { status: 'ACCEPTED', acceptedAt: new Date(), acceptedByEmail: user.email },
-      }),
+      ...(isShared
+        ? []
+        : [
+            this.prisma.invite.update({
+              where: { id: invite.id },
+              data: { status: 'ACCEPTED', acceptedAt: new Date(), acceptedByEmail: user.email },
+            }),
+          ]),
     ]);
 
     return this.getOfficeSummary(invite.officeId);
@@ -299,6 +306,10 @@ export class OfficeService {
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
 
+    // Paylaşılan link (email yok) çok kullanımlıdır: PENDING kalır.
+    // Kişiye özel davet ise kabul edilince tükenir (ACCEPTED).
+    const isShared = invite.email === null;
+
     return this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
@@ -310,10 +321,12 @@ export class OfficeService {
         },
       });
 
-      await tx.invite.update({
-        where: { id: invite.id },
-        data: { status: 'ACCEPTED', acceptedAt: new Date(), acceptedByEmail: email },
-      });
+      if (!isShared) {
+        await tx.invite.update({
+          where: { id: invite.id },
+          data: { status: 'ACCEPTED', acceptedAt: new Date(), acceptedByEmail: email },
+        });
+      }
 
       return this.buildSession(user);
     });
