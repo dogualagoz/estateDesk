@@ -212,10 +212,10 @@ function register() {
             <div class="flex items-center gap-2">
               <button v-if="!isFirst" class="btn ghost h-9" @click="prev">Geri</button>
               <template v-if="current.final">
-                <button class="btn h-9" @click="finish">Kapat</button>
-                <button class="btn primary h-9" @click="register">
-                  Ücretsiz Başla
-                  <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                <button class="btn ghost h-9" @click="register">Kaydol</button>
+                <button class="btn primary h-9" @click="finish">
+                  Bitir
+                  <span class="material-symbols-outlined text-[16px]">check</span>
                 </button>
               </template>
               <button v-else class="btn primary h-9" @click="next">
