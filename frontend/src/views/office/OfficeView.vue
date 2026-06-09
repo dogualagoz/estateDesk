@@ -443,30 +443,28 @@ onMounted(load);
               </div>
             </div>
 
-            <!-- Yönetici eylemleri -->
+            <!-- Yönetici eylemleri — net, etiketli butonlar -->
             <div
               v-if="auth.isAdmin && m.id !== auth.user?.id && m.id !== ownerId"
-              class="flex items-center gap-1 absolute top-3 right-3 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity bg-surface-container-lowest/80 backdrop-blur-sm rounded-lg"
+              class="flex items-center gap-2 pt-stack-md border-t border-outline-variant"
             >
               <button
-                v-if="m.id !== ownerId"
-                class="btn ghost px-2 py-1.5"
+                class="btn secondary flex-1 !py-1.5 text-[13px]"
                 :disabled="roleChangingId === m.id"
-                :title="m.role === 'ADMIN' ? 'Danışmanlığa al' : 'Yönetici yap'"
                 @click.stop="toggleRole(m)"
               >
-                <span class="material-symbols-outlined text-[20px]">
+                <span class="material-symbols-outlined text-[18px]">
                   {{ m.role === 'ADMIN' ? 'remove_moderator' : 'shield_person' }}
                 </span>
+                {{ m.role === 'ADMIN' ? 'Danışman Yap' : 'Yönetici Yap' }}
               </button>
               <button
-                v-if="m.id !== ownerId"
-                class="btn ghost px-2 py-1.5 text-error"
+                class="btn !py-1.5 text-[13px] border-error text-error bg-transparent hover:bg-error-container"
                 :disabled="removingMemberId === m.id"
-                title="Ofisten çıkar"
                 @click.stop="removeMember(m)"
               >
-                <span class="material-symbols-outlined text-[20px]">person_remove</span>
+                <span class="material-symbols-outlined text-[18px]">person_remove</span>
+                Çıkar
               </button>
             </div>
           </div>
@@ -585,11 +583,11 @@ onMounted(load);
               Vazgeç
             </button>
           </div>
-          <div v-else class="flex items-center gap-2">
-            <span class="text-on-surface font-medium">{{ office?.name }}</span>
-            <button class="btn ghost text-[13px]" @click="startEditName">
-              <span class="material-symbols-outlined text-[16px]">edit</span>
-              Düzenle
+          <div v-else class="flex items-center justify-between gap-2 max-w-md p-stack-sm pl-3 rounded-lg border border-outline-variant bg-surface-container-low">
+            <span class="text-on-surface font-medium truncate">{{ office?.name }}</span>
+            <button class="btn secondary !py-1.5 text-[13px] shrink-0" @click="startEditName">
+              <span class="material-symbols-outlined text-[18px]">edit</span>
+              Adı Düzenle
             </button>
           </div>
         </div>
@@ -701,7 +699,7 @@ onMounted(load);
             </template>
           </p>
           <button
-            class="btn danger ghost w-fit"
+            class="btn w-fit border-error text-error bg-transparent hover:bg-error-container disabled:hover:bg-transparent"
             :disabled="auth.user?.id === ownerId"
             @click="leaveOffice"
           >
