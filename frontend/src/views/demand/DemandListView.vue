@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { demandService } from '@/services/demand.service';
 import type { Demand, DemandQuery } from '@/types/demand';
@@ -17,6 +17,31 @@ const total = ref(0);
 const showFilters = ref(false);
 
 const filters = reactive<DemandQuery>({ page: 1, pageSize: 20 });
+
+const totalPages = computed(() => Math.ceil(total.value / (filters.pageSize ?? 20)));
+
+const pageNumbers = computed(() => {
+  const current = filters.page ?? 1;
+  const last = totalPages.value;
+  const pages: (number | '...')[] = [];
+  if (last <= 7) {
+    for (let i = 1; i <= last; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (current > 3) pages.push('...');
+    for (let i = Math.max(2, current - 1); i <= Math.min(last - 1, current + 1); i++) pages.push(i);
+    if (current < last - 2) pages.push('...');
+    pages.push(last);
+  }
+  return pages;
+});
+
+function goToPage(p: number) {
+  if (p < 1 || p > totalPages.value) return;
+  filters.page = p;
+  load();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
 async function load() {
   loading.value = true;
@@ -187,7 +212,7 @@ onMounted(load);
       <article
         v-for="d in items"
         :key="d.id"
-        class="relative bg-surface-container-lowest rounded-xl border border-outline-variant px-stack-md pt-stack-md pb-3 flex flex-col cursor-pointer transition-all duration-200 hover:shadow-md hover:border-outline group"
+        class="relative bg-surface-container-lowest rounded-xl border border-outline-variant px-stack-md pt-stack-md pb-3 flex flex-col cursor-pointer transition-all duration-200 hover:shadow-md hover:border-outline has-[.best-match-link:hover]:!shadow-sm has-[.best-match-link:hover]:!border-outline-variant group"
         :class="{ 'opacity-60': d.status === 'CLOSED' }"
         @click="router.push(`/demand/${d.id}`)"
       >
@@ -245,7 +270,7 @@ onMounted(load);
           <RouterLink
             v-if="d.bestMatch"
             :to="`/portfolio/${d.bestMatch.portfolioId}`"
-            class="flex items-center gap-3 p-2 rounded-lg border border-outline-variant bg-surface-container-low hover:bg-surface-container hover:border-outline transition-colors"
+            class="best-match-link flex items-center gap-3 p-2 rounded-lg border border-outline-variant bg-surface-container-low hover:bg-surface-container hover:border-primary/50 hover:shadow-sm transition-all"
             @click.stop
           >
             <div class="w-12 h-12 rounded-md overflow-hidden bg-surface-container-high shrink-0 flex items-center justify-center">
@@ -301,6 +326,41 @@ onMounted(load);
           </div>
         </div>
       </article>
+    </div>
+
+    <!-- Pagination -->
+    <div v-if="!loading && totalPages > 1" class="flex items-center justify-center gap-2 mt-8">
+      <button
+        class="btn p-2"
+        :disabled="(filters.page ?? 1) <= 1"
+        @click="goToPage((filters.page ?? 1) - 1)"
+        title="Önceki sayfa"
+      >
+        <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+      </button>
+
+      <template v-for="p in pageNumbers" :key="p">
+        <span v-if="p === '...'" class="px-2 text-on-surface-variant select-none">…</span>
+        <button
+          v-else
+          class="w-9 h-9 rounded-lg text-label-md font-medium transition-colors"
+          :class="p === (filters.page ?? 1)
+            ? 'bg-primary text-on-primary'
+            : 'text-on-surface hover:bg-surface-container'"
+          @click="goToPage(p as number)"
+        >
+          {{ p }}
+        </button>
+      </template>
+
+      <button
+        class="btn p-2"
+        :disabled="(filters.page ?? 1) >= totalPages"
+        @click="goToPage((filters.page ?? 1) + 1)"
+        title="Sonraki sayfa"
+      >
+        <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+      </button>
     </div>
   </div>
 </template>
