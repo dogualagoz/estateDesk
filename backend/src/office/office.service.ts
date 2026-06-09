@@ -13,6 +13,15 @@ import { AuthUser } from '../auth/decorators/current-user.decorator';
 import { requireOfficeId } from '../common/office.util';
 import { CreateOfficeDto } from './dto/create-office.dto';
 import { CreateInviteDto } from './dto/create-invite.dto';
+import { UpdateOfficeDto } from './dto/update-office.dto';
+import { ExportDataset } from './dto/export-query.dto';
+import {
+  PORTFOLIO_COLUMNS,
+  DEMAND_COLUMNS,
+  buildCsv,
+  buildXlsx,
+  type ExportColumn,
+} from './office-export';
 
 const INVITE_TTL_DAYS = 7;
 
@@ -41,6 +50,44 @@ export class OfficeService {
   async getMyOffice(user: AuthUser) {
     const officeId = requireOfficeId(user);
     return this.getOfficeSummary(officeId);
+  }
+
+  /** Ofis adını günceller (yalnız yönetici). */
+  async updateOffice(user: AuthUser, dto: UpdateOfficeDto) {
+    const officeId = requireOfficeId(user);
+    await this.prisma.office.update({
+      where: { id: officeId },
+      data: { name: dto.name.trim() },
+    });
+    return this.getOfficeSummary(officeId);
+  }
+
+  /**
+   * Bir üyenin rolünü değiştirir (yönetici ↔ danışman).
+   * Ofis kurucusunun rolü düşürülemez; yönetici kendi rolünü değiştiremez.
+   */
+  async changeMemberRole(user: AuthUser, memberId: string, role: Role) {
+    const officeId = requireOfficeId(user);
+
+    if (memberId === user.id) {
+      throw new BadRequestException('Kendi rolünüzü değiştiremezsiniz');
+    }
+
+    const member = await this.prisma.user.findUnique({ where: { id: memberId } });
+    if (!member || member.officeId !== officeId) {
+      throw new NotFoundException('Kullanıcı bu ofisin üyesi değil');
+    }
+
+    const office = await this.prisma.office.findUnique({
+      where: { id: officeId },
+      select: { ownerId: true },
+    });
+    if (office?.ownerId === member.id && role !== Role.ADMIN) {
+      throw new BadRequestException('Ofis kurucusunun yöneticiliği kaldırılamaz');
+    }
+
+    await this.prisma.user.update({ where: { id: memberId }, data: { role } });
+    return { success: true };
   }
 
   private async getOfficeSummary(officeId: string) {
@@ -93,6 +140,14 @@ export class OfficeService {
 
     if (member.id === user.id) {
       throw new BadRequestException('Kendi kendinizi çıkartamazsınız');
+    }
+
+    const office = await this.prisma.office.findUnique({
+      where: { id: officeId },
+      select: { ownerId: true },
+    });
+    if (office?.ownerId === member.id) {
+      throw new BadRequestException('Ofis kurucusu çıkartılamaz');
     }
 
     await this.prisma.user.update({
@@ -374,4 +429,86 @@ export class OfficeService {
       link: `${base}/invite/${invite.token}`,
     };
   }
+
+  /**
+   * Ofis portföy/talep verilerini CSV veya XLSX olarak dışa aktarır.
+   * Opsiyonel `memberId` ile tek bir danışmanın kayıtlarıyla sınırlanır.
+   * Daima ofis kapsamında çalışır (ofis izolasyonu).
+   */
+  async exportData(
+    user: AuthUser,
+    dataset: ExportDataset,
+    format: 'csv' | 'xlsx',
+    memberId?: string,
+  ): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
+    const officeId = requireOfficeId(user);
+
+    let memberSlug = 'tum-ofis';
+    if (memberId) {
+      const member = await this.prisma.user.findFirst({
+        where: { id: memberId, officeId },
+        select: { fullName: true },
+      });
+      if (!member) throw new NotFoundException('Danışman bu ofisin üyesi değil');
+      memberSlug = slugify(member.fullName);
+    }
+
+    const where: any = { officeId, deletedAt: null };
+    if (memberId) where.createdById = memberId;
+
+    let columns: ExportColumn[];
+    let rows: any[];
+    let label: string;
+
+    if (dataset === ExportDataset.PORTFOLIOS) {
+      columns = PORTFOLIO_COLUMNS;
+      label = 'Portfoyler';
+      rows = await this.prisma.portfolio.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: { createdBy: { select: { fullName: true } } },
+      });
+    } else {
+      columns = DEMAND_COLUMNS;
+      label = 'Talepler';
+      rows = await this.prisma.demand.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: { createdBy: { select: { fullName: true } } },
+      });
+    }
+
+    const stamp = new Date().toISOString().slice(0, 10);
+    const baseName = `EstateDesk_${label}_${memberSlug}_${stamp}`;
+
+    if (format === 'csv') {
+      return {
+        buffer: buildCsv(columns, rows),
+        filename: `${baseName}.csv`,
+        contentType: 'text/csv; charset=utf-8',
+      };
+    }
+
+    return {
+      buffer: await buildXlsx(columns, rows, label),
+      filename: `${baseName}.xlsx`,
+      contentType:
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    };
+  }
+}
+
+/** Türkçe karakterleri sadeleştirip dosya adına uygun slug üretir. */
+function slugify(input: string): string {
+  const map: Record<string, string> = {
+    ç: 'c', Ç: 'c', ğ: 'g', Ğ: 'g', ı: 'i', İ: 'i',
+    ö: 'o', Ö: 'o', ş: 's', Ş: 's', ü: 'u', Ü: 'u',
+  };
+  return (
+    input
+      .replace(/[çÇğĞıİöÖşŞüÜ]/g, (c) => map[c] ?? c)
+      .replace(/[^a-zA-Z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .toLowerCase() || 'danisman'
+  );
 }
