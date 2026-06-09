@@ -121,6 +121,11 @@ router.beforeEach((to) => {
     return { name: 'login', query: { redirect: to.fullPath } };
   }
 
+  // Girişli kullanıcı davet preview sayfasına girerse direkt accept view'e yönlendir
+  if (auth.isAuthenticated && to.name === 'invite.preview') {
+    return { name: 'invite.accept', params: { token: to.params.token } };
+  }
+
   // Girişli kullanıcı login/register'a giderse uygun yere yönlendir
   if (auth.isAuthenticated && (to.name === 'login' || to.name === 'register')) {
     return auth.hasOffice ? { name: 'dashboard' } : { name: 'onboarding' };
