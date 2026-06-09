@@ -127,13 +127,15 @@ router.beforeEach((to) => {
   }
 
   // Ofisi olmayan girişli kullanıcı önce onboarding'i tamamlamalı
-  // (davet sayfası hariç — davetle ofise katılabilsin)
+  // (davet sayfaları hariç — davetle ofise katılabilsin)
   if (
     auth.isAuthenticated &&
     !auth.hasOffice &&
     to.name !== 'onboarding' &&
     to.name !== 'invite.preview' &&
-    to.name !== 'invite.register'
+    to.name !== 'invite.register' &&
+    to.name !== 'invite.accept' &&
+    to.name !== 'invite.success'
   ) {
     return { name: 'onboarding' };
   }
