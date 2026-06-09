@@ -6,10 +6,14 @@ import { requireOfficeId } from '../common/office.util';
 import { CreateDemandDto } from './dto/create-demand.dto';
 import { UpdateDemandDto } from './dto/update-demand.dto';
 import { QueryDemandDto } from './dto/query-demand.dto';
+import { MatchingService } from '../matching/matching.service';
 
 @Injectable()
 export class DemandService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private matching: MatchingService,
+  ) {}
 
   async list(user: AuthUser, query: QueryDemandDto) {
     const officeId = requireOfficeId(user);
@@ -59,7 +63,14 @@ export class DemandService {
       }),
     ]);
 
-    return { items, total, page, pageSize };
+    // Her talep için en iyi eşleşen portföyü (tek sorguyla) ekle.
+    const bestMatches = await this.matching.bestMatchForDemands(officeId, items);
+    const itemsWithMatch = items.map((d) => ({
+      ...d,
+      bestMatch: bestMatches[d.id] ?? null,
+    }));
+
+    return { items: itemsWithMatch, total, page, pageSize };
   }
 
   async get(user: AuthUser, id: string) {

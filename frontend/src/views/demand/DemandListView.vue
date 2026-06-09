@@ -2,10 +2,11 @@
 import { onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { demandService } from '@/services/demand.service';
-import { DEMAND_STATUS_LABELS, type Demand, type DemandQuery } from '@/types/demand';
-import { PROPERTY_TYPES, PROPERTY_TYPE_LABELS } from '@/types/portfolio';
+import type { Demand, DemandQuery } from '@/types/demand';
+import { PROPERTY_TYPES, PROPERTY_TYPE_LABELS, LISTING_TYPE_LABELS } from '@/types/portfolio';
 import { useConfirm } from '@/composables/useConfirm';
 import { useToast } from '@/composables/useToast';
+import { resolveImgUrl } from '@/utils/image';
 
 const router = useRouter();
 const { confirm } = useConfirm();
@@ -50,13 +51,32 @@ function initials(name: string) {
   return name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 }
 
-function timeAgo(dateStr: string) {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const days = Math.floor(diff / 86400000);
-  if (days === 0) return 'Bugün';
-  if (days === 1) return '1 gün önce';
-  if (days < 7) return `${days} gün önce`;
-  return `${Math.floor(days / 7)} hafta önce`;
+function daysSince(dateStr: string) {
+  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+}
+
+function searchAgeLabel(dateStr: string) {
+  const days = daysSince(dateStr);
+  if (days === 0) return 'Bugün eklendi';
+  if (days === 1) return '1 gündür arıyor';
+  if (days < 14) return `${days} gündür arıyor`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 9) return `${weeks} haftadır arıyor`;
+  return `${Math.floor(days / 30)} aydır arıyor`;
+}
+
+/**
+ * Arama süresine göre yeşil→kırmızı renk.
+ * 0 gün → yeşil, ~60 gün ve üstü → kırmızı (doğrusal hue geçişi).
+ */
+function searchAgeColor(dateStr: string) {
+  const t = Math.min(daysSince(dateStr) / 60, 1);
+  const hue = Math.round(142 * (1 - t)); // 142 (yeşil) → 0 (kırmızı)
+  return `hsl(${hue}, 62%, 42%)`;
+}
+
+function fmtCompact(n: number) {
+  return new Intl.NumberFormat('tr-TR').format(n) + ' ₺';
 }
 
 async function remove(d: Demand) {
@@ -167,70 +187,115 @@ onMounted(load);
       <article
         v-for="d in items"
         :key="d.id"
-        class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-md shadow-sm flex flex-col cursor-pointer transition-shadow duration-200 hover:shadow-md group"
-        :class="{ 'opacity-70': d.status === 'CLOSED' }"
+        class="relative bg-surface-container-lowest rounded-xl border border-outline-variant px-stack-md pt-stack-md pb-3 flex flex-col cursor-pointer transition-all duration-200 hover:shadow-md hover:border-outline group"
+        :class="{ 'opacity-60': d.status === 'CLOSED' }"
         @click="router.push(`/demand/${d.id}`)"
       >
-        <!-- Status badges -->
-        <div class="flex justify-between items-start mb-3">
+        <!-- Top row: type · listing chip  +  status -->
+        <div class="flex justify-between items-center gap-2 mb-3">
+          <div class="flex items-center gap-1.5 min-w-0">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-label-sm font-medium bg-surface-container text-on-surface-variant shrink-0">
+              {{ d.types.length ? PROPERTY_TYPE_LABELS[d.types[0]] : 'Tür yok' }}<span v-if="d.types.length > 1" class="text-outline ml-0.5">+{{ d.types.length - 1 }}</span>
+            </span>
+            <span
+              class="inline-flex items-center px-2 py-0.5 rounded-md text-label-sm font-medium shrink-0"
+              :class="d.listingType === 'RENT' ? 'bg-amber-50 text-amber-700' : 'bg-primary-fixed text-on-primary-fixed-variant'"
+            >{{ LISTING_TYPE_LABELS[d.listingType] }}</span>
+          </div>
           <span
-            :class="[
-              'inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-label-sm font-medium',
-              d.status === 'ACTIVE'
-                ? 'bg-primary-fixed text-on-primary-fixed-variant'
-                : 'bg-secondary-container text-on-surface-variant'
-            ]"
+            class="inline-flex items-center gap-1.5 text-label-sm font-medium shrink-0"
+            :class="d.status === 'ACTIVE' ? 'text-emerald-600' : 'text-on-surface-variant'"
           >
-            <span class="material-symbols-outlined text-[14px]">{{ d.status === 'ACTIVE' ? 'radar' : 'check_circle' }}</span>
+            <span class="w-1.5 h-1.5 rounded-full" :class="d.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-outline'"></span>
             {{ d.status === 'ACTIVE' ? 'Arıyor' : 'Kapandı' }}
           </span>
-          <span class="inline-flex items-center px-2 py-0.5 rounded-sm border border-outline-variant text-label-sm text-on-surface-variant bg-surface-container">
-            {{ DEMAND_STATUS_LABELS[d.status] }}
-          </span>
         </div>
 
-        <!-- Title -->
-        <h2 class="text-body-lg font-semibold text-on-surface mb-1 transition-colors group-hover:text-primary">
-          {{ d.regions.join(', ') || 'Bölge belirtilmemiş' }}
-          <span v-if="d.roomPreferences.length" class="text-on-surface-variant font-normal"> — {{ d.roomPreferences.join(', ') }}</span>
+        <!-- Title: location -->
+        <h2 class="text-body-lg font-semibold leading-snug text-on-surface transition-colors group-hover:text-primary line-clamp-1">
+          <template v-if="d.regions.length">{{ d.regions.join(', ') }}</template>
+          <span v-else class="text-on-surface-variant font-normal">Bölge belirtilmemiş</span>
         </h2>
 
-        <p class="text-label-md text-on-surface-variant mb-3 line-clamp-2">
-          {{ d.note || 'Not eklenmemiş' }}
-        </p>
-
-        <!-- Budget -->
-        <div class="flex items-center gap-3 bg-surface-container-low border border-outline-variant rounded-lg p-3 mb-3">
-          <span class="material-symbols-outlined text-[20px] text-primary p-1.5 bg-surface-container-lowest rounded-sm shadow-sm">payments</span>
-          <div>
-            <div class="text-label-sm text-outline uppercase tracking-wider">Bütçe Aralığı</div>
-            <div class="text-label-md font-semibold text-primary mt-0.5">{{ fmtPrice(d.minBudget) }} – {{ fmtPrice(d.maxBudget) }}</div>
-          </div>
+        <!-- Room preferences -->
+        <div class="flex flex-wrap gap-1 mt-1.5" v-if="d.roomPreferences.length">
+          <span v-for="r in d.roomPreferences.slice(0, 5)" :key="r" class="text-label-sm text-on-surface-variant px-1.5 py-0.5 rounded bg-surface-container-low">{{ r }}</span>
         </div>
 
-        <!-- Tags -->
-        <div class="flex flex-wrap gap-1.5 mb-3" v-if="d.featurePrefs.length || d.types.length">
-          <span
-            v-for="f in (d.featurePrefs.length ? d.featurePrefs.slice(0, 4) : d.types)"
-            :key="f"
-            class="tag"
-          >{{ d.featurePrefs.length ? f : PROPERTY_TYPE_LABELS[f as keyof typeof PROPERTY_TYPE_LABELS] }}</span>
+        <!-- Note -->
+        <p v-if="d.note" class="text-label-md text-on-surface-variant mt-2 line-clamp-2">{{ d.note }}</p>
+
+        <!-- Budget -->
+        <div class="flex items-baseline gap-2 mt-3">
+          <span class="text-body-lg font-semibold text-on-surface tabular-nums">{{ fmtPrice(d.minBudget) }}</span>
+          <span class="text-on-surface-variant">–</span>
+          <span class="text-body-lg font-semibold text-on-surface tabular-nums">{{ fmtPrice(d.maxBudget) }}</span>
+        </div>
+
+        <!-- Best matching portfolio -->
+        <div class="mt-3 mb-1">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-label-sm text-outline uppercase tracking-wider">En İyi Eşleşme</span>
+            <span
+              v-if="d.bestMatch"
+              class="inline-flex items-center text-label-sm font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700"
+            >%{{ d.bestMatch.score }}</span>
+          </div>
+
+          <RouterLink
+            v-if="d.bestMatch"
+            :to="`/portfolio/${d.bestMatch.portfolioId}`"
+            class="flex items-center gap-3 p-2 rounded-lg border border-outline-variant bg-surface-container-low hover:bg-surface-container hover:border-outline transition-colors"
+            @click.stop
+          >
+            <div class="w-12 h-12 rounded-md overflow-hidden bg-surface-container-high shrink-0 flex items-center justify-center">
+              <img v-if="d.bestMatch.image" :src="resolveImgUrl(d.bestMatch.image)" class="w-full h-full object-cover" alt="" loading="lazy" />
+              <span v-else class="material-symbols-outlined text-[22px] text-outline">home_work</span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-label-md font-medium text-on-surface truncate">
+                {{ d.bestMatch.title || `${PROPERTY_TYPE_LABELS[d.bestMatch.type]} · ${d.bestMatch.district}` }}
+              </div>
+              <div class="text-label-sm text-on-surface-variant truncate">
+                {{ d.bestMatch.district }}<template v-if="d.bestMatch.neighborhood">, {{ d.bestMatch.neighborhood }}</template> · {{ d.bestMatch.roomCount }}
+              </div>
+              <div class="text-label-sm font-semibold text-primary tabular-nums mt-0.5">{{ fmtCompact(d.bestMatch.price) }}</div>
+            </div>
+            <span class="material-symbols-outlined text-[18px] text-outline shrink-0">chevron_right</span>
+          </RouterLink>
+
+          <div
+            v-else
+            class="flex items-center gap-2 p-2.5 rounded-lg border border-dashed border-outline-variant text-label-sm text-on-surface-variant"
+          >
+            <span class="material-symbols-outlined text-[18px] text-outline">search_off</span>
+            Henüz eşleşen portföy yok
+          </div>
         </div>
 
         <!-- Footer -->
-        <div class="flex justify-between items-center mt-auto pt-3 border-t border-outline-variant">
-          <div class="flex items-center gap-2">
-            <div class="w-7 h-7 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center text-[11px] font-bold shadow-sm">
+        <div class="flex justify-between items-center mt-auto pt-2.5 border-t border-outline-variant">
+          <div class="flex items-center gap-2 min-w-0">
+            <div class="w-7 h-7 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center text-[11px] font-bold shrink-0">
               {{ initials(d.customerName) }}
             </div>
-            <span class="text-label-md font-medium text-on-surface">{{ d.customerName }}</span>
+            <span class="text-label-md font-medium text-on-surface truncate">{{ d.customerName }}</span>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="flex items-center gap-1 text-label-sm text-outline">
-              <span class="material-symbols-outlined text-[14px]">schedule</span>
-              {{ timeAgo(d.createdAt) }}
+          <div class="flex items-center gap-1 shrink-0">
+            <span
+              class="flex items-center gap-1.5 text-label-sm font-medium"
+              :style="d.status === 'ACTIVE' ? { color: searchAgeColor(d.createdAt) } : undefined"
+              :class="{ 'text-outline': d.status === 'CLOSED' }"
+              :title="`${daysSince(d.createdAt)} gün`"
+            >
+              <span
+                class="w-1.5 h-1.5 rounded-full"
+                :style="d.status === 'ACTIVE' ? { backgroundColor: searchAgeColor(d.createdAt) } : undefined"
+                :class="{ 'bg-outline': d.status === 'CLOSED' }"
+              ></span>
+              {{ d.status === 'ACTIVE' ? searchAgeLabel(d.createdAt) : 'Kapandı' }}
             </span>
-            <button class="btn ghost danger p-1.5" @click.stop="remove(d)" title="Sil">
+            <button class="btn ghost danger p-1.5 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity" @click.stop="remove(d)" title="Sil">
               <span class="material-symbols-outlined text-[16px]">delete</span>
             </button>
           </div>

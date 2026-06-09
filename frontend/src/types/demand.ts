@@ -2,6 +2,21 @@ import type { ListingType, PropertyType } from './portfolio';
 
 export type DemandStatus = 'ACTIVE' | 'CLOSED';
 
+/** Talep kartında gösterilen en iyi eşleşen portföy özeti. */
+export interface DemandBestMatch {
+  portfolioId: string;
+  title: string | null;
+  type: PropertyType;
+  listingType: ListingType;
+  city: string;
+  district: string;
+  neighborhood: string | null;
+  roomCount: string;
+  price: number;
+  image: string | null;
+  score: number;
+}
+
 export const DEMAND_STATUS_LABELS: Record<DemandStatus, string> = {
   ACTIVE: 'Aktif',
   CLOSED: 'Kapandı',
@@ -31,6 +46,7 @@ export interface Demand {
   status: DemandStatus;
   createdById: string;
   createdBy?: { id: string; fullName: string };
+  bestMatch?: DemandBestMatch | null;
   deletedAt?: string | null;
   createdAt: string;
   updatedAt: string;

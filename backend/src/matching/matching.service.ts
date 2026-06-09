@@ -18,10 +18,27 @@ type PortfolioRow = Prisma.PortfolioGetPayload<{
   include: { createdBy: { select: { id: true; fullName: true } } };
 }>;
 
+type DemandRow = Prisma.DemandGetPayload<object>;
+
 export interface ScoredPortfolio extends MatchResult {
   portfolio: Omit<PortfolioRow, 'price'> & { price: number };
   matchedFeatures: string[];
   isHidden: boolean;
+}
+
+/** Talep kartında gösterilecek hafif en-iyi-eşleşme özeti. */
+export interface BestMatchSummary {
+  portfolioId: string;
+  title: string | null;
+  type: string;
+  listingType: string;
+  city: string;
+  district: string;
+  neighborhood: string | null;
+  roomCount: string;
+  price: number;
+  image: string | null;
+  score: number;
 }
 
 @Injectable()
@@ -43,6 +60,63 @@ export class MatchingService {
       include: { createdBy: { select: { id: true, fullName: true } } },
     });
 
+    const results = this.scoreRows(rows, criteria);
+    results.sort((a, b) => b.score - a.score);
+    return results;
+  }
+
+  /**
+   * Bir grup talep için en iyi eşleşen portföyü tek DB sorgusuyla hesaplar.
+   * Talep listesi kartlarında küçük önizleme göstermek için kullanılır.
+   */
+  async bestMatchForDemands(
+    officeId: string,
+    demands: DemandRow[],
+  ): Promise<Record<string, BestMatchSummary | null>> {
+    const out: Record<string, BestMatchSummary | null> = {};
+    if (!demands.length) return out;
+
+    const rows = await this.prisma.portfolio.findMany({
+      where: { deletedAt: null, officeId, visibility: 'PUBLIC' },
+      include: { createdBy: { select: { id: true, fullName: true } } },
+    });
+    if (!rows.length) {
+      for (const d of demands) out[d.id] = null;
+      return out;
+    }
+
+    for (const demand of demands) {
+      const criteria = this.demandToCriteria(demand);
+      const scored = this.scoreRows(rows, criteria);
+      if (!scored.length) {
+        out[demand.id] = null;
+        continue;
+      }
+      const best = scored.reduce((a, b) => (b.score > a.score ? b : a));
+      const p = best.portfolio;
+      out[demand.id] = {
+        portfolioId: p.id,
+        title: p.title,
+        type: p.type,
+        listingType: p.listingType,
+        city: p.city,
+        district: p.district,
+        neighborhood: p.neighborhood,
+        roomCount: p.roomCount,
+        price: p.price,
+        image: p.images?.[0] ?? null,
+        score: best.score,
+      };
+    }
+    return out;
+  }
+
+  /** Portföy satırlarına bellekte sert filtre + skorlama uygular. */
+  private scoreRows(rows: PortfolioRow[], criteria: MatchCriteria): ScoredPortfolio[] {
+    const wantedTypes = criteria.types?.length
+      ? new Set(criteria.types as string[])
+      : null;
+    const wantedListing = criteria.listingType ?? null;
     const wantedCity = normalizeText(criteria.city);
     const priceCeiling =
       criteria.maxBudget != null ? criteria.maxBudget * (1 + PRICE_STRETCH) : null;
@@ -54,7 +128,9 @@ export class MatchingService {
     for (const row of rows) {
       const price = Number(row.price);
 
-      // ── Katman 1 (devam): bellekte sert filtreler ──
+      // ── Sert filtreler ──
+      if (wantedTypes && !wantedTypes.has(row.type)) continue;
+      if (wantedListing && row.listingType !== wantedListing) continue;
       if (wantedCity && normalizeText(row.city) !== wantedCity) continue;
       if (priceCeiling != null && price > priceCeiling) continue;
       if (roomFloorIdx >= 0) {
@@ -66,7 +142,7 @@ export class MatchingService {
         if (!mustHave.every((f) => have.has(f))) continue;
       }
 
-      // ── Katman 2: skorlama ──
+      // ── Skorlama ──
       const scoringInput: ScoringPortfolio = {
         type: row.type,
         listingType: row.listingType,
@@ -89,8 +165,27 @@ export class MatchingService {
       });
     }
 
-    results.sort((a, b) => b.score - a.score);
     return results;
+  }
+
+  /** Demand kaydını eşleştirme kriterlerine çevirir. */
+  private demandToCriteria(d: DemandRow): MatchCriteria {
+    return {
+      types: d.types,
+      listingType: d.listingType,
+      city: d.city ?? undefined,
+      district: d.district ?? undefined,
+      neighborhood: d.neighborhood ?? undefined,
+      districts: d.districts ?? undefined,
+      neighborhoods: d.neighborhoods ?? undefined,
+      minBudget: d.minBudget != null ? Number(d.minBudget) : undefined,
+      maxBudget: d.maxBudget != null ? Number(d.maxBudget) : undefined,
+      roomPreferences: d.roomPreferences ?? undefined,
+      minArea: d.minArea ?? undefined,
+      maxArea: d.maxArea ?? undefined,
+      mustHaveFeatures: d.mustHaveFeatures ?? undefined,
+      bonusFeatures: d.bonusFeatures ?? undefined,
+    };
   }
 
   /** Seçilen oda tercihleri içindeki en küçük ordinal indeks (min-oda sert filtre tabanı). */
