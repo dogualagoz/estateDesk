@@ -3,11 +3,13 @@ import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { officeService } from '@/services/office.service';
+import { useToast } from '@/composables/useToast';
 import type { InvitePreview } from '@/types/office';
 
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
+const toast = useToast();
 
 const token = route.params.token as string;
 const invitePreview = ref<InvitePreview | null>(null);
@@ -34,6 +36,7 @@ async function acceptInvite() {
   try {
     await officeService.acceptInvite(token);
     await auth.fetchMe();
+    toast.success(`${invitePreview.value?.officeName ?? 'Ofise'} katıldınız!`);
     router.push('/');
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Ofise katılma başarısız';

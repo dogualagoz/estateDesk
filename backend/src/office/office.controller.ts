@@ -26,6 +26,18 @@ export class OfficeController {
   }
 
   @Roles(Role.ADMIN)
+  @Get('invite-link')
+  getInviteLink(@CurrentUser() user: AuthUser) {
+    return this.office.getInviteLink(user);
+  }
+
+  @Roles(Role.ADMIN)
+  @Post('invite-link/reset')
+  resetInviteLink(@CurrentUser() user: AuthUser) {
+    return this.office.resetInviteLink(user);
+  }
+
+  @Roles(Role.ADMIN)
   @Post('invites')
   createInvite(@CurrentUser() user: AuthUser, @Body() dto: CreateInviteDto) {
     return this.office.createInvite(user, dto);

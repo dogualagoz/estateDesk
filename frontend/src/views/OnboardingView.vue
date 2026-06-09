@@ -3,9 +3,13 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { officeService } from '@/services/office.service';
+import { useConfirm } from '@/composables/useConfirm';
+import { useToast } from '@/composables/useToast';
 
 const auth = useAuthStore();
 const router = useRouter();
+const { confirm } = useConfirm();
+const toast = useToast();
 
 type Mode = 'choose' | 'create' | 'join';
 const mode = ref<Mode>('choose');
@@ -21,6 +25,7 @@ async function createOffice() {
   try {
     await officeService.create(officeName.value.trim());
     await auth.fetchMe();
+    toast.success('Ofisiniz oluşturuldu, hoş geldiniz!');
     router.push('/');
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Ofis oluşturulamadı';
@@ -41,7 +46,14 @@ function goToInvite() {
   router.push({ name: 'invite.preview', params: { token } });
 }
 
-function logout() {
+async function logout() {
+  const ok = await confirm({
+    title: 'Çıkış yap',
+    message: 'Oturumunuzu kapatmak istediğinizden emin misiniz?',
+    confirmText: 'Çıkış Yap',
+    icon: 'logout',
+  });
+  if (!ok) return;
   auth.logout();
   router.push('/login');
 }

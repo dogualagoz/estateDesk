@@ -176,6 +176,59 @@ export class OfficeService {
     return { success: true };
   }
 
+  /**
+   * Ofisin tek paylaşılan davet linkini döndürür (Notion/Figma mantığı).
+   * Birden fazla geçerli genel (e-postasız) link varsa en yenisini tutar,
+   * gerisini iptal eder. Geçerli link yoksa yeni bir tane oluşturur.
+   */
+  async getInviteLink(user: AuthUser) {
+    const officeId = requireOfficeId(user);
+    const now = new Date();
+
+    const invites = await this.prisma.invite.findMany({
+      where: { officeId, email: null, status: 'PENDING' },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const valid = invites.filter((i) => i.expiresAt > now);
+
+    if (valid.length > 0) {
+      const [keep, ...extra] = valid;
+      // Fazlalık geçerli linkleri ve süresi dolmuşları iptal et — tek link kalsın
+      const stale = [...extra, ...invites.filter((i) => i.expiresAt <= now)];
+      if (stale.length) {
+        await this.prisma.invite.updateMany({
+          where: { id: { in: stale.map((i) => i.id) } },
+          data: { status: 'REVOKED' },
+        });
+      }
+      return this.toInviteResponse(keep);
+    }
+
+    return this.createSharedInvite(user.id, officeId, now);
+  }
+
+  /** Mevcut paylaşılan linki iptal edip yeni bir tane üretir. */
+  async resetInviteLink(user: AuthUser) {
+    const officeId = requireOfficeId(user);
+    await this.prisma.invite.updateMany({
+      where: { officeId, email: null, status: 'PENDING' },
+      data: { status: 'REVOKED' },
+    });
+    return this.createSharedInvite(user.id, officeId, new Date());
+  }
+
+  private async createSharedInvite(userId: string, officeId: string, now: Date) {
+    const invite = await this.prisma.invite.create({
+      data: {
+        officeId,
+        invitedById: userId,
+        expiresAt: new Date(now.getTime() + INVITE_TTL_DAYS * 24 * 60 * 60 * 1000),
+      },
+    });
+    return this.toInviteResponse(invite);
+  }
+
   /** Davet linki açıldığında gösterilecek önizleme (public). */
   async previewInvite(token: string) {
     const invite = await this.prisma.invite.findUnique({

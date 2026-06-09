@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth';
 import { usersService } from '@/services/users.service';
 import { portfolioService } from '@/services/portfolio.service';
 import { demandService } from '@/services/demand.service';
+import { useConfirm } from '@/composables/useConfirm';
 import { PROPERTY_TYPE_LABELS, LISTING_TYPE_LABELS, type Portfolio } from '@/types/portfolio';
 import { DEMAND_STATUS_LABELS, type Demand } from '@/types/demand';
 import type { UserProfile } from '@/types/user';
@@ -12,6 +13,7 @@ import type { UserProfile } from '@/types/user';
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
+const { confirm } = useConfirm();
 
 const profile = ref<UserProfile | null>(null);
 const portfolios = ref<Portfolio[]>([]);
@@ -49,7 +51,14 @@ async function load(id: string) {
   }
 }
 
-function logout() {
+async function logout() {
+  const ok = await confirm({
+    title: 'Çıkış yap',
+    message: 'Oturumunuzu kapatmak istediğinizden emin misiniz?',
+    confirmText: 'Çıkış Yap',
+    icon: 'logout',
+  });
+  if (!ok) return;
   auth.logout();
   router.push('/login');
 }

@@ -3,6 +3,8 @@ import { onMounted, reactive, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { portfolioService } from '@/services/portfolio.service';
 import { resolveImgUrl } from '@/utils/image';
+import { useConfirm } from '@/composables/useConfirm';
+import { useToast } from '@/composables/useToast';
 import {
   PROPERTY_TYPES,
   PROPERTY_TYPE_LABELS,
@@ -11,6 +13,8 @@ import {
 } from '@/types/portfolio';
 
 const router = useRouter();
+const { confirm } = useConfirm();
+const toast = useToast();
 const loading = ref(false);
 const items = ref<Portfolio[]>([]);
 const total = ref(0);
@@ -71,9 +75,20 @@ function fmtPrice(p: string | number) {
 }
 
 async function remove(p: Portfolio) {
-  if (!confirm(`"${p.city}/${p.district}" portföyü silinsin mi?`)) return;
-  await portfolioService.remove(p.id);
-  await load();
+  const ok = await confirm({
+    title: 'Portföyü sil',
+    message: `"${p.city}/${p.district}" portföyünü silmek istediğinizden emin misiniz?`,
+    danger: true,
+    icon: 'delete',
+  });
+  if (!ok) return;
+  try {
+    await portfolioService.remove(p.id);
+    toast.success('Portföy silindi');
+    await load();
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message || 'Portföy silinemedi');
+  }
 }
 
 onMounted(load);

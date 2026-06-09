@@ -9,6 +9,11 @@ export const officeService = {
   removeMember: (memberId: string) =>
     api.delete<{ success: boolean }>(`/offices/members/${memberId}`).then((r) => r.data),
 
+  // Ofis başına tek paylaşılan davet linki (Notion/Figma mantığı)
+  getInviteLink: () => api.get<Invite>('/offices/invite-link').then((r) => r.data),
+  resetInviteLink: () =>
+    api.post<Invite>('/offices/invite-link/reset', {}).then((r) => r.data),
+
   createInvite: () =>
     api.post<Invite>('/offices/invites', {}).then((r) => r.data),
   listInvites: () => api.get<Invite[]>('/offices/invites').then((r) => r.data),

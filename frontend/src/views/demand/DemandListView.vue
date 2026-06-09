@@ -4,8 +4,12 @@ import { useRouter } from 'vue-router';
 import { demandService } from '@/services/demand.service';
 import { DEMAND_STATUS_LABELS, type Demand, type DemandQuery } from '@/types/demand';
 import { PROPERTY_TYPES, PROPERTY_TYPE_LABELS } from '@/types/portfolio';
+import { useConfirm } from '@/composables/useConfirm';
+import { useToast } from '@/composables/useToast';
 
 const router = useRouter();
+const { confirm } = useConfirm();
+const toast = useToast();
 const loading = ref(false);
 const items = ref<Demand[]>([]);
 const total = ref(0);
@@ -56,9 +60,20 @@ function timeAgo(dateStr: string) {
 }
 
 async function remove(d: Demand) {
-  if (!confirm(`"${d.customerName}" talebi silinsin mi?`)) return;
-  await demandService.remove(d.id);
-  await load();
+  const ok = await confirm({
+    title: 'Talebi sil',
+    message: `"${d.customerName}" adlı müşterinin talebini silmek istediğinizden emin misiniz?`,
+    danger: true,
+    icon: 'delete',
+  });
+  if (!ok) return;
+  try {
+    await demandService.remove(d.id);
+    toast.success('Talep silindi');
+    await load();
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message || 'Talep silinemedi');
+  }
 }
 
 onMounted(load);

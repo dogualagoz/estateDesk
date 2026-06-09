@@ -3,20 +3,23 @@ import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { officeService } from '@/services/office.service';
+import { useConfirm } from '@/composables/useConfirm';
+import { useToast } from '@/composables/useToast';
 import type { OfficeSummary, OfficeMember, Invite } from '@/types/office';
 
 const auth = useAuthStore();
 const router = useRouter();
+const { confirm } = useConfirm();
+const toast = useToast();
 
 const office = ref<OfficeSummary | null>(null);
 const members = ref<OfficeMember[]>([]);
-const invites = ref<Invite[]>([]);
+const inviteLink = ref<Invite | null>(null);
 const loading = ref(false);
 
-const inviteEmail = ref('');
 const inviteError = ref<string | null>(null);
-const creatingInvite = ref(false);
-const copiedToken = ref<string | null>(null);
+const resetting = ref(false);
+const copied = ref(false);
 const removingMemberId = ref<string | null>(null);
 
 function initials(name: string) {
@@ -30,74 +33,106 @@ async function load() {
     office.value = o;
     members.value = m;
     if (auth.isAdmin) {
-      invites.value = await officeService.listInvites();
+      inviteLink.value = await officeService.getInviteLink();
     }
   } finally {
     loading.value = false;
   }
 }
 
-async function createInvite() {
-  inviteError.value = null;
-  creatingInvite.value = true;
+/** Linki panoya kopyala — clipboard API yoksa input seçimine düşer. */
+async function copyLink() {
+  const link = inviteLink.value?.link;
+  if (!link) return;
   try {
-    const invite = await officeService.createInvite();
-    // Listede varsa güncelle, yoksa başa ekle
-    const idx = invites.value.findIndex((i) => i.id === invite.id);
-    if (idx >= 0) invites.value[idx] = invite;
-    else invites.value.unshift(invite);
-    await copyLink(invite);
-  } catch (e: any) {
-    inviteError.value = e?.response?.data?.message || 'Davet oluşturulamadı';
-  } finally {
-    creatingInvite.value = false;
-  }
-}
-
-async function copyLink(invite: Invite) {
-  try {
-    await navigator.clipboard.writeText(invite.link);
-    copiedToken.value = invite.token;
-    setTimeout(() => {
-      if (copiedToken.value === invite.token) copiedToken.value = null;
-    }, 2000);
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(link);
+    } else {
+      throw new Error('clipboard yok');
+    }
   } catch {
-    /* clipboard erişilemezse sessizce geç */
+    // Güvenli olmayan bağlam / izin yoksa: gizli textarea ile kopyala
+    const ta = document.createElement('textarea');
+    ta.value = link;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+    } catch {
+      document.body.removeChild(ta);
+      toast.error('Link kopyalanamadı, manuel olarak kopyalayın');
+      return;
+    }
+    document.body.removeChild(ta);
   }
+  copied.value = true;
+  setTimeout(() => (copied.value = false), 2000);
 }
 
-async function revokeInvite(id: string) {
-  await officeService.revokeInvite(id);
-  invites.value = invites.value.filter((i) => i.id !== id);
+async function resetInviteLink() {
+  const ok = await confirm({
+    title: 'Davet linkini yenile',
+    message: 'Mevcut link geçersiz olacak ve daha önce paylaştığınız bağlantılar artık çalışmayacak. Yeni bir link oluşturulsun mu?',
+    confirmText: 'Yenile',
+    danger: true,
+    icon: 'autorenew',
+  });
+  if (!ok) return;
+
+  inviteError.value = null;
+  resetting.value = true;
+  try {
+    inviteLink.value = await officeService.resetInviteLink();
+    toast.success('Yeni davet linki oluşturuldu');
+  } catch (e: any) {
+    inviteError.value = e?.response?.data?.message || 'Link yenilenemedi';
+    toast.error(inviteError.value || 'Link yenilenemedi');
+  } finally {
+    resetting.value = false;
+  }
 }
 
 async function removeMember(member: OfficeMember) {
-  if (!confirm(`${member.fullName} adlı danışmanı ofisten çıkartmak istediğinizden emin misiniz?`)) {
-    return;
-  }
+  const ok = await confirm({
+    title: 'Danışmanı çıkar',
+    message: `${member.fullName} adlı danışmanı ofisten çıkarmak istediğinizden emin misiniz?`,
+    confirmText: 'Çıkar',
+    danger: true,
+    icon: 'person_remove',
+  });
+  if (!ok) return;
 
   removingMemberId.value = member.id;
   try {
     await officeService.removeMember(member.id);
     members.value = members.value.filter((m) => m.id !== member.id);
+    toast.success(`${member.fullName} ofisten çıkarıldı`);
   } catch (e: any) {
-    alert(e?.response?.data?.message || 'İşlem başarısız');
+    toast.error(e?.response?.data?.message || 'İşlem başarısız');
   } finally {
     removingMemberId.value = null;
   }
 }
 
 async function leaveOffice() {
-  if (!confirm('Ofisten çıkmak istediğinizden emin misiniz?')) {
-    return;
-  }
+  const ok = await confirm({
+    title: 'Ofisten çık',
+    message: `"${office.value?.name ?? 'Bu ofis'}" ofisinden ayrılmak istediğinizden emin misiniz? Portföy ve taleplerinize artık erişemezsiniz.`,
+    confirmText: 'Ofisten Çık',
+    danger: true,
+    icon: 'logout',
+  });
+  if (!ok) return;
 
   try {
     await officeService.leaveOffice();
     await auth.fetchMe();
+    toast.success('Ofisten ayrıldınız');
     router.push('/onboarding');
   } catch (e: any) {
-    alert(e?.response?.data?.message || 'İşlem başarısız');
+    toast.error(e?.response?.data?.message || 'İşlem başarısız');
   }
 }
 
@@ -177,45 +212,55 @@ onMounted(load);
         </button>
       </section>
 
-      <!-- Davet yönetimi (yalnız yönetici) -->
+      <!-- Davet yönetimi (yalnız yönetici) — tek paylaşılan link -->
       <section v-if="auth.isAdmin" class="card flex flex-col gap-gutter">
         <div>
           <h2 class="text-body-lg font-semibold text-on-surface">Danışman Davet Et</h2>
           <p class="text-label-md text-on-surface-variant mt-1">
-            Davet linki oluşturun ve ilgili kişiyle paylaşın. Davet linki 14 gün geçerlidir.
+            Bu linke sahip olan herkes ofise danışman olarak katılabilir. Linki yalnızca güvendiğiniz kişilerle paylaşın.
           </p>
         </div>
 
-        <div class="flex gap-stack-md">
-          <button class="btn primary" :disabled="creatingInvite" @click="createInvite">
-            <span class="material-symbols-outlined text-[18px]">link</span>
-            {{ creatingInvite ? 'Oluşturuluyor…' : 'Davet Linki Oluştur' }}
-          </button>
-        </div>
-        <p v-if="inviteError" class="error-msg">{{ inviteError }}</p>
-
-        <!-- Aktif davet linkleri -->
-        <div v-if="invites.length" class="flex flex-col gap-stack-sm pt-stack-md border-t border-outline-variant">
-          <p class="text-label-md font-medium text-on-surface">Aktif davet linkleri ({{ invites.length }})</p>
+        <!-- Kopyalanabilir ama düzenlenemez link alanı (Notion/Figma tarzı) -->
+        <div class="flex flex-col gap-stack-sm">
           <div
-            v-for="inv in invites"
-            :key="inv.id"
-            class="flex items-center gap-3 flex-wrap p-stack-md rounded-lg bg-surface-container-low"
+            class="flex items-stretch rounded-lg border border-outline-variant bg-surface-container-low overflow-hidden focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/10 transition-colors"
           >
-            <div class="min-w-0 flex-1">
-              <p class="text-label-sm text-on-surface-variant truncate">{{ inv.link }}</p>
-              <p class="text-label-xs text-on-surface-variant mt-0.5" v-if="inv.expiresInDays">
-                {{ inv.expiresInDays }} gün kaldı
-              </p>
-            </div>
-            <button class="btn ghost text-[13px] py-1.5 px-3" @click="copyLink(inv)">
-              <span class="material-symbols-outlined text-[16px]">{{ copiedToken === inv.token ? 'check' : 'content_copy' }}</span>
-              {{ copiedToken === inv.token ? 'Kopyalandı' : 'Kopyala' }}
-            </button>
-            <button class="btn ghost text-[13px] py-1.5 px-3 text-error" @click="revokeInvite(inv.id)">
-              <span class="material-symbols-outlined text-[16px]">close</span>
+            <input
+              :value="inviteLink?.link ?? 'Yükleniyor…'"
+              readonly
+              spellcheck="false"
+              class="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-label-md text-on-surface-variant font-mono text-[13px] outline-none cursor-text select-all"
+              @focus="($event.target as HTMLInputElement).select()"
+              @click="($event.target as HTMLInputElement).select()"
+            />
+            <button
+              class="shrink-0 flex items-center gap-1.5 px-4 border-l border-outline-variant text-label-md font-medium transition-colors"
+              :class="copied ? 'text-primary bg-primary-fixed/40' : 'text-primary hover:bg-primary/5'"
+              :disabled="!inviteLink"
+              @click="copyLink"
+            >
+              <span class="material-symbols-outlined text-[18px]">{{ copied ? 'check' : 'content_copy' }}</span>
+              {{ copied ? 'Kopyalandı' : 'Kopyala' }}
             </button>
           </div>
+
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <p class="text-label-sm text-on-surface-variant" v-if="inviteLink">
+              <span class="material-symbols-outlined text-[14px] align-text-bottom">schedule</span>
+              {{ inviteLink.expiresInDays > 0 ? `${inviteLink.expiresInDays} gün geçerli` : 'Bugün sona eriyor' }}
+            </p>
+            <button
+              class="btn ghost text-[13px] py-1.5 px-2.5 text-on-surface-variant"
+              :disabled="resetting"
+              @click="resetInviteLink"
+              title="Mevcut linki geçersiz kılıp yeni bir tane oluştur"
+            >
+              <span class="material-symbols-outlined text-[16px]" :class="resetting ? 'animate-spin' : ''">autorenew</span>
+              {{ resetting ? 'Yenileniyor…' : 'Linki Yenile' }}
+            </button>
+          </div>
+          <p v-if="inviteError" class="error-msg">{{ inviteError }}</p>
         </div>
       </section>
     </template>

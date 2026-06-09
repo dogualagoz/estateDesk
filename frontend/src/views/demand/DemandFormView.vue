@@ -20,6 +20,8 @@ import {
 import { resolveImgUrl } from '@/utils/image';
 import LocationDropdown from '@/components/ui/LocationDropdown.vue';
 import PortfolioDetailModal from '@/components/portfolio/PortfolioDetailModal.vue';
+import { useConfirm } from '@/composables/useConfirm';
+import { useToast } from '@/composables/useToast';
 import {
   getCityNames,
   getDistrictNames,
@@ -28,6 +30,8 @@ import {
 
 const route = useRoute();
 const router = useRouter();
+const { confirm } = useConfirm();
+const toast = useToast();
 const isEdit = computed(() => !!route.params.id);
 
 const form = reactive({
@@ -90,13 +94,21 @@ function onMaxBudgetBlur(e: Event) {
 
 async function remove() {
   if (!isEdit.value) return;
-  if (!confirm('Bu talep silinsin mi?')) return;
+  const ok = await confirm({
+    title: 'Talebi sil',
+    message: 'Bu talebi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
+    danger: true,
+    icon: 'delete',
+  });
+  if (!ok) return;
   removing.value = true;
   try {
     await demandService.remove(route.params.id as string);
+    toast.success('Talep silindi');
     router.push('/demand');
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Silme başarısız';
+    toast.error(error.value || 'Silme başarısız');
   } finally {
     removing.value = false;
   }

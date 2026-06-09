@@ -2,10 +2,12 @@
 import { computed, ref, reactive, onMounted, onUnmounted, watch, nextTick, provide } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useConfirm } from '@/composables/useConfirm';
 
 const auth = useAuthStore();
 const router = useRouter();
 const route = useRoute();
+const { confirm } = useConfirm();
 
 const links = computed(() => [
   { to: '/',          label: 'Dashboard',  icon: 'dashboard' },
@@ -40,7 +42,14 @@ function handleKeydown(e: KeyboardEvent) {
 onMounted(() => window.addEventListener('keydown', handleKeydown));
 onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 
-function logout() {
+async function logout() {
+  const ok = await confirm({
+    title: 'Çıkış yap',
+    message: 'Oturumunuzu kapatmak istediğinizden emin misiniz?',
+    confirmText: 'Çıkış Yap',
+    icon: 'logout',
+  });
+  if (!ok) return;
   auth.logout();
   router.push('/login');
 }

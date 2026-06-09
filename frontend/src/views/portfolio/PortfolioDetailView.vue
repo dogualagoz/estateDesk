@@ -3,6 +3,8 @@ import { onMounted, ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { portfolioService } from '@/services/portfolio.service';
 import { resolveImgUrl } from '@/utils/image';
+import { useConfirm } from '@/composables/useConfirm';
+import { useToast } from '@/composables/useToast';
 import {
   PROPERTY_TYPE_LABELS,
   LISTING_TYPE_LABELS,
@@ -12,6 +14,8 @@ import {
 
 const route  = useRoute();
 const router = useRouter();
+const { confirm } = useConfirm();
+const toast = useToast();
 const item      = ref<Portfolio | null>(null);
 const loading   = ref(true);
 const uploading = ref(false);
@@ -64,9 +68,20 @@ async function load() {
 
 async function remove() {
   if (!item.value) return;
-  if (!confirm('Bu portföy silinsin mi?')) return;
-  await portfolioService.remove(item.value.id);
-  router.push('/portfolio');
+  const ok = await confirm({
+    title: 'Portföyü sil',
+    message: 'Bu portföyü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
+    danger: true,
+    icon: 'delete',
+  });
+  if (!ok) return;
+  try {
+    await portfolioService.remove(item.value.id);
+    toast.success('Portföy silindi');
+    router.push('/portfolio');
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message || 'Portföy silinemedi');
+  }
 }
 
 function pickImages() { fileInput.value?.click(); }
