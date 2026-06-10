@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
 import { requireOfficeId } from '../common/office.util';
+import { uploadsDir } from '../common/uploads.util';
 import { CreatePortfolioDto } from './dto/create-portfolio.dto';
 import { UpdatePortfolioDto } from './dto/update-portfolio.dto';
 import { QueryPortfolioDto } from './dto/query-portfolio.dto';
@@ -114,7 +115,7 @@ export class PortfolioService {
 
   async addImages(user: AuthUser, id: string, files: Express.Multer.File[]) {
     const item = await this.get(user, id);
-    const dir = path.join('/app/uploads/portfolio', id);
+    const dir = path.join(uploadsDir(), 'portfolio', id);
     fs.mkdirSync(dir, { recursive: true });
 
     const newUrls: string[] = [];
@@ -148,7 +149,7 @@ export class PortfolioService {
       throw new NotFoundException('Image not found');
     }
 
-    const filePath = path.join('/app/uploads/portfolio', id, filename);
+    const filePath = path.join(uploadsDir(), 'portfolio', id, filename);
 
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);

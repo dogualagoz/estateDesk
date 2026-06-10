@@ -12,17 +12,18 @@ export class AuthService {
 
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    // Tek ortak mesaj: kayıtlı e-postaların dışarıdan tespitini (user enumeration) engeller
     if (!user) {
-      throw new UnauthorizedException('Bu e-posta adresine kayıtlı hesap bulunamadı');
-    }
-
-    if (!user.isActive) {
-      throw new UnauthorizedException('Hesabınız deaktif edilmiştir. Lütfen destek ekibi ile iletişime geçin');
+      throw new UnauthorizedException('E-posta veya şifre hatalı');
     }
 
     const ok = await bcrypt.compare(dto.password, user.passwordHash);
     if (!ok) {
-      throw new UnauthorizedException('Şifre yanlış. Lütfen kontrol edip tekrar deneyin');
+      throw new UnauthorizedException('E-posta veya şifre hatalı');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Hesabınız deaktif edilmiştir. Lütfen destek ekibi ile iletişime geçin');
     }
 
     return this.buildSession(user);

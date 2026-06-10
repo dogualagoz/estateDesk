@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'path';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -17,12 +17,15 @@ import { DemandMatchModule } from './demand-match/demand-match.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { DemoReadOnlyGuard } from './common/demo-read-only.guard';
+import { uploadsDir } from './common/uploads.util';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    // Genel istek limiti; auth endpoint'lerinde daha sıkı limit var (@Throttle)
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
     ServeStaticModule.forRoot({
-      rootPath: join('/app', 'uploads'),
+      rootPath: uploadsDir(),
       serveRoot: '/uploads',
       serveStaticOptions: { index: false },
     }),
@@ -38,6 +41,7 @@ import { DemoReadOnlyGuard } from './common/demo-read-only.guard';
     DemandMatchModule,
   ],
   providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: DemoReadOnlyGuard },

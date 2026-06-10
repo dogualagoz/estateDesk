@@ -25,8 +25,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
       const res = exception.getResponse();
       message = typeof res === 'string' ? res : (res as any).message ?? res;
     } else if (exception instanceof Error) {
+      // İç hata detayı istemciye sızdırılmaz; yalnızca loglanır
       this.logger.error(exception.message, exception.stack);
-      message = exception.message;
     }
 
     response.status(status).json({

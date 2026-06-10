@@ -1,4 +1,10 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
@@ -78,6 +84,19 @@ export class UsersService {
     const target = await this.prisma.user.findFirst({ where: { id, officeId } });
     if (!target) throw new NotFoundException('User not found');
 
+    // office.service.changeMemberRole ile aynı korumalar — bu uç onları bypass edememeli
+    if (dto.role !== undefined && dto.role !== target.role) {
+      if (target.id === user.id) {
+        throw new BadRequestException('Kendi rolünüzü değiştiremezsiniz');
+      }
+      if (dto.role !== Role.ADMIN && (await this.isOfficeOwner(officeId, target.id))) {
+        throw new BadRequestException('Ofis kurucusunun yöneticiliği kaldırılamaz');
+      }
+    }
+    if (dto.isActive === false) {
+      await this.assertCanDeactivate(user, officeId, target.id);
+    }
+
     const data: any = {};
     if (dto.fullName !== undefined) data.fullName = dto.fullName;
     if (dto.role !== undefined) data.role = dto.role;
@@ -95,10 +114,28 @@ export class UsersService {
     const officeId = requireOfficeId(user);
     const target = await this.prisma.user.findFirst({ where: { id, officeId } });
     if (!target) throw new NotFoundException('User not found');
+    await this.assertCanDeactivate(user, officeId, target.id);
     return this.prisma.user.update({
       where: { id },
       data: { isActive: false },
       select: PUBLIC_FIELDS,
     });
+  }
+
+  private async isOfficeOwner(officeId: string, userId: string) {
+    const office = await this.prisma.office.findUnique({
+      where: { id: officeId },
+      select: { ownerId: true },
+    });
+    return office?.ownerId === userId;
+  }
+
+  private async assertCanDeactivate(user: AuthUser, officeId: string, targetId: string) {
+    if (targetId === user.id) {
+      throw new BadRequestException('Kendi hesabınızı deaktive edemezsiniz');
+    }
+    if (await this.isOfficeOwner(officeId, targetId)) {
+      throw new BadRequestException('Ofis kurucusu deaktive edilemez');
+    }
   }
 }
