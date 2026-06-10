@@ -734,7 +734,7 @@ async function submit() {
                         <div class="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-200"
                              :class="form.visibility === 'HIDDEN' ? 'left-[18px]' : 'left-0.5'" />
                       </div>
-                      <span class="text-label-sm text-on-surface-variant">Sadece Bana Özel</span>
+                      <span class="text-label-sm text-on-surface-variant">Gizli (ofis içi)</span>
                     </button>
                   </div>
                   <textarea class="textarea" v-model="form.note" rows="3" placeholder="Müşteri görüşmesi notları, anahtar durumu vb." />

@@ -75,16 +75,18 @@ Standart NestJS modül yapısı. Her domain kendi klasöründe `module`, `contro
 - `demand-match` — eşleştirme pin/kayıt tablosu
 - `dashboard` — özet istatistikler
 
-**Global guard'lar** (`app.module.ts`):
+**Global guard'lar** (`app.module.ts`, sırayla):
+- `ThrottlerGuard` — rate limiting (genel 100 istek/dk; auth uçlarında `@Throttle` ile 10/dk)
 - `JwtAuthGuard` — tüm route'lara uygulanır; `@Public()` ile devre dışı bırakılır
 - `RolesGuard` — `@Roles(Role.ADMIN)` kontrol eder
+- `DemoReadOnlyGuard` — demo kullanıcılarının (isDemo) yazma isteklerini engeller; salt-okunur POST'lar `@DemoSafe()` ile muaf tutulur
 
 **Veri desenleri:**
 - Tüm silmeler soft delete: `deletedAt` set edilir, sorgularda `deletedAt: null` filtresi
 - **Ofis izolasyonu**: Her `Portfolio` ve `Demand` kaydı `officeId` içerir; tüm liste/get/update/delete sorguları ofise göre filtrelenir
-- JWT payload'ı `userId`, `role`, `officeId` içerir; `@AuthUser()` decorator ile controller'lara enjekte edilir
-- Görsel yükleme: `POST /portfolio/:id/images` → sharp ile WebP + sıkıştırma → `backend/uploads/`
-- Metin araması: Postgres `ILIKE`
+- JWT payload'ı `sub`, `email`, `role` içerir; kullanıcı (officeId dahil) her istekte DB'den taze okunur (`jwt.strategy.validate`) ve `@CurrentUser()` decorator ile controller'lara enjekte edilir
+- Görsel yükleme: `POST /portfolio/:id/images` → sharp ile WebP + sıkıştırma → `uploadsDir()` (varsayılan `<cwd>/uploads`; `UPLOADS_DIR` env ile ezilebilir)
+- Metin araması: liste filtreleri Prisma `contains` (mode: insensitive); global arama `unaccent` + LIKE'lı parametrize raw SQL
 
 ### Multi-tenant Ofis Yapısı
 
@@ -126,7 +128,7 @@ Davet akışı: `POST /office/invites` → token üret → `GET /invites/:token`
 
 **Modeller:** `Office`, `Invite`, `User`, `Portfolio`, `Demand`, `DemandMatch`
 
-**Enum'lar:** `Role` (ADMIN|AGENT), `PropertyType` (APARTMENT|VILLA|LAND|SHOP|OFFICE), `ListingType` (SATILIK|KIRALIK), `PortfolioVisibility`, `DemandStatus`, `InviteStatus`
+**Enum'lar:** `Role` (ADMIN|AGENT), `PropertyType` (APARTMENT|VILLA|LAND|SHOP|OFFICE|HOTEL), `ListingType` (SALE|RENT), `PortfolioVisibility`, `DemandStatus`, `InviteStatus`
 
 ### Tasarım Sistemi (`DESIGN.md`)
 
@@ -142,7 +144,7 @@ Notion ilhamlı, sakin ve minimalist. Birincil renk: Adaçayı (#4e604f / #7D907
 
 ## Production
 
-`docker-compose.prod.yml` + `nginx/prod.conf`. Backend Dockerfile CMD'si başlarken `prisma migrate deploy` çalıştırır. Görseller `backend/uploads/` bind mount ile nginx üzerinden servis edilir.
+`docker-compose.prod.yml` + `nginx/prod.conf`. Backend Dockerfile CMD'si başlarken `prisma migrate deploy` çalıştırır. Görseller kök `uploads/` dizininden bind mount ile (`./uploads:/app/uploads` ve nginx'e `:ro`) servis edilir.
 
 ## Kurallar
 
