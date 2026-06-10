@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
@@ -137,7 +137,17 @@ export class PortfolioService {
 
   async removeImage(user: AuthUser, id: string, filename: string) {
     const item = await this.get(user, id);
+
+    // Path traversal koruması: yalnızca düz dosya adı kabul edilir
+    if (path.basename(filename) !== filename || filename.includes('..')) {
+      throw new BadRequestException('Invalid filename');
+    }
+
     const url = `/uploads/portfolio/${id}/${filename}`;
+    if (!item.images.includes(url)) {
+      throw new NotFoundException('Image not found');
+    }
+
     const filePath = path.join('/app/uploads/portfolio', id, filename);
 
     if (fs.existsSync(filePath)) {

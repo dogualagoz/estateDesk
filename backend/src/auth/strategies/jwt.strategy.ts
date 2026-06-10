@@ -10,13 +10,22 @@ export interface JwtPayload {
   role: 'ADMIN' | 'AGENT';
 }
 
+/** JWT_SECRET zorunludur; tanımsızsa uygulama açılışta hata verir (fail-fast). */
+export function requireJwtSecret(config: ConfigService): string {
+  const secret = config.get<string>('JWT_SECRET');
+  if (!secret) {
+    throw new Error('JWT_SECRET ortam değişkeni tanımlı değil — uygulama başlatılamıyor.');
+  }
+  return secret;
+}
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(config: ConfigService, private prisma: PrismaService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: config.get<string>('JWT_SECRET') || 'change-me',
+      secretOrKey: requireJwtSecret(config),
     });
   }
 
