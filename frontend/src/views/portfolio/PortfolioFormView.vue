@@ -11,9 +11,11 @@ import {
   FEATURE_PRESETS,
   type CreatePortfolioPayload,
   type ListingType,
+  type Portfolio,
   type PropertyType,
 } from '@/types/portfolio';
 import LocationDropdown from '@/components/ui/LocationDropdown.vue';
+import { useToast } from '@/composables/useToast';
 import {
   getCityNames,
   getDistrictNames,
@@ -22,6 +24,7 @@ import {
 
 const route = useRoute();
 const router = useRouter();
+const toast = useToast();
 const isEdit = computed(() => !!route.params.id);
 
 const TYPE_ICONS: Record<PropertyType, string> = {
@@ -148,7 +151,12 @@ async function removeExistingImage(url: string) {
   const idx = existingImages.value.indexOf(url);
   const filename = url.split('/').pop()!;
   const portfolioId = route.params.id as string;
-  await portfolioService.deleteImage(portfolioId, filename);
+  try {
+    await portfolioService.deleteImage(portfolioId, filename);
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message || 'Görsel silinemedi');
+    return;
+  }
   existingImages.value = existingImages.value.filter((u) => u !== url);
   if (idx !== -1 && activeIndex.value >= allPreviewUrls.value.length) {
     activeIndex.value = Math.max(0, allPreviewUrls.value.length - 1);
@@ -243,7 +251,14 @@ function addCustomFeature() {
 
 onMounted(async () => {
   if (!isEdit.value) return;
-  const p = await portfolioService.get(route.params.id as string);
+  let p: Portfolio;
+  try {
+    p = await portfolioService.get(route.params.id as string);
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message || 'Portföy yüklenemedi');
+    router.push('/portfolio');
+    return;
+  }
   Object.assign(form, {
     type:         p.type,
     listingType:  p.listingType ?? 'SALE',

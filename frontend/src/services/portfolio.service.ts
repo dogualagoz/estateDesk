@@ -26,5 +26,7 @@ export const portfolioService = {
       .then((r) => r.data);
   },
   deleteImage: (id: string, filename: string) =>
-    api.delete<Portfolio>(`/portfolios/${id}/images/${filename}`).then((r) => r.data),
+    api
+      .delete<Portfolio>(`/portfolios/${id}/images/${encodeURIComponent(filename)}`)
+      .then((r) => r.data),
 };

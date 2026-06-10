@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { demandService } from '@/services/demand.service';
 import { matchingService } from '@/services/matching.service';
 import { demandMatchService } from '@/services/demandMatch.service';
-import type { CreateDemandPayload, DemandStatus } from '@/types/demand';
+import type { CreateDemandPayload, Demand, DemandStatus } from '@/types/demand';
 import type { MatchCriteria, ScoredPortfolio, DimensionKey } from '@/types/matching';
 import { DIMENSION_LABELS } from '@/types/matching';
 import {
@@ -221,19 +221,23 @@ async function loadPinnedMatches() {
 async function togglePin(portfolioId: string) {
   if (!isEdit.value) return;
   const demandId = route.params.id as string;
-  if (pinnedIds.value.has(portfolioId)) {
-    await demandMatchService.unpin(demandId, portfolioId);
-    pinnedIds.value.delete(portfolioId);
-    pinnedIds.value = new Set(pinnedIds.value);
-    pinnedResults.value = pinnedResults.value.filter((r) => r.portfolio.id !== portfolioId);
-  } else {
-    await demandMatchService.pin(demandId, portfolioId);
-    pinnedIds.value.add(portfolioId);
-    pinnedIds.value = new Set(pinnedIds.value);
-    const matched = results.value.find((r) => r.portfolio.id === portfolioId);
-    if (matched) pinnedResults.value = [matched, ...pinnedResults.value];
-    justPinnedId.value = portfolioId;
-    setTimeout(() => { justPinnedId.value = null; }, 700);
+  try {
+    if (pinnedIds.value.has(portfolioId)) {
+      await demandMatchService.unpin(demandId, portfolioId);
+      pinnedIds.value.delete(portfolioId);
+      pinnedIds.value = new Set(pinnedIds.value);
+      pinnedResults.value = pinnedResults.value.filter((r) => r.portfolio.id !== portfolioId);
+    } else {
+      await demandMatchService.pin(demandId, portfolioId);
+      pinnedIds.value.add(portfolioId);
+      pinnedIds.value = new Set(pinnedIds.value);
+      const matched = results.value.find((r) => r.portfolio.id === portfolioId);
+      if (matched) pinnedResults.value = [matched, ...pinnedResults.value];
+      justPinnedId.value = portfolioId;
+      setTimeout(() => { justPinnedId.value = null; }, 700);
+    }
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message || 'Eşleştirme güncellenemedi');
   }
 }
 
@@ -335,7 +339,14 @@ function closePreview() {
 // ── Yükleme (edit) ──
 onMounted(async () => {
   if (isEdit.value) {
-    const d = await demandService.get(route.params.id as string);
+    let d: Demand;
+    try {
+      d = await demandService.get(route.params.id as string);
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || 'Talep yüklenemedi');
+      router.push('/demand');
+      return;
+    }
     Object.assign(form, {
       types: d.types,
       listingType: d.listingType ?? 'SALE',

@@ -1,10 +1,10 @@
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -28,7 +28,11 @@ const INVITE_TTL_DAYS = 7;
 
 @Injectable()
 export class OfficeService {
-  constructor(private prisma: PrismaService, private auth: AuthService) {}
+  constructor(
+    private prisma: PrismaService,
+    private auth: AuthService,
+    private config: ConfigService,
+  ) {}
 
   /** Yeni ofis kurar; kurucu ofis yöneticisi (ADMIN) ve üyesi olur. */
   async createOffice(user: AuthUser, dto: CreateOfficeDto) {
@@ -388,7 +392,7 @@ export class OfficeService {
     expiresAt: Date;
     createdAt: Date;
   }) {
-    const base = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const base = this.config.get<string>('FRONTEND_URL') || 'http://localhost:5173';
     const now = new Date();
     const expiresInMs = invite.expiresAt.getTime() - now.getTime();
     const expiresInSeconds = Math.max(0, Math.floor(expiresInMs / 1000));
