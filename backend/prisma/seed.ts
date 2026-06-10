@@ -1,7 +1,7 @@
 import { PrismaClient, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
-const prisma = new PrismaClient();
+export const prisma = new PrismaClient();
 
 async function seedAdmin() {
   const email = process.env.SEED_ADMIN_EMAIL || 'admin@estatedesk.local';
@@ -70,10 +70,10 @@ async function seedDemoUser(officeId: string) {
   return user;
 }
 
-async function seedPortfolios(ownerId: string, officeId: string) {
-  const count = await prisma.portfolio.count();
-  if (count > 0) {
-    console.log(`[seed] Portfolios already present (${count}), skipping.`);
+export async function seedPortfolios(ownerId: string, officeId: string) {
+  const count = await prisma.portfolio.count({ where: { officeId } });
+  if (count >= 50) {
+    console.log(`[seed] Portfolios already present in office (${count}), skipping.`);
     return;
   }
 
@@ -1251,10 +1251,10 @@ async function seedPortfolios(ownerId: string, officeId: string) {
   console.log(`[seed] ${data.length} portfolios created.`);
 }
 
-async function seedDemands(ownerId: string, officeId: string) {
-  const count = await prisma.demand.count();
+export async function seedDemands(ownerId: string, officeId: string) {
+  const count = await prisma.demand.count({ where: { officeId } });
   if (count >= 50) {
-    console.log(`[seed] Demands already present (${count}), skipping.`);
+    console.log(`[seed] Demands already present in office (${count}), skipping.`);
     return;
   }
 
@@ -1720,10 +1720,10 @@ async function seedDemands(ownerId: string, officeId: string) {
   console.log(`[seed] ${demands.length} demands created.`);
 }
 
-async function seedAntalyaPortfolios(ownerId: string, officeId: string) {
-  const count = await prisma.portfolio.count();
+export async function seedAntalyaPortfolios(ownerId: string, officeId: string) {
+  const count = await prisma.portfolio.count({ where: { officeId } });
   if (count >= 215) {
-    console.log(`[seed] Additional portfolios already present (${count}), skipping.`);
+    console.log(`[seed] Additional portfolios already present in office (${count}), skipping.`);
     return;
   }
 
@@ -2145,11 +2145,15 @@ async function main() {
   await seedDemands(admin.id, office.id);
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+// seed-demo.ts gibi script'ler bu dosyayı import edebilsin diye
+// main() yalnızca doğrudan çalıştırıldığında tetiklenir
+if (require.main === module) {
+  main()
+    .catch((e) => {
+      console.error(e);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}
