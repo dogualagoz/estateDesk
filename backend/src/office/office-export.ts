@@ -105,10 +105,19 @@ export const DEMAND_COLUMNS: ExportColumn[] = [
 /** Excel/CSV'nin Türkçe karakterleri doğru göstermesi için UTF-8 BOM. */
 const BOM = '﻿';
 
+/**
+ * Formül enjeksiyonu koruması: =, +, -, @ ile başlayan hücre Excel'de
+ * formül olarak çalışmasın diye ' önekiyle metne zorlanır.
+ */
+function sanitizeCell(value: string): string {
+  return /^[=+\-@]/.test(value) ? `'${value}` : value;
+}
+
 function csvCell(value: string): string {
+  const safe = sanitizeCell(value);
   // Çift tırnak kaçışı + alan ayırıcı/yeni satır içeriyorsa tırnakla
-  const needsQuote = /[",\n\r;]/.test(value);
-  const escaped = value.replace(/"/g, '""');
+  const needsQuote = /[",\n\r;]/.test(safe);
+  const escaped = safe.replace(/"/g, '""');
   return needsQuote ? `"${escaped}"` : escaped;
 }
 
@@ -147,7 +156,7 @@ export async function buildXlsx(
   headerRow.height = 22;
 
   for (const row of rows) {
-    sheet.addRow(columns.map((c) => c.value(row)));
+    sheet.addRow(columns.map((c) => sanitizeCell(c.value(row))));
   }
 
   sheet.autoFilter = {

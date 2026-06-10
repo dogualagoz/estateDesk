@@ -309,3 +309,19 @@ export function matchScore(
   const score = totalWeight === 0 ? NEUTRAL : Math.round((earned / totalWeight) * 100);
   return { score, reasons, gaps, breakdown };
 }
+
+/** Kartta gösterilecek eşleşen özellikler (must-have + bonus ∩ portföy). */
+export function matchedFeatures(features: string[], c: MatchCriteria): string[] {
+  const wanted = [...(c.mustHaveFeatures ?? []), ...(c.bonusFeatures ?? [])];
+  const have = new Set(features.map(normalizeText));
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const w of wanted) {
+    const n = normalizeText(w);
+    if (have.has(n) && !seen.has(n)) {
+      seen.add(n);
+      out.push(w);
+    }
+  }
+  return out;
+}

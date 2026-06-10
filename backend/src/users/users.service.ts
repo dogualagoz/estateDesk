@@ -9,6 +9,7 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
 import { requireOfficeId } from '../common/office.util';
+import { attachMemberCounts } from '../common/member-counts.util';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -35,7 +36,7 @@ export class UsersService {
       select: PUBLIC_FIELDS,
       orderBy: { createdAt: 'asc' },
     });
-    return Promise.all(members.map((m) => this.withCounts(m, officeId)));
+    return attachMemberCounts(this.prisma, members, officeId);
   }
 
   /** Aynı ofisteki bir üyenin profili (portföy/talep sayılarıyla). */
@@ -46,19 +47,8 @@ export class UsersService {
       select: PUBLIC_FIELDS,
     });
     if (!member) throw new NotFoundException('User not found');
-    return this.withCounts(member, officeId);
-  }
-
-  private async withCounts<T extends { id: string }>(member: T, officeId: string) {
-    const [portfolioCount, demandCount] = await this.prisma.$transaction([
-      this.prisma.portfolio.count({
-        where: { createdById: member.id, officeId, deletedAt: null },
-      }),
-      this.prisma.demand.count({
-        where: { createdById: member.id, officeId, deletedAt: null },
-      }),
-    ]);
-    return { ...member, portfolioCount, demandCount };
+    const [profile] = await attachMemberCounts(this.prisma, [member], officeId);
+    return profile;
   }
 
   async create(user: AuthUser, dto: CreateUserDto) {

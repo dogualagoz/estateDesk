@@ -146,36 +146,12 @@ export class DashboardService {
       },
     });
 
-    const itemsWithMatches = await Promise.all(
-      pendingDemands.map(async (demand) => {
-        try {
-          const matchedPortfolios = await this.matching.matchPortfolios(user, {
-            types: demand.types,
-            listingType: demand.listingType,
-            city: demand.city ?? undefined,
-            district: demand.district ?? undefined,
-            neighborhood: demand.neighborhood ?? undefined,
-            districts: demand.districts ?? undefined,
-            neighborhoods: demand.neighborhoods ?? undefined,
-            minBudget: demand.minBudget ? Number(demand.minBudget) : undefined,
-            maxBudget: demand.maxBudget ? Number(demand.maxBudget) : undefined,
-            roomPreferences: demand.roomPreferences,
-            minArea: demand.minArea ?? undefined,
-            maxArea: demand.maxArea ?? undefined,
-            mustHaveFeatures: demand.mustHaveFeatures,
-            bonusFeatures: demand.bonusFeatures,
-          });
+    // Talep başına ayrı portföy sorgusu (N+1) yerine tek sorgu + bellekte skorlama
+    const topMatches = await this.matching.topMatchForDemands(officeId, pendingDemands);
 
-          return {
-            demand,
-            topMatch: matchedPortfolios[0] || null,
-          };
-        } catch (err) {
-          return { demand, topMatch: null };
-        }
-      }),
-    );
-
-    return itemsWithMatches;
+    return pendingDemands.map((demand) => ({
+      demand,
+      topMatch: topMatches[demand.id] ?? null,
+    }));
   }
 }

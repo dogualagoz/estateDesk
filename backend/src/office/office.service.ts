@@ -7,10 +7,11 @@ import {
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuthService } from '../auth/auth.service';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
 import { requireOfficeId } from '../common/office.util';
+import { attachMemberCounts } from '../common/member-counts.util';
 import { CreateOfficeDto } from './dto/create-office.dto';
 import { CreateInviteDto } from './dto/create-invite.dto';
 import { UpdateOfficeDto } from './dto/update-office.dto';
@@ -27,7 +28,7 @@ const INVITE_TTL_DAYS = 7;
 
 @Injectable()
 export class OfficeService {
-  constructor(private prisma: PrismaService, private jwt: JwtService) {}
+  constructor(private prisma: PrismaService, private auth: AuthService) {}
 
   /** Yeni ofis kurar; kurucu ofis yöneticisi (ADMIN) ve üyesi olur. */
   async createOffice(user: AuthUser, dto: CreateOfficeDto) {
@@ -118,15 +119,7 @@ export class OfficeService {
       orderBy: { createdAt: 'asc' },
     });
 
-    return Promise.all(
-      members.map(async (m) => {
-        const [portfolioCount, demandCount] = await this.prisma.$transaction([
-          this.prisma.portfolio.count({ where: { createdById: m.id, officeId, deletedAt: null } }),
-          this.prisma.demand.count({ where: { createdById: m.id, officeId, deletedAt: null } }),
-        ]);
-        return { ...m, portfolioCount, demandCount };
-      }),
-    );
+    return attachMemberCounts(this.prisma, members, officeId);
   }
 
   /** Ofisten üye çıkart (ADMIN tarafından). */
@@ -383,24 +376,8 @@ export class OfficeService {
         });
       }
 
-      return this.buildSession(user);
+      return this.auth.buildSession(user);
     });
-  }
-
-  private buildSession(user: any) {
-    const payload = { sub: user.id, email: user.email, role: user.role, officeId: user.officeId };
-    const accessToken = this.jwt.sign(payload);
-
-    return {
-      accessToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
-        role: user.role,
-        officeId: user.officeId,
-      },
-    };
   }
 
   private toInviteResponse(invite: {

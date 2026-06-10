@@ -3,12 +3,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
 import { requireOfficeId } from '../common/office.util';
 import {
-  MatchCriteria,
   ScoringPortfolio,
   matchScore,
-  normalizeText,
+  matchedFeatures,
 } from '../matching/matching.scoring';
-import type { ScoredPortfolio } from '../matching/matching.service';
+import { demandToCriteria, type ScoredPortfolio } from '../matching/matching.service';
 
 @Injectable()
 export class DemandMatchService {
@@ -60,20 +59,8 @@ export class DemandMatchService {
       orderBy: { pinnedAt: 'desc' },
     });
 
-    const criteria: MatchCriteria = {
-      types: demand.types.length ? demand.types : undefined,
-      listingType: demand.listingType,
-      city: demand.city ?? undefined,
-      districts: demand.districts.length ? demand.districts : undefined,
-      neighborhoods: demand.neighborhoods.length ? demand.neighborhoods : undefined,
-      minBudget: demand.minBudget ? Number(demand.minBudget) : undefined,
-      maxBudget: demand.maxBudget ? Number(demand.maxBudget) : undefined,
-      roomPreferences: demand.roomPreferences.length ? demand.roomPreferences : undefined,
-      minArea: demand.minArea ?? undefined,
-      maxArea: demand.maxArea ?? undefined,
-      mustHaveFeatures: demand.mustHaveFeatures.length ? demand.mustHaveFeatures : undefined,
-      bonusFeatures: demand.bonusFeatures.length ? demand.bonusFeatures : undefined,
-    };
+    // Canlı eşleştirme sekmesiyle aynı kriter dönüşümü (tekil ilçe/mahalle fallback'i dahil)
+    const criteria = demandToCriteria(demand);
 
     return matches.map((m) => {
       const row = m.portfolio;
@@ -93,24 +80,9 @@ export class DemandMatchService {
       return {
         ...result,
         portfolio: { ...row, price },
-        matchedFeatures: this.matchedFeatures(row.features, criteria),
+        matchedFeatures: matchedFeatures(row.features, criteria),
         isHidden: row.visibility === 'HIDDEN',
       };
     });
-  }
-
-  private matchedFeatures(features: string[], c: MatchCriteria): string[] {
-    const wanted = [...(c.mustHaveFeatures ?? []), ...(c.bonusFeatures ?? [])];
-    const have = new Set(features.map(normalizeText));
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const w of wanted) {
-      const n = normalizeText(w);
-      if (have.has(n) && !seen.has(n)) {
-        seen.add(n);
-        out.push(w);
-      }
-    }
-    return out;
   }
 }

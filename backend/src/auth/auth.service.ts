@@ -58,7 +58,8 @@ export class AuthService {
     return this.buildSession(user);
   }
 
-  private async buildSession(user: User) {
+  /** JWT + istemciye dönen oturum özeti. Davetle kayıt akışı (OfficeService) da kullanır. */
+  async buildSession(user: User) {
     const payload = { sub: user.id, email: user.email, role: user.role };
     const accessToken = await this.jwt.signAsync(payload);
 

@@ -9,6 +9,7 @@ import {
   MatchResult,
   ScoringPortfolio,
   matchScore,
+  matchedFeatures,
   normalizeText,
   roomIndex,
 } from './matching.scoring';
@@ -19,6 +20,45 @@ type PortfolioRow = Prisma.PortfolioGetPayload<{
 }>;
 
 type DemandRow = Prisma.DemandGetPayload<object>;
+
+/** Kriter dönüşümü için gereken talep alanları (tam Demand kaydı şart değil). */
+export type DemandCriteriaSource = Pick<
+  DemandRow,
+  | 'types'
+  | 'listingType'
+  | 'city'
+  | 'district'
+  | 'neighborhood'
+  | 'districts'
+  | 'neighborhoods'
+  | 'minBudget'
+  | 'maxBudget'
+  | 'roomPreferences'
+  | 'minArea'
+  | 'maxArea'
+  | 'mustHaveFeatures'
+  | 'bonusFeatures'
+>;
+
+/** Demand kaydını eşleştirme kriterlerine çevirir. */
+export function demandToCriteria(d: DemandCriteriaSource): MatchCriteria {
+  return {
+    types: d.types,
+    listingType: d.listingType,
+    city: d.city ?? undefined,
+    district: d.district ?? undefined,
+    neighborhood: d.neighborhood ?? undefined,
+    districts: d.districts ?? undefined,
+    neighborhoods: d.neighborhoods ?? undefined,
+    minBudget: d.minBudget != null ? Number(d.minBudget) : undefined,
+    maxBudget: d.maxBudget != null ? Number(d.maxBudget) : undefined,
+    roomPreferences: d.roomPreferences ?? undefined,
+    minArea: d.minArea ?? undefined,
+    maxArea: d.maxArea ?? undefined,
+    mustHaveFeatures: d.mustHaveFeatures ?? undefined,
+    bonusFeatures: d.bonusFeatures ?? undefined,
+  };
+}
 
 export interface ScoredPortfolio extends MatchResult {
   portfolio: Omit<PortfolioRow, 'price'> & { price: number };
@@ -86,7 +126,7 @@ export class MatchingService {
     }
 
     for (const demand of demands) {
-      const criteria = this.demandToCriteria(demand);
+      const criteria = demandToCriteria(demand);
       const scored = this.scoreRows(rows, criteria);
       if (!scored.length) {
         out[demand.id] = null;
@@ -160,7 +200,7 @@ export class MatchingService {
       results.push({
         ...result,
         portfolio: { ...row, price },
-        matchedFeatures: this.matchedFeatures(row.features, criteria),
+        matchedFeatures: matchedFeatures(row.features, criteria),
         isHidden: row.visibility === 'HIDDEN',
       });
     }
@@ -168,24 +208,29 @@ export class MatchingService {
     return results;
   }
 
-  /** Demand kaydını eşleştirme kriterlerine çevirir. */
-  private demandToCriteria(d: DemandRow): MatchCriteria {
-    return {
-      types: d.types,
-      listingType: d.listingType,
-      city: d.city ?? undefined,
-      district: d.district ?? undefined,
-      neighborhood: d.neighborhood ?? undefined,
-      districts: d.districts ?? undefined,
-      neighborhoods: d.neighborhoods ?? undefined,
-      minBudget: d.minBudget != null ? Number(d.minBudget) : undefined,
-      maxBudget: d.maxBudget != null ? Number(d.maxBudget) : undefined,
-      roomPreferences: d.roomPreferences ?? undefined,
-      minArea: d.minArea ?? undefined,
-      maxArea: d.maxArea ?? undefined,
-      mustHaveFeatures: d.mustHaveFeatures ?? undefined,
-      bonusFeatures: d.bonusFeatures ?? undefined,
-    };
+  /**
+   * Bir grup talep için en yüksek skorlu portföyü tek DB sorgusuyla hesaplar.
+   * Dashboard'daki "bekleyen eşleşmeler" kartları için kullanılır.
+   */
+  async topMatchForDemands(
+    officeId: string,
+    demands: (DemandCriteriaSource & { id: string })[],
+  ): Promise<Record<string, ScoredPortfolio | null>> {
+    const out: Record<string, ScoredPortfolio | null> = {};
+    if (!demands.length) return out;
+
+    const rows = await this.prisma.portfolio.findMany({
+      where: { deletedAt: null, officeId },
+      include: { createdBy: { select: { id: true, fullName: true } } },
+    });
+
+    for (const demand of demands) {
+      const scored = this.scoreRows(rows, demandToCriteria(demand));
+      out[demand.id] = scored.length
+        ? scored.reduce((a, b) => (b.score > a.score ? b : a))
+        : null;
+    }
+    return out;
   }
 
   /** Seçilen oda tercihleri içindeki en küçük ordinal indeks (min-oda sert filtre tabanı). */
@@ -193,21 +238,5 @@ export class MatchingService {
     if (!prefs?.length) return -1;
     const idxs = prefs.map(roomIndex).filter((i) => i >= 0);
     return idxs.length ? Math.min(...idxs) : -1;
-  }
-
-  /** Kartta gösterilecek eşleşen özellikler (must-have + bonus ∩ portföy). */
-  private matchedFeatures(features: string[], c: MatchCriteria): string[] {
-    const wanted = [...(c.mustHaveFeatures ?? []), ...(c.bonusFeatures ?? [])];
-    const have = new Set(features.map(normalizeText));
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const w of wanted) {
-      const n = normalizeText(w);
-      if (have.has(n) && !seen.has(n)) {
-        seen.add(n);
-        out.push(w);
-      }
-    }
-    return out;
   }
 }
