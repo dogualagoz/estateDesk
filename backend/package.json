@@ -13,6 +13,7 @@
     "prisma:deploy": "prisma migrate deploy",
     "seed": "ts-node prisma/seed.ts",
     "seed:demo": "ts-node prisma/seed-demo.ts",
+    "seed:images": "ts-node prisma/seed-images.ts",
     "lint": "echo 'no lint configured'",
     "test": "jest",
     "test:watch": "jest --watch"
