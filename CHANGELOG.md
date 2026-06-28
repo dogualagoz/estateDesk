@@ -8,6 +8,22 @@ Versioning follows [SemVer](https://semver.org/).
 
 ---
 
+## [1.3.0] - 2026-06-28
+
+### Added
+- Custom brand logo (`frontend/public/logo.svg`) integrated across all surfaces: landing navbar, landing footer, login page, onboarding page, app sidebar (desktop & mobile), and the hero `AppPreviewMock` component
+- `HowItWorksSection` redesigned: replaced three icon cards with app screenshot–style mock UI panels simulating the actual Portfolio form, Demand form, and Match results screen
+
+### Changed
+- Landing navbar height increased (`h-16` → `h-20`) with larger logo mark and brand text
+- Login and Onboarding pages now show the brand logo instead of a generic Material icon
+- All logo `<img>` references use Vite-safe dynamic binding (`:src="'/logo.svg'"`) to prevent build-time import analysis errors
+
+### Fixed
+- Vite dev server not serving newly added `public/` assets until container restart
+
+---
+
 ## [1.2.3] - 2026-06-11
 
 ### Added
