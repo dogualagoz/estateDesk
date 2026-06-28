@@ -30,7 +30,10 @@ const matches = [
     <div class="flex h-[340px] sm:h-[380px]">
       <!-- Mini sidebar -->
       <aside class="w-14 sm:w-40 shrink-0 bg-primary text-on-primary flex flex-col py-3 px-2 sm:px-3 gap-1">
-        <div class="hidden sm:block px-2 pb-3 font-bold text-on-primary/95 tracking-tight">emlakdefter</div>
+        <div class="hidden sm:flex items-center gap-1.5 px-2 pb-3">
+          <img :src="'/logo.svg'" alt="emlakdefter" class="h-5 w-5 rounded" />
+          <span class="font-bold text-[13px] text-on-primary/95 tracking-tight">emlakdefter</span>
+        </div>
         <div
           v-for="n in navItems"
           :key="n.label"

@@ -15,9 +15,7 @@ function go(id: string) {
         <!-- Marka -->
         <div>
           <div class="flex items-center gap-2 mb-3">
-            <span class="w-8 h-8 rounded-lg bg-primary text-on-primary flex items-center justify-center">
-              <span class="material-symbols-outlined text-[20px]">holiday_village</span>
-            </span>
+            <img :src="'/logo.svg'" alt="emlakdefter" class="h-8 w-8 rounded-lg" />
             <span class="font-bold text-headline-md text-on-surface tracking-tight">emlakdefter</span>
           </div>
           <p class="text-label-md text-on-surface-variant max-w-xs">

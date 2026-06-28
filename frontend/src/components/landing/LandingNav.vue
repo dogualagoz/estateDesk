@@ -33,13 +33,11 @@ function go(id: string) {
       ? 'bg-surface/85 backdrop-blur-md border-b border-outline-variant'
       : 'bg-transparent border-b border-transparent'"
   >
-    <div class="max-w-container-max-width mx-auto px-margin-mobile md:px-margin-desktop h-16 flex items-center justify-between gap-4">
+    <div class="max-w-container-max-width mx-auto px-margin-mobile md:px-margin-desktop h-20 flex items-center justify-between gap-4">
       <!-- Marka -->
-      <button class="flex items-center gap-2 group" @click="go('hero')">
-        <span class="w-8 h-8 rounded-lg bg-primary text-on-primary flex items-center justify-center shadow-sm">
-          <span class="material-symbols-outlined text-[20px]">holiday_village</span>
-        </span>
-        <span class="font-bold text-headline-md text-on-surface tracking-tight">emlakdefter</span>
+      <button class="flex items-center gap-3 group" @click="go('hero')">
+        <img :src="'/logo.svg'" alt="emlakdefter" class="h-11 w-11 rounded-xl shadow-sm" />
+        <span class="font-bold text-[22px] text-on-surface tracking-tight">emlakdefter</span>
       </button>
 
       <!-- Masaüstü linkler -->

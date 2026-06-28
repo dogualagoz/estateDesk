@@ -123,8 +123,9 @@ onUnmounted(() => window.removeEventListener('resize', updateIndicator));
 
       <!-- Brand -->
       <div class="px-6 py-5 border-b border-white/10">
-        <router-link :to="brandPath" class="font-bold text-headline-md text-on-primary tracking-tight">
-          emlakdefter
+        <router-link :to="brandPath" class="flex items-center gap-2.5">
+          <img :src="'/logo.svg'" alt="emlakdefter" class="h-8 w-8 rounded-lg" />
+          <span class="font-bold text-headline-md text-on-primary tracking-tight">emlakdefter</span>
         </router-link>
       </div>
 
@@ -178,8 +179,9 @@ onUnmounted(() => window.removeEventListener('resize', updateIndicator));
 
     <!-- Mobil üst bar -->
     <header class="md:hidden fixed top-0 inset-x-0 z-40 h-14 flex items-center justify-between px-4 bg-primary text-on-primary">
-      <router-link :to="brandPath" class="font-bold text-headline-md text-on-primary tracking-tight">
-        emlakdefter
+      <router-link :to="brandPath" class="flex items-center gap-2">
+        <img :src="'/logo.svg'" alt="emlakdefter" class="h-7 w-7 rounded-lg" />
+        <span class="font-bold text-headline-md text-on-primary tracking-tight">emlakdefter</span>
       </router-link>
       <router-link
         :to="profilePath"

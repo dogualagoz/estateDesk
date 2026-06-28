@@ -47,9 +47,18 @@ export const officeService = {
   },
 
   // Ofis başına tek paylaşılan davet linki (Notion/Figma mantığı)
-  getInviteLink: () => api.get<Invite>('/offices/invite-link').then((r) => r.data),
+  getInviteLink: () =>
+    api.get<Invite>('/offices/invite-link').then((r) => {
+      const data = r.data;
+      data.link = `${window.location.origin}/invite/${data.token}`;
+      return data;
+    }),
   resetInviteLink: () =>
-    api.post<Invite>('/offices/invite-link/reset', {}).then((r) => r.data),
+    api.post<Invite>('/offices/invite-link/reset', {}).then((r) => {
+      const data = r.data;
+      data.link = `${window.location.origin}/invite/${data.token}`;
+      return data;
+    }),
 
   createInvite: () =>
     api.post<Invite>('/offices/invites', {}).then((r) => r.data),

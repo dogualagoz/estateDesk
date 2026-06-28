@@ -63,9 +63,7 @@ async function logout() {
   <div class="min-h-screen bg-background flex items-center justify-center px-margin-mobile py-margin-desktop">
     <main class="w-full max-w-[560px] flex flex-col gap-gutter">
       <header class="text-center flex flex-col items-center gap-2">
-        <div class="w-14 h-14 bg-surface-container rounded-xl flex items-center justify-center text-primary mb-1">
-          <span class="material-symbols-outlined text-[28px]" style="font-variation-settings:'FILL' 1">domain</span>
-        </div>
+        <img :src="'/logo.svg'" alt="emlakdefter" class="w-16 h-16 rounded-xl mb-1" />
         <h1 class="text-headline-lg font-semibold tracking-tight text-on-surface">
           Hoş geldiniz, {{ auth.user?.fullName?.split(' ')[0] }}
         </h1>

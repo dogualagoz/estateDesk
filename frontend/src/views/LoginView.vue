@@ -55,10 +55,8 @@ async function submit() {
 
       <!-- Header -->
       <header class="flex flex-col items-center gap-2 text-center pt-2">
-        <div class="w-14 h-14 bg-surface-container rounded-xl flex items-center justify-center text-primary mb-2">
-          <span class="material-symbols-outlined text-[28px]" style="font-variation-settings:'FILL' 1">domain</span>
-        </div>
-        <h1 class="text-headline-lg font-semibold tracking-tight text-primary">EstateDesk</h1>
+        <img :src="'/logo.svg'" alt="emlakdefter" class="w-16 h-16 rounded-xl mb-2" />
+        <h1 class="text-headline-lg font-semibold tracking-tight text-primary">emlakdefter</h1>
         <p v-if="inviteToken" class="text-label-md text-on-surface-variant">
           Davetinizi kabul etmek için giriş yapın
         </p>

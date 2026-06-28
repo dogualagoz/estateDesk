@@ -62,7 +62,7 @@
   },
   "overrides": {
     "lodash": "^4.17.23",
-    "multer": "^2.1.1",
+    "multer": "^2.2.0",
     "@nestjs/serve-static": {
       "path-to-regexp": "^1.9.0"
     }
