@@ -8,6 +8,16 @@ Versioning follows [SemVer](https://semver.org/).
 
 ---
 
+## [1.3.1] - 2026-06-28
+
+### Fixed
+- Invite link displays `localhost:5173` instead of the real domain when generated from a local dev environment — all frontend invite service methods now override the backend-provided link with `window.location.origin`
+- Unauthenticated users navigating directly to `/invite/:token/accept` now get redirected to the preview page instead of seeing a 401 error
+- Typo "Ofiye Katılın" / "Ofiye Katıl" corrected to "Ofise Katılın" / "Ofise Katıl" in `InviteAcceptView`
+- Backend `FRONTEND_URL` env variable now has trailing slash stripped to prevent double-slash in invite URLs
+
+---
+
 ## [1.3.0] - 2026-06-28
 
 ### Added

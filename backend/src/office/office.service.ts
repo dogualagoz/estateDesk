@@ -392,7 +392,7 @@ export class OfficeService {
     expiresAt: Date;
     createdAt: Date;
   }) {
-    const base = this.config.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+    const base = (this.config.get<string>('FRONTEND_URL') || 'http://localhost:5173').replace(/\/$/, '');
     const now = new Date();
     const expiresInMs = invite.expiresAt.getTime() - now.getTime();
     const expiresInSeconds = Math.max(0, Math.floor(expiresInMs / 1000));

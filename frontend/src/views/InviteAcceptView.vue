@@ -62,7 +62,7 @@ async function acceptInvite() {
             <span class="material-symbols-outlined text-[32px]" style="font-variation-settings:'FILL' 1">domain</span>
           </div>
           <div>
-            <h1 class="text-headline-md font-semibold text-on-surface">Ofiye Katılın</h1>
+            <h1 class="text-headline-md font-semibold text-on-surface">Ofise Katılın</h1>
             <p class="text-label-md text-on-surface-variant mt-1">
               <strong>{{ invitePreview?.invitedByName }}</strong> sizi davet etti
             </p>
@@ -105,7 +105,7 @@ async function acceptInvite() {
             :disabled="accepting"
             @click="acceptInvite"
           >
-            {{ accepting ? 'Katılınıyor…' : 'Ofiye Katıl' }}
+            {{ accepting ? 'Katılınıyor…' : 'Ofise Katıl' }}
             <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
           </button>
 

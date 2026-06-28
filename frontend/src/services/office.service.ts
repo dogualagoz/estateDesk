@@ -61,8 +61,18 @@ export const officeService = {
     }),
 
   createInvite: () =>
-    api.post<Invite>('/offices/invites', {}).then((r) => r.data),
-  listInvites: () => api.get<Invite[]>('/offices/invites').then((r) => r.data),
+    api.post<Invite>('/offices/invites', {}).then((r) => {
+      const data = r.data;
+      data.link = `${window.location.origin}/invite/${data.token}`;
+      return data;
+    }),
+  listInvites: () =>
+    api.get<Invite[]>('/offices/invites').then((r) =>
+      r.data.map((invite) => ({
+        ...invite,
+        link: `${window.location.origin}/invite/${invite.token}`,
+      })),
+    ),
   revokeInvite: (id: string) =>
     api.delete<{ success: boolean }>(`/offices/invites/${id}`).then((r) => r.data),
 

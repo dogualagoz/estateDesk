@@ -167,6 +167,11 @@ router.beforeEach(async (to) => {
     return { name: 'invite.accept', params: { token: to.params.token } };
   }
 
+  // Giriş yapmamış kullanıcı accept view'e girerse preview'e yönlendir
+  if (!auth.isAuthenticated && to.name === 'invite.accept') {
+    return { name: 'invite.preview', params: { token: to.params.token } };
+  }
+
   // Gerçek hesapla girişli kullanıcı landing/login/register'a giderse uygun yere yönlendir
   // (Demo oturumu bunu tetiklemez; demo kullanıcı siteye geri dönebilsin.)
   if (

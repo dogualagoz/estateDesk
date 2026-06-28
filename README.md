@@ -2,6 +2,8 @@
 
 Emlak ofisleri için dahili portföy ve talep yönetim aracı. NestJS + Vue 3 + PostgreSQL + Prisma.
 
+[Changelog](CHANGELOG.md)
+
 ## Mimari
 
 ```
