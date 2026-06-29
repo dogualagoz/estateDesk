@@ -85,8 +85,19 @@ function positionBubble() {
   const bh = bubble.value?.offsetHeight ?? 180;
   const gap = 14;
 
+  // Mobilde alt sabitleme
+  if (vw < 640) {
+    bubbleStyle.value = {
+      bottom: '16px',
+      left: '16px',
+      width: `${vw - 32}px`,
+      top: 'auto',
+    };
+    return;
+  }
+
   // Ortalanmış (hedefsiz veya küçük ekran)
-  if (!rect.value || step.placement === 'center' || vw < 640) {
+  if (!rect.value || step.placement === 'center') {
     bubbleStyle.value = {
       top: `${Math.max((vh - bh) / 2, 16)}px`,
       left: `${Math.max((vw - bw) / 2, 16)}px`,
@@ -187,14 +198,18 @@ function register() {
           class="tour-bubble absolute z-10 w-[min(92vw,360px)] rounded-xl bg-surface-container-lowest border border-outline-variant shadow-lg p-5"
           :style="bubbleStyle"
         >
-          <div class="flex items-center gap-2 mb-2">
-            <span class="w-7 h-7 rounded-lg bg-primary text-on-primary flex items-center justify-center shrink-0">
-              <span class="material-symbols-outlined text-[18px]">{{ current.final ? 'rocket_launch' : 'tips_and_updates' }}</span>
-            </span>
-            <h3 class="text-body-md font-semibold text-on-surface">{{ current.title }}</h3>
-          </div>
+          <Transition name="step-fade" mode="out-in">
+            <div :key="stepIndex">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="w-7 h-7 rounded-lg bg-primary text-on-primary flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-[18px]">{{ current.final ? 'rocket_launch' : 'tips_and_updates' }}</span>
+                </span>
+                <h3 class="text-body-md font-semibold text-on-surface">{{ current.title }}</h3>
+              </div>
 
-          <p class="text-label-md text-on-surface-variant leading-6">{{ current.body }}</p>
+              <p class="text-label-md text-on-surface-variant leading-6">{{ current.body }}</p>
+            </div>
+          </Transition>
 
           <!-- İlerleme noktaları -->
           <div class="flex items-center gap-1.5 mt-4">
@@ -258,7 +273,22 @@ function register() {
   opacity: 0;
 }
 
+.step-fade-enter-active {
+  transition: opacity 0.13s ease, transform 0.13s ease;
+}
+.step-fade-leave-active {
+  transition: opacity 0.1s ease;
+}
+.step-fade-enter-from {
+  opacity: 0;
+  transform: translateY(3px);
+}
+.step-fade-leave-to {
+  opacity: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tour-spotlight, .tour-bubble { transition: none; animation: none; }
+  .step-fade-enter-active, .step-fade-leave-active { transition: none; }
 }
 </style>

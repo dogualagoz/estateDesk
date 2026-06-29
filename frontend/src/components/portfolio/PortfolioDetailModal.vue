@@ -18,8 +18,10 @@ const props = withDefaults(
     pinned?: boolean;
     /** Pop-up'ın büyüyeceği başlangıç noktası (tıklanan kartın merkezi, viewport koordinatı). */
     origin?: { x: number; y: number } | null;
+    /** Ziyaretçi modu: satıcı iletişimi ve dahili kısayolları gizler. */
+    hideContact?: boolean;
   }>(),
-  { canPin: false, pinned: false, origin: null },
+  { canPin: false, pinned: false, origin: null, hideContact: false },
 );
 const emit = defineEmits<{
   (e: 'close'): void;
@@ -224,7 +226,7 @@ function goToDetail() {
               </div>
 
               <!-- İletişim -->
-              <div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-4">
+              <div v-if="!hideContact" class="bg-surface-container-lowest rounded-xl border border-outline-variant p-4">
                 <p class="text-label-xs font-semibold uppercase tracking-widest text-on-surface-variant mb-3">İletişim</p>
                 <div class="grid grid-cols-2 gap-3">
                   <div class="flex flex-col gap-1">
@@ -271,6 +273,7 @@ function goToDetail() {
             <div class="flex-1"></div>
 
             <a
+              v-if="!hideContact"
               :href="`tel:${portfolio.ownerPhone}`"
               class="btn"
               :class="canPin ? '' : 'primary'"
@@ -278,11 +281,11 @@ function goToDetail() {
               <span class="material-symbols-outlined text-[18px]">call</span>
               Ara — {{ portfolio.ownerName }}
             </a>
-            <button type="button" class="btn" @click="goToDetail">
+            <button v-if="!hideContact" type="button" class="btn" @click="goToDetail">
               <span class="material-symbols-outlined text-[18px]">open_in_new</span>
               Tam Detay
             </button>
-            <button type="button" class="btn" @click="emit('close')">Kapat</button>
+            <button type="button" class="btn" :class="hideContact ? 'primary' : ''" @click="emit('close')">Kapat</button>
           </div>
         </div>
       </div>

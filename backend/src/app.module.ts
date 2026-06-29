@@ -14,6 +14,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { SearchModule } from './search/search.module';
 import { MatchingModule } from './matching/matching.module';
 import { DemandMatchModule } from './demand-match/demand-match.module';
+import { DemandShareModule } from './demand-share/demand-share.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { DemoReadOnlyGuard } from './common/demo-read-only.guard';
@@ -39,6 +40,7 @@ import { uploadsDir } from './common/uploads.util';
     SearchModule,
     MatchingModule,
     DemandMatchModule,
+    DemandShareModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

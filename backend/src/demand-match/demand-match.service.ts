@@ -45,14 +45,32 @@ export class DemandMatchService {
 
   async listPinned(user: AuthUser, demandId: string): Promise<ScoredPortfolio[]> {
     const officeId = requireOfficeId(user);
+    return this.listPinnedForOffice(officeId, demandId);
+  }
 
+  /**
+   * Bir talebe pinlenen portföyleri skorlayarak döndürür (officeId-parametrik).
+   * `listPinned` (auth) ve paylaşılan defter (public) tarafından kullanılır.
+   * `publicOnly` true ise silinmiş veya HIDDEN portföyler hariç tutulur.
+   */
+  async listPinnedForOffice(
+    officeId: string,
+    demandId: string,
+    opts?: { publicOnly?: boolean },
+  ): Promise<ScoredPortfolio[]> {
     const demand = await this.prisma.demand.findFirst({
       where: { id: demandId, deletedAt: null, officeId },
     });
     if (!demand) throw new NotFoundException('Talep bulunamadı');
 
     const matches = await this.prisma.demandMatch.findMany({
-      where: { demandId, officeId },
+      where: {
+        demandId,
+        officeId,
+        ...(opts?.publicOnly
+          ? { portfolio: { deletedAt: null, visibility: 'PUBLIC' } }
+          : {}),
+      },
       include: {
         portfolio: { include: { createdBy: { select: { id: true, fullName: true } } } },
       },

@@ -5,8 +5,7 @@ import { demandService } from '@/services/demand.service';
 import { matchingService } from '@/services/matching.service';
 import { demandMatchService } from '@/services/demandMatch.service';
 import type { CreateDemandPayload, Demand, DemandStatus } from '@/types/demand';
-import type { MatchCriteria, ScoredPortfolio, DimensionKey } from '@/types/matching';
-import { DIMENSION_LABELS } from '@/types/matching';
+import type { MatchCriteria, ScoredPortfolio } from '@/types/matching';
 import {
   PROPERTY_TYPES,
   PROPERTY_TYPE_LABELS,
@@ -20,6 +19,8 @@ import {
 import { resolveImgUrl } from '@/utils/image';
 import LocationDropdown from '@/components/ui/LocationDropdown.vue';
 import PortfolioDetailModal from '@/components/portfolio/PortfolioDetailModal.vue';
+import MatchCard from '@/components/portfolio/MatchCard.vue';
+import ShareNotebookModal from '@/components/demand/ShareNotebookModal.vue';
 import { useConfirm } from '@/composables/useConfirm';
 import { useToast } from '@/composables/useToast';
 import {
@@ -286,13 +287,9 @@ function fmtPrice(p: string | number) {
 function locationOf(p: ScoredPortfolio['portfolio']) {
   return [p.neighborhood, p.district, p.city].filter(Boolean).join(', ');
 }
-function dimLabel(k: DimensionKey) {
-  return DIMENSION_LABELS[k];
-}
-const activeBreakdown = (r: ScoredPortfolio) => r.breakdown.filter((b) => b.active);
 
 // ── Skor renk skalası: yeşil (iyi) → kırmızı (zayıf) ──
-/** Kart köşesindeki büyük skor rozeti (0..100). */
+/** Kart köşesindeki büyük skor rozeti (0..100); pinned sekme kartı kullanır. */
 function scoreBadgeBg(s: number) {
   if (s >= 80) return 'bg-emerald-600/90';
   if (s >= 60) return 'bg-lime-600/90';
@@ -300,28 +297,12 @@ function scoreBadgeBg(s: number) {
   if (s >= 20) return 'bg-orange-500/90';
   return 'bg-red-600/90';
 }
-/** Dimension uyum çubuğunun dolgu rengi (score 0..1). */
-function dimBarColor(score: number) {
-  const s = score * 100;
-  if (s >= 80) return 'bg-emerald-500';
-  if (s >= 60) return 'bg-lime-500';
-  if (s >= 40) return 'bg-amber-500';
-  if (s >= 20) return 'bg-orange-500';
-  return 'bg-red-500';
-}
-/** Dimension yüzde sayısının metin rengi (score 0..1). */
-function dimTextColor(score: number) {
-  const s = score * 100;
-  if (s >= 80) return 'text-emerald-600';
-  if (s >= 60) return 'text-lime-600';
-  if (s >= 40) return 'text-amber-600';
-  if (s >= 20) return 'text-orange-600';
-  return 'text-red-600';
-}
 
 // ── Portföy önizleme modalı ──
 const previewPortfolio = ref<Portfolio | null>(null);
 const previewOrigin = ref<{ x: number; y: number } | null>(null);
+const shareModalOpen = ref(false);
+const shareBtn = ref<HTMLElement | null>(null);
 function openPreview(p: Portfolio, ev?: MouseEvent) {
   const el = ev?.currentTarget as HTMLElement | undefined;
   if (el) {
@@ -433,6 +414,29 @@ async function submit() {
         <p class="text-label-md text-on-surface-variant mt-0.5">
           Kriterleri girin — uyan portföyler sağda anlık skorlanır.
         </p>
+      </div>
+      <div class="flex-1"></div>
+      <div v-if="isEdit" class="relative shrink-0">
+        <button
+          ref="shareBtn"
+          type="button"
+          class="btn primary"
+          title="Eşleşen ilanları paylaşılabilir bir defter olarak gönderin"
+          @click="shareModalOpen = !shareModalOpen"
+        >
+          <span class="material-symbols-outlined text-[18px]">menu_book</span>
+          <span class="hidden sm:inline">Defter Oluştur</span>
+        </button>
+
+        <!-- Defter oluştur & paylaş popover'ı -->
+        <ShareNotebookModal
+          :open="shareModalOpen"
+          :demand-id="(route.params.id as string)"
+          :pinned-count="pinnedIds.size"
+          :all-count="results.length"
+          :anchor="shareBtn"
+          @close="shareModalOpen = false"
+        />
       </div>
     </div>
 
@@ -811,150 +815,19 @@ async function submit() {
 
           <!-- Kartlar: 2'li dikey grid -->
           <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div
-              v-for="r in results" :key="r.portfolio.id"
+            <MatchCard
+              v-for="r in results"
+              :key="r.portfolio.id"
+              :scored="r"
+              :pinned="pinnedIds.has(r.portfolio.id)"
+              :can-pin="isEdit"
               :draggable="isEdit"
-              @dragstart="onDragStart(r.portfolio.id)"
+              :just-pinned="justPinnedId === r.portfolio.id"
+              @toggle-pin="togglePin"
+              @preview="openPreview"
+              @dragstart="onDragStart"
               @dragend="onDragEnd"
-              @click="openPreview(r.portfolio, $event)"
-              class="rounded-2xl overflow-hidden border flex flex-col hover:-translate-y-0.5 transition-all duration-200 select-none cursor-pointer"
-              :class="[
-                pinnedIds.has(r.portfolio.id)
-                  ? 'border-2 border-primary bg-primary/[0.03] shadow-[0_0_0_3px_rgba(78,96,79,0.15),0_2px_8px_rgba(0,0,0,0.08)]'
-                  : 'border border-outline-variant/50 bg-white shadow-sm hover:shadow-md',
-                justPinnedId === r.portfolio.id ? 'animate-pin-pop' : ''
-              ]"
-            >
-              <!-- Görsel -->
-              <div class="relative w-full h-52 bg-surface-container shrink-0">
-                <img
-                  v-if="r.portfolio.images?.length"
-                  :src="resolveImgUrl(r.portfolio.images[0])"
-                  :alt="r.portfolio.title ?? undefined"
-                  class="w-full h-full object-cover"
-                />
-                <div v-else class="w-full h-full flex flex-col items-center justify-center bg-surface-container">
-                  <span class="material-symbols-outlined text-[48px] text-on-surface-variant/20">apartment</span>
-                </div>
-
-                <!-- Sol üst: ilan tipi -->
-                <div class="absolute top-3 left-3">
-                  <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-black/40 text-white backdrop-blur-sm">
-                    {{ LISTING_TYPE_LABELS[r.portfolio.listingType] }}
-                  </span>
-                </div>
-
-                <!-- Eşleştirildi görsel overlay -->
-                <div v-if="pinnedIds.has(r.portfolio.id)" class="absolute inset-0 bg-primary/10 pointer-events-none" />
-
-                <!-- Sol alt: eşleştirildi şerit rozeti -->
-                <div v-if="pinnedIds.has(r.portfolio.id)"
-                  class="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1.5 py-1.5 bg-primary text-on-primary text-[11px] font-bold tracking-wide">
-                  <span class="material-symbols-outlined text-[13px]">bookmark</span>
-                  EŞLEŞTİRİLDİ
-                </div>
-
-                <!-- Sağ üst: pin butonu -->
-                <div class="absolute top-3 right-3">
-                  <button v-if="isEdit" type="button"
-                    @click.stop="togglePin(r.portfolio.id)"
-                    class="flex items-center justify-center w-9 h-9 rounded-xl backdrop-blur-md shadow-md transition-all duration-150"
-                    :class="pinnedIds.has(r.portfolio.id)
-                      ? 'bg-primary text-on-primary scale-110'
-                      : 'bg-black/40 text-white hover:bg-primary hover:text-on-primary hover:scale-110'"
-                    :title="pinnedIds.has(r.portfolio.id) ? 'Eşleştirmeyi kaldır' : 'Bu talebe eşleştir'">
-                    <span class="material-symbols-outlined text-[18px]">{{ pinnedIds.has(r.portfolio.id) ? 'bookmark' : 'bookmark_add' }}</span>
-                  </button>
-                </div>
-
-                <!-- Skor badge: pinned ise üstte, değilse altta -->
-                <div
-                  class="absolute flex flex-col items-center justify-center w-[52px] h-[52px] rounded-2xl backdrop-blur-md shadow-lg transition-all duration-300"
-                  :class="[
-                    pinnedIds.has(r.portfolio.id) ? 'bottom-10 right-3' : 'bottom-3 right-3',
-                    scoreBadgeBg(r.score)
-                  ]">
-                  <span class="text-[22px] font-black leading-none text-white">{{ r.score }}</span>
-                  <span class="text-[9px] font-semibold text-white/70 uppercase tracking-wide leading-none mt-0.5">puan</span>
-                </div>
-              </div>
-
-              <!-- Bilgi alanı -->
-              <div class="flex flex-col flex-1 px-4 pt-3.5 pb-4 gap-2">
-                <!-- Başlık -->
-                <h3 class="text-[13px] font-semibold text-on-surface leading-snug line-clamp-2">
-                  {{ r.portfolio.title || PROPERTY_TYPE_LABELS[r.portfolio.type] }}
-                </h3>
-
-                <!-- Fiyat -->
-                <p class="text-[18px] font-black text-primary leading-none tracking-tight">
-                  {{ fmtPrice(r.portfolio.price) }}
-                </p>
-
-                <!-- Konum -->
-                <p class="text-[11px] text-on-surface-variant flex items-center gap-0.5">
-                  <span class="material-symbols-outlined text-[12px] shrink-0">location_on</span>
-                  <span class="truncate">{{ locationOf(r.portfolio) }}</span>
-                </p>
-
-                <!-- Alan + oda + dimension çubukları -->
-                <div class="flex items-center gap-3 text-[11px] text-on-surface-variant">
-                  <span class="flex items-center gap-0.5 font-medium">
-                    <span class="material-symbols-outlined text-[12px]">straighten</span>{{ r.portfolio.areaSqm }} m²
-                  </span>
-                  <span class="flex items-center gap-0.5 font-medium">
-                    <span class="material-symbols-outlined text-[12px]">door_open</span>{{ r.portfolio.roomCount }}
-                  </span>
-                </div>
-
-                <!-- Dimension uyum çubukları -->
-                <div class="grid grid-cols-5 gap-2 py-1.5">
-                  <div v-for="b in activeBreakdown(r)" :key="b.key">
-                    <div class="flex items-center justify-between mb-1">
-                      <span class="text-[10px] font-medium text-on-surface-variant/80 leading-none">{{ dimLabel(b.key) }}</span>
-                      <span class="text-[11px] font-bold leading-none" :class="dimTextColor(b.score)">
-                        {{ Math.round(b.score * 100) }}
-                      </span>
-                    </div>
-                    <div class="h-2 rounded-full bg-surface-container overflow-hidden">
-                      <div class="h-full rounded-full transition-all duration-500" :class="dimBarColor(b.score)"
-                        :style="{ width: (b.score * 100) + '%' }" />
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Uyuşan / eksik etiketler -->
-                <div class="flex flex-wrap gap-1.5">
-                  <span v-for="k in r.reasons" :key="'r'+k"
-                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-semibold bg-emerald-100 text-emerald-700">
-                    <span class="material-symbols-outlined text-[14px]">check_circle</span>{{ dimLabel(k) }}
-                  </span>
-                  <span v-for="k in r.gaps" :key="'g'+k"
-                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-semibold bg-red-100 text-red-700">
-                    <span class="material-symbols-outlined text-[14px]">cancel</span>{{ dimLabel(k) }}
-                  </span>
-                </div>
-
-                <!-- Eşleşen özellikler -->
-                <div v-if="r.matchedFeatures.length" class="flex flex-wrap gap-1">
-                  <span v-for="f in r.matchedFeatures.slice(0, 3)" :key="f"
-                    class="px-1.5 py-0.5 rounded-full text-[10px] bg-surface-container text-on-surface-variant">
-                    {{ f }}
-                  </span>
-                  <span v-if="r.matchedFeatures.length > 3"
-                    class="px-1.5 py-0.5 rounded-full text-[10px] bg-surface-container text-on-surface-variant">
-                    +{{ r.matchedFeatures.length - 3 }}
-                  </span>
-                </div>
-
-                <!-- Telefon butonu -->
-                <a :href="`tel:${r.portfolio.ownerPhone}`" @click.stop
-                  class="mt-auto flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary text-on-primary text-[12px] font-semibold hover:opacity-90 active:scale-[0.98] transition-all">
-                  <span class="material-symbols-outlined text-[14px]">call</span>
-                  {{ r.portfolio.ownerName }}
-                </a>
-              </div>
-            </div>
+            />
           </div>
           </template>
         </div>

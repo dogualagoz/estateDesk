@@ -39,6 +39,12 @@ const routes: RouteRecordRaw[] = [
     meta: { public: true },
   },
   {
+    path: '/defter/:token',
+    name: 'shared.collection',
+    component: () => import('@/views/SharedCollectionView.vue'),
+    meta: { public: true },
+  },
+  {
     path: '/onboarding',
     name: 'onboarding',
     component: () => import('@/views/OnboardingView.vue'),
@@ -190,7 +196,8 @@ router.beforeEach(async (to) => {
     to.name !== 'invite.preview' &&
     to.name !== 'invite.register' &&
     to.name !== 'invite.accept' &&
-    to.name !== 'invite.success'
+    to.name !== 'invite.success' &&
+    to.name !== 'shared.collection'
   ) {
     return { name: 'onboarding' };
   }

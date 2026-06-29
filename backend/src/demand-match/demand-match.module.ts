@@ -7,5 +7,6 @@ import { PrismaModule } from '../prisma/prisma.module';
   imports: [PrismaModule],
   controllers: [DemandMatchController],
   providers: [DemandMatchService],
+  exports: [DemandMatchService],
 })
 export class DemandMatchModule {}

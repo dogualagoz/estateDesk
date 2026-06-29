@@ -43,6 +43,16 @@ enum InviteStatus {
   EXPIRED
 }
 
+enum DemandShareMode {
+  ALL_MATCHES
+  PINNED
+}
+
+enum DemandShareStatus {
+  ACTIVE
+  REVOKED
+}
+
 model Office {
   id        String   @id @default(cuid())
   name      String
@@ -56,6 +66,7 @@ model Office {
   demands       Demand[]
   invites       Invite[]
   demandMatches DemandMatch[]
+  demandShares  DemandShare[]
 }
 
 model Invite {
@@ -95,6 +106,7 @@ model User {
   portfolios    Portfolio[]
   demands       Demand[]
   demandMatches DemandMatch[]
+  demandShares  DemandShare[]
 }
 
 model Portfolio {
@@ -162,6 +174,7 @@ model Demand {
   office   Office @relation(fields: [officeId], references: [id])
 
   demandMatches DemandMatch[]
+  demandShares  DemandShare[]
 
   deletedAt DateTime?
   createdAt DateTime  @default(now())
@@ -190,4 +203,24 @@ model DemandMatch {
   @@index([demandId])
   @@index([portfolioId])
   @@index([officeId])
+}
+
+model DemandShare {
+  id          String            @id @default(cuid())
+  token       String            @unique @default(cuid())
+  demandId    String
+  demand      Demand            @relation(fields: [demandId], references: [id])
+  officeId    String
+  office      Office            @relation(fields: [officeId], references: [id])
+  mode        DemandShareMode
+  note        String?
+  createdById String
+  createdBy   User              @relation(fields: [createdById], references: [id])
+  status      DemandShareStatus @default(ACTIVE)
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  createdAt   DateTime          @default(now())
+
+  @@index([demandId])
+  @@index([token])
 }

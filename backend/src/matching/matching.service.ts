@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { ListingType, Prisma, PropertyType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
 import { requireOfficeId } from '../common/office.util';
@@ -87,13 +87,25 @@ export class MatchingService {
 
   async matchPortfolios(user: AuthUser, dto: MatchPortfoliosDto): Promise<ScoredPortfolio[]> {
     const officeId = requireOfficeId(user);
-    const criteria: MatchCriteria = dto;
+    return this.scoreOfficePortfolios(officeId, dto);
+  }
 
+  /**
+   * Bir ofisin portföylerini verilen kritere göre skorlar (officeId-parametrik).
+   * `matchPortfolios` (auth) ve paylaşılan defter (public) tarafından kullanılır.
+   * `publicOnly` true ise yalnız PUBLIC görünürlükteki ilanlar dahil edilir.
+   */
+  async scoreOfficePortfolios(
+    officeId: string,
+    criteria: MatchCriteria,
+    opts?: { publicOnly?: boolean },
+  ): Promise<ScoredPortfolio[]> {
     // ── Katman 1: kaba DB filtresi (güvenilir alanlar) ──
     // Türkçe normalizasyon gerektiren eşleşmeler (şehir/oda/özellik) bellekte yapılır.
     const where: Prisma.PortfolioWhereInput = { deletedAt: null, officeId };
-    if (dto.types?.length) where.type = { in: dto.types };
-    if (dto.listingType) where.listingType = dto.listingType;
+    if (criteria.types?.length) where.type = { in: criteria.types as PropertyType[] };
+    if (criteria.listingType) where.listingType = criteria.listingType as ListingType;
+    if (opts?.publicOnly) where.visibility = 'PUBLIC';
 
     const rows = await this.prisma.portfolio.findMany({
       where,

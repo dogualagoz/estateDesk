@@ -8,6 +8,22 @@ Versioning follows [SemVer](https://semver.org/).
 
 ---
 
+## [1.4.0] - 2026-06-29
+
+### Added
+- **Paylaşılabilir Defter (Shared Demand Collection):** Bir talebe bağlı, 7 gün geçerli, login gerektirmeyen paylaşım linki. Emlakçı eşleşen ilanları tek bir linkle başka emlakçı/müşteriyle paylaşabiliyor; linke tıklayan **ziyaretçi** kriterleri ve eşleşen ilanları skor + uyuşan/eksik yönlerle salt-okunur görüyor (yeni 3. kullanıcı tipi)
+- Backend: `DemandShare` modeli + migration, public `GET /shared/:token` endpoint (`@Public`), office-scoped `POST/GET/DELETE /demand/:id/shares` uçları
+- Veri **canlı** üretiliyor (snapshot yok); ziyaretçi linke girince eşleşmeler o an yeniden hesaplanıyor
+- Ziyaretçiye giden veriden satıcı iletişimi (`ownerName`/`ownerPhone`), dahili not ve müşteri bilgisi çıkaran **sanitizer** + Jest testleri (sızıntı + süre/iptal kontrolü)
+- Frontend: `/defter/:token` salt-okunur ziyaretçi sayfası (`SharedCollectionView`), butona bağlı Figma/Notion tarzı paylaşım popover'ı (`ShareNotebookModal`), yeniden kullanılabilir `MatchCard` bileşeni
+
+### Changed
+- Eşleştirme servisleri officeId-parametrik hale getirildi (`scoreOfficePortfolios`, `listPinnedForOffice`) — auth ve public akışların ortak skorlama mantığını paylaşması için
+- `PortfolioDetailModal`'a `hideContact` modu eklendi (ziyaretçide satıcı iletişimi ve "Tam Detay" gizli)
+- Demo tur balonu (`TourOverlay`) mobilde alt-sabitleniyor ve adım geçişlerinde yumuşak animasyon kullanıyor
+
+---
+
 ## [1.3.1] - 2026-06-28
 
 ### Fixed
