@@ -35,6 +35,8 @@ export interface Invite {
   link: string;
 }
 
+export type InviteInvalidReason = 'EXPIRED' | 'ACCEPTED' | 'REVOKED';
+
 export interface InvitePreview {
   officeName: string;
   invitedByName: string;
@@ -43,4 +45,13 @@ export interface InvitePreview {
   expiresInSeconds: number;
   expiresInDays: number;
   valid: boolean;
+  invalidReason: InviteInvalidReason | null;
+}
+
+export interface AlreadyInOfficeError {
+  code: 'ALREADY_IN_OFFICE';
+  message: string;
+  currentOfficeName: string;
+  isOwner: boolean;
+  sameOffice: boolean;
 }

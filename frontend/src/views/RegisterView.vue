@@ -2,6 +2,8 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { usePasswordStrength } from '@/composables/usePasswordStrength';
+import PasswordStrengthHints from '@/components/ui/PasswordStrengthHints.vue';
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -10,9 +12,14 @@ const fullName = ref('');
 const email = ref('');
 const password = ref('');
 const error = ref<string | null>(null);
+const { isValid: passwordValid } = usePasswordStrength(password);
 
 async function submit() {
   error.value = null;
+  if (!passwordValid.value) {
+    error.value = 'Şifre en az 8 karakter olmalı, bir büyük harf ve bir rakam içermelidir';
+    return;
+  }
   try {
     await auth.register({
       fullName: fullName.value.trim(),
@@ -50,12 +57,13 @@ async function submit() {
         </div>
         <div class="field full">
           <label for="password">Şifre</label>
-          <input id="password" class="input h-12" type="password" v-model="password" placeholder="En az 6 karakter" required minlength="6" />
+          <input id="password" class="input h-12" type="password" v-model="password" placeholder="En az 8 karakter" required minlength="8" />
+          <PasswordStrengthHints :password="password" />
         </div>
 
         <p v-if="error" class="error-msg text-center">{{ error }}</p>
 
-        <button class="btn primary w-full h-12 text-[15px] font-semibold mt-1 gap-2" :disabled="auth.loading" type="submit">
+        <button class="btn primary w-full h-12 text-[15px] font-semibold mt-1 gap-2" :disabled="auth.loading || !passwordValid" type="submit">
           {{ auth.loading ? 'Kaydediliyor…' : 'Kayıt Ol' }}
           <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
         </button>

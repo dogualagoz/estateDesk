@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { officeService } from '@/services/office.service';
+import { usePasswordStrength } from '@/composables/usePasswordStrength';
+import PasswordStrengthHints from '@/components/ui/PasswordStrengthHints.vue';
 import type { InvitePreview } from '@/types/office';
 
 const route = useRoute();
@@ -17,8 +19,22 @@ const password = ref('');
 const error = ref<string | null>(null);
 const loading = ref(true);
 const submitting = ref(false);
+const { isValid: passwordValid } = usePasswordStrength(password);
 
 const invitePreview = ref<InvitePreview | null>(null);
+
+const invalidMessage = computed(() => {
+  switch (invitePreview.value?.invalidReason) {
+    case 'EXPIRED':
+      return 'Bu davetin süresi dolmuş.';
+    case 'ACCEPTED':
+      return 'Bu davet zaten kullanılmış.';
+    case 'REVOKED':
+      return 'Bu davet iptal edilmiş.';
+    default:
+      return 'Bu davetin süresi dolmuş veya iptal edilmiş.';
+  }
+});
 
 onMounted(async () => {
   try {
@@ -32,6 +48,10 @@ onMounted(async () => {
 
 async function submit() {
   error.value = null;
+  if (!passwordValid.value) {
+    error.value = 'Şifre en az 8 karakter olmalı, bir büyük harf ve bir rakam içermelidir';
+    return;
+  }
   submitting.value = true;
   try {
     const result = await officeService.registerWithInvite(token, {
@@ -77,12 +97,12 @@ async function submit() {
           </div>
         </template>
 
-        <!-- Davet süresi dolmuş/iptal edilmiş -->
+        <!-- Davet süresi dolmuş/iptal edilmiş/kullanılmış -->
         <template v-else-if="invitePreview && !invitePreview.valid">
           <header class="flex flex-col items-center gap-2 text-center pt-2">
             <span class="material-symbols-outlined text-[40px] text-error">schedule</span>
-            <h1 class="text-headline-md font-semibold text-on-surface">Davet süresi dolmuş</h1>
-            <p class="text-label-md text-on-surface-variant">Bu davetin süresi dolmuş veya iptal edilmiş.</p>
+            <h1 class="text-headline-md font-semibold text-on-surface">Davet geçersiz</h1>
+            <p class="text-label-md text-on-surface-variant">{{ invalidMessage }}</p>
           </header>
           <div class="flex gap-2 pt-2">
             <router-link to="/login" class="btn secondary w-full">Giriş yap</router-link>
@@ -143,16 +163,17 @@ async function submit() {
                 class="input h-12"
                 type="password"
                 v-model="password"
-                placeholder="En az 6 karakter"
+                placeholder="En az 8 karakter"
                 required
-                minlength="6"
+                minlength="8"
                 :disabled="submitting"
               />
+              <PasswordStrengthHints :password="password" />
             </div>
 
             <p v-if="error" class="error-msg text-center">{{ error }}</p>
 
-            <button class="btn primary w-full h-12 text-[15px] font-semibold mt-1 gap-2" :disabled="submitting" type="submit">
+            <button class="btn primary w-full h-12 text-[15px] font-semibold mt-1 gap-2" :disabled="submitting || !passwordValid" type="submit">
               {{ submitting ? 'Kaydediliyor…' : 'Hesap Oluştur ve Katıl' }}
               <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
             </button>

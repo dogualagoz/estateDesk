@@ -24,6 +24,19 @@ const expiryColor = computed(() => {
   return preview.value.expiresInDays <= 1 ? 'text-error' : 'text-on-surface-variant';
 });
 
+const invalidMessage = computed(() => {
+  switch (preview.value?.invalidReason) {
+    case 'EXPIRED':
+      return 'Bu davetin süresi dolmuş.';
+    case 'ACCEPTED':
+      return 'Bu davet zaten kullanılmış.';
+    case 'REVOKED':
+      return 'Bu davet iptal edilmiş.';
+    default:
+      return 'Bu davetin süresi dolmuş veya iptal edilmiş.';
+  }
+});
+
 onMounted(async () => {
   try {
     preview.value = await officeService.previewInvite(token);
@@ -86,7 +99,7 @@ function handleLogin() {
 
         <!-- Davet süresi geçerli değil -->
         <div v-if="!preview.valid" class="flex flex-col gap-stack-md text-center bg-error-container rounded-lg p-stack-md">
-          <p class="text-label-md font-semibold text-error">Bu davetin süresi dolmuş veya iptal edilmiş.</p>
+          <p class="text-label-md font-semibold text-error">{{ invalidMessage }}</p>
           <div class="flex gap-2 pt-2">
             <router-link to="/login" class="btn secondary w-full text-sm">Giriş yap</router-link>
             <router-link to="/register" class="btn primary w-full text-sm">Kayıt ol</router-link>

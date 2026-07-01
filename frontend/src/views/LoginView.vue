@@ -2,7 +2,6 @@
 import { computed, ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import { officeService } from '@/services/office.service';
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -19,22 +18,10 @@ async function submit() {
   try {
     await auth.login(email.value.trim(), password.value);
 
-    // Davet token'ı varsa
+    // Davet token'ı varsa: ofisi olsun olmasın tüm çatışma çözümü
+    // (aynı ofis / farklı ofis / kurucu vb.) InviteAcceptView'da tek yerde toplanır.
     if (inviteToken.value) {
-      // Officesiz kullanıcı → InviteAcceptView'a yönlendir (confirm ekranı)
-      // Offisli kullanıcı → direkt acceptInvite() yap
-      if (!auth.hasOffice) {
-        router.push({ name: 'invite.accept', params: { token: inviteToken.value } });
-      } else {
-        try {
-          await officeService.acceptInvite(inviteToken.value);
-          await auth.fetchMe();
-          router.push('/dashboard');
-        } catch (e: any) {
-          console.error('Invite acceptance failed:', e);
-          router.push('/dashboard');
-        }
-      }
+      router.push({ name: 'invite.accept', params: { token: inviteToken.value } });
     } else {
       // Ofisi varsa dashboard, yoksa onboarding
       const destination = auth.hasOffice ? '/dashboard' : '/onboarding';

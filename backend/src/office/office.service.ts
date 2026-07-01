@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -16,6 +17,7 @@ import { CreateOfficeDto } from './dto/create-office.dto';
 import { CreateInviteDto } from './dto/create-invite.dto';
 import { UpdateOfficeDto } from './dto/update-office.dto';
 import { ExportDataset } from './dto/export-query.dto';
+import { AlreadyInOfficeException } from './exceptions/already-in-office.exception';
 import {
   PORTFOLIO_COLUMNS,
   DEMAND_COLUMNS,
@@ -25,6 +27,8 @@ import {
 } from './office-export';
 
 const INVITE_TTL_DAYS = 7;
+
+type InviteInvalidReason = 'EXPIRED' | 'ACCEPTED' | 'REVOKED';
 
 @Injectable()
 export class OfficeService {
@@ -292,8 +296,9 @@ export class OfficeService {
     });
     if (!invite) throw new NotFoundException('Davet bulunamadı');
 
+    const invalidReason = this.getInviteInvalidReason(invite);
+    const valid = invalidReason === null;
     const now = new Date();
-    const valid = invite.status === 'PENDING' && invite.expiresAt > now;
     const expiresInMs = invite.expiresAt.getTime() - now.getTime();
     const expiresInSeconds = Math.max(0, Math.floor(expiresInMs / 1000));
     const expiresInDays = Math.floor(expiresInSeconds / (24 * 3600));
@@ -306,17 +311,43 @@ export class OfficeService {
       expiresInSeconds,
       expiresInDays,
       valid,
+      invalidReason,
     };
   }
 
-  /** Kimliği doğrulanmış, ofissiz kullanıcının daveti kabul edip ofise katılması. */
+  /** Kimliği doğrulanmış kullanıcının daveti kabul edip ofise katılması. */
   async acceptInvite(user: AuthUser, token: string) {
-    if (user.officeId) throw new ConflictException('Zaten bir ofistesiniz');
-
     const invite = await this.prisma.invite.findUnique({ where: { token } });
     if (!invite) throw new NotFoundException('Davet bulunamadı');
-    if (invite.status !== 'PENDING' || invite.expiresAt < new Date()) {
-      throw new BadRequestException('Davet artık geçerli değil');
+
+    const invalidReason = this.getInviteInvalidReason(invite);
+    if (invalidReason) {
+      throw new BadRequestException({
+        code: 'INVITE_INVALID',
+        invalidReason,
+        message: this.inviteInvalidReasonMessage(invalidReason),
+      });
+    }
+
+    if (user.officeId) {
+      const currentOffice = await this.prisma.office.findUnique({
+        where: { id: user.officeId },
+        select: { name: true, ownerId: true },
+      });
+      throw new AlreadyInOfficeException(
+        currentOffice?.name ?? '',
+        currentOffice?.ownerId === user.id,
+        user.officeId === invite.officeId,
+      );
+    }
+
+    // Kişiye özel davet: token'ı bilen herkesin değil, yalnızca davet edilen
+    // e-postanın sahibinin kabul edebilmesini garanti eder.
+    if (invite.email && invite.email.toLowerCase() !== user.email.toLowerCase()) {
+      throw new ForbiddenException({
+        code: 'INVITE_EMAIL_MISMATCH',
+        message: 'Bu davet farklı bir e-posta adresi için oluşturulmuş',
+      });
     }
 
     // Paylaşılan link (email yok) çok kullanımlıdır: PENDING kalır, takımdaki
@@ -348,11 +379,27 @@ export class OfficeService {
   ) {
     const invite = await this.prisma.invite.findUnique({ where: { token } });
     if (!invite) throw new NotFoundException('Davet bulunamadı');
-    if (invite.status !== 'PENDING' || invite.expiresAt < new Date()) {
-      throw new BadRequestException('Davet artık geçerli değil');
+
+    const invalidReason = this.getInviteInvalidReason(invite);
+    if (invalidReason) {
+      throw new BadRequestException({
+        code: 'INVITE_INVALID',
+        invalidReason,
+        message: this.inviteInvalidReasonMessage(invalidReason),
+      });
     }
 
-    const email = dto.email.toLowerCase().trim();
+    // dto.email zaten RegisterDto'nun @Transform'u ile normalize edilmiş gelir
+    const email = dto.email;
+
+    // Kişiye özel davet: yalnızca davet edilen e-posta bu daveti kullanarak kayıt olabilir
+    if (invite.email && invite.email.toLowerCase() !== email) {
+      throw new ForbiddenException({
+        code: 'INVITE_EMAIL_MISMATCH',
+        message: 'Bu davet farklı bir e-posta adresi için oluşturulmuş',
+      });
+    }
+
     const existing = await this.prisma.user.findUnique({ where: { email } });
     if (existing) throw new ConflictException('Bu e-posta zaten kayıtlı');
 
@@ -382,6 +429,28 @@ export class OfficeService {
 
       return this.auth.buildSession(user);
     });
+  }
+
+  /** Davetin PENDING/süre dolmamış dışındaki durumunu ayırt eder (UI'da farklı mesajlar için). */
+  private getInviteInvalidReason(invite: {
+    status: string;
+    expiresAt: Date;
+  }): InviteInvalidReason | null {
+    if (invite.status === 'ACCEPTED') return 'ACCEPTED';
+    if (invite.status === 'REVOKED') return 'REVOKED';
+    if (invite.expiresAt < new Date()) return 'EXPIRED';
+    return null;
+  }
+
+  private inviteInvalidReasonMessage(reason: InviteInvalidReason): string {
+    switch (reason) {
+      case 'EXPIRED':
+        return 'Bu davetin süresi dolmuş';
+      case 'ACCEPTED':
+        return 'Bu davet zaten kullanılmış';
+      case 'REVOKED':
+        return 'Bu davet iptal edilmiş';
+    }
   }
 
   private toInviteResponse(invite: {

@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Post } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { DemandShareService } from './demand-share.service';
 import { CreateShareDto } from './dto/create-share.dto';
 import { CurrentUser, AuthUser } from '../auth/decorators/current-user.decorator';
@@ -36,6 +37,7 @@ export class DemandShareController {
 
   // ── Public: ziyaretçi defter görüntüleme ──
   @Public()
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @Get('shared/:token')
   getPublicCollection(@Param('token') token: string) {
     return this.service.getPublicCollection(token);
