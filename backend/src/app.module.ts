@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
@@ -15,9 +15,11 @@ import { SearchModule } from './search/search.module';
 import { MatchingModule } from './matching/matching.module';
 import { DemandMatchModule } from './demand-match/demand-match.module';
 import { DemandShareModule } from './demand-share/demand-share.module';
+import { HealthModule } from './health/health.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { DemoReadOnlyGuard } from './common/demo-read-only.guard';
+import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
 import { uploadsDir } from './common/uploads.util';
 
 @Module({
@@ -41,6 +43,7 @@ import { uploadsDir } from './common/uploads.util';
     MatchingModule,
     DemandMatchModule,
     DemandShareModule,
+    HealthModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
@@ -49,4 +52,8 @@ import { uploadsDir } from './common/uploads.util';
     { provide: APP_GUARD, useClass: DemoReadOnlyGuard },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestLoggerMiddleware).forRoutes('*');
+  }
+}

@@ -73,13 +73,21 @@ Standart NestJS modül yapısı. Her domain kendi klasöründe `module`, `contro
 - `office` — ofis oluşturma, üye yönetimi, davet sistemi
 - `search` — global arama
 - `demand-match` — eşleştirme pin/kayıt tablosu
+- `demand-share` — bir talebe eşleşen portföylerden oluşan "defter"i token'lı public link ile ziyaretçiye paylaşma (`GET /shared/:token` `@Public()`); ofis kapsamlı CRUD `/demand/:demandId/shares` altında
 - `dashboard` — özet istatistikler
+- `health` — `GET /health` (`@Public()`, `@SkipThrottle()`); DB bağlantısını `PrismaService.$queryRaw` ile kontrol eder, Docker/Plesk healthcheck için kullanılır
 
 **Global guard'lar** (`app.module.ts`, sırayla):
 - `ThrottlerGuard` — rate limiting (genel 100 istek/dk; auth uçlarında `@Throttle` ile 10/dk)
 - `JwtAuthGuard` — tüm route'lara uygulanır; `@Public()` ile devre dışı bırakılır
 - `RolesGuard` — `@Roles(Role.ADMIN)` kontrol eder
 - `DemoReadOnlyGuard` — demo kullanıcılarının (isDemo) yazma isteklerini engeller; salt-okunur POST'lar `@DemoSafe()` ile muaf tutulur
+
+**Middleware** (`common/middleware/`, `main.ts` / `app.module.ts`):
+- `requestIdMiddleware` — `main.ts`'te `app.use()` ile en erken çalışır; gelen `x-request-id` header'ını kullanır ya da üretir, response header'ına ekler
+- `RequestLoggerMiddleware` — `AppModule.configure()` ile tüm route'lara bağlanır; `res.on('finish')` içinde `{requestId, method, path, statusCode, durationMs, userId, officeId}` JSON log satırı üretir
+- `compression()` — `main.ts`'te helmet'ten sonra uygulanır
+- `HttpExceptionFilter` hata yanıtlarına ve loglarına `requestId` dahil eder
 
 **Veri desenleri:**
 - Tüm silmeler soft delete: `deletedAt` set edilir, sorgularda `deletedAt: null` filtresi
