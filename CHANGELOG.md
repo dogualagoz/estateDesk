@@ -8,6 +8,27 @@ Versioning follows [SemVer](https://semver.org/).
 
 ---
 
+## [1.5.0] - 2026-07-01
+
+### Added
+- `GET /health` (`@Public`, `@SkipThrottle`) — DB bağlantısını `PrismaService.$queryRaw` ile kontrol eden sağlık kontrolü uç noktası, Docker/Plesk healthcheck için
+- İstek loglama: her isteğe `requestId` atayan/ekleyen middleware ve tamamlanınca `{requestId, method, path, statusCode, durationMs, userId, officeId}` JSON log satırı üreten `RequestLoggerMiddleware`
+- Şifre politikası: kayıt ve davetle-kayıt akışlarında min 8 karakter + büyük harf + rakam kuralı, canlı geri bildirimli `PasswordStrengthHints` bileşeni
+- "Zaten bir ofistesiniz" tıkanmasına çözüm: `InviteAcceptView` artık aynı-ofis / farklı-ofis-ayrılabilir / ofis-kurucusu durumlarını ayırt ediyor; ayrılabilir durumda ofisten çıkıp daveti otomatik tekrar deneyen tek akışlı bir CTA sunuyor
+- `office.service` ve `auth.service` için Jest testleri
+
+### Fixed
+- Kişisel (email'e özel) davet linklerinde artık kabul eden kullanıcının e-postası davetteki e-postayla eşleşmiyorsa reddediliyor — token'ı bilen herkesin başkasına ait daveti kabul edebildiği güvenlik açığı kapatıldı
+- Login/register e-postaları artık DTO seviyesinde normalize ediliyor (case-insensitive arama/kayıt tutarlılığı)
+- Süresi dolmuş/kullanılmış/iptal edilmiş davetler artık tek bir genel mesaj yerine birbirinden ayırt edilen mesajlarla gösteriliyor
+- `LoginView`'daki, davet kabulü başarısız olduğunda hatayı sessizce yutup dashboard'a yönlendiren gizli bug kaldırıldı
+
+### Changed
+- Davet önizleme/kabul/kayıt uçlarına ve public defter linkine (`GET /shared/:token`) daha sıkı rate limit eklendi (10-20/dk)
+- `HttpExceptionFilter` artık özel exception'ların (örn. `AlreadyInOfficeException`) taşıdığı ek alanları (`code` vb.) istemciye iletiyor, önceden sessizce düşürülüyordu
+
+---
+
 ## [1.4.0] - 2026-06-29
 
 ### Added
