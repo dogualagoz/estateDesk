@@ -72,6 +72,18 @@ describe('AuthService.login', () => {
     await expect(service.login(dto)).rejects.toThrow(UnauthorizedException);
   });
 
+  it('kullanıcı yokken de bcrypt.compare çağırır (timing enumeration önleme)', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const bcrypt = require('bcrypt');
+    bcrypt.compare.mockClear();
+    const { service } = makeService({ findUnique: jest.fn().mockResolvedValue(null) });
+    const dto = plainToInstance(LoginDto, { email: 'nope@x.com', password: 'whatever' });
+
+    await expect(service.login(dto)).rejects.toThrow(UnauthorizedException);
+    // Erken dönüş yok: sahte hash ile karşılaştırma yapılmış olmalı
+    expect(bcrypt.compare).toHaveBeenCalledTimes(1);
+  });
+
   it('deaktif kullanıcıyı reddeder', async () => {
     const { service } = makeService({
       findUnique: jest.fn().mockResolvedValue({

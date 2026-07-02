@@ -13,6 +13,8 @@ import { AuthService } from '../auth/auth.service';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
 import { requireOfficeId } from '../common/office.util';
 import { attachMemberCounts } from '../common/member-counts.util';
+import { generateSecureToken } from '../common/token.util';
+import { BCRYPT_ROUNDS } from '../common/security.constants';
 import { CreateOfficeDto } from './dto/create-office.dto';
 import { CreateInviteDto } from './dto/create-invite.dto';
 import { UpdateOfficeDto } from './dto/update-office.dto';
@@ -206,6 +208,7 @@ export class OfficeService {
     const invite = await this.prisma.invite.create({
       data: {
         email,
+        token: generateSecureToken(),
         officeId,
         invitedById: user.id,
         expiresAt: new Date(now.getTime() + INVITE_TTL_DAYS * 24 * 60 * 60 * 1000),
@@ -277,6 +280,7 @@ export class OfficeService {
   private async createSharedInvite(userId: string, officeId: string, now: Date) {
     const invite = await this.prisma.invite.create({
       data: {
+        token: generateSecureToken(),
         officeId,
         invitedById: userId,
         expiresAt: new Date(now.getTime() + INVITE_TTL_DAYS * 24 * 60 * 60 * 1000),
@@ -403,7 +407,7 @@ export class OfficeService {
     const existing = await this.prisma.user.findUnique({ where: { email } });
     if (existing) throw new ConflictException('Bu e-posta zaten kayıtlı');
 
-    const passwordHash = await bcrypt.hash(dto.password, 10);
+    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
 
     // Paylaşılan link (email yok) çok kullanımlıdır: PENDING kalır.
     // Kişiye özel davet ise kabul edilince tükenir (ACCEPTED).

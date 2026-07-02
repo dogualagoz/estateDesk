@@ -8,15 +8,15 @@ Detaylı plan: `~/.claude/plans/plan-senle-imdi-genel-wise-liskov.md`
 - [x] Frontend ESLint (eslint-plugin-vue) + lint script
 - [x] Kökte .prettierrc.json + .prettierignore
 - [x] `--fix` ilk geçiş, build + test yeşil (backend 42 test ✓)
-- [ ] **Commit 1**
+- [x] **Commit 1** (`f1147e9`)
 
 ## FAZ 1 — Güvenlik Sertleştirme
-- [ ] `token.util.ts` (crypto.randomBytes) + cuid default kaldırma migration'ı
-- [ ] Login dummy bcrypt compare (timing enumeration koruması)
-- [ ] `BCRYPT_ROUNDS` konstantı
-- [ ] nginx güvenlik başlıkları + limit_req
-- [ ] Prod compose healthcheck'ler + non-root backend Dockerfile
-- [ ] npm audit
+- [x] `token.util.ts` (crypto.randomBytes) — migration gerekmedi: `@default(cuid())` client-side'mış, DB'de default yok
+- [x] Login dummy bcrypt compare (timing enumeration koruması) + yeni test
+- [x] `BCRYPT_ROUNDS` konstantı (auth/users/office/seed)
+- [x] nginx güvenlik başlıkları + limit_req (20r/s, burst 40, 429) — prod stack'te doğrulandı
+- [x] Prod compose healthcheck'ler + non-root backend Dockerfile (whoami → node)
+- [x] npm audit: backend babel fix'lendi; kalan 13 moderate = NestJS 11 major (ROADMAP), frontend esbuild = Vite 8 major, dev-only (ROADMAP)
 - [ ] **Commit 2**
 
 ## FAZ 2 — Hedefli Refactor

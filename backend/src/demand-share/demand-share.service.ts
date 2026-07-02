@@ -4,6 +4,7 @@ import { DemandShare, DemandShareMode } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
 import { requireOfficeId } from '../common/office.util';
+import { generateSecureToken } from '../common/token.util';
 import { MatchingService, demandToCriteria } from '../matching/matching.service';
 import { DemandMatchService } from '../demand-match/demand-match.service';
 import { CreateShareDto } from './dto/create-share.dto';
@@ -32,6 +33,7 @@ export class DemandShareService {
     const now = new Date();
     const share = await this.prisma.demandShare.create({
       data: {
+        token: generateSecureToken(),
         demandId,
         officeId,
         mode: dto.mode,

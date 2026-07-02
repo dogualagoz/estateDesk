@@ -1,5 +1,6 @@
 import { PrismaClient, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { BCRYPT_ROUNDS } from '../src/common/security.constants';
 
 export const prisma = new PrismaClient();
 
@@ -14,7 +15,7 @@ async function seedAdmin() {
     return existing;
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
   const user = await prisma.user.create({
     data: { email, passwordHash, fullName, role: Role.ADMIN, isActive: true },
   });
@@ -54,7 +55,7 @@ async function seedDemoUser(officeId: string) {
     return existing;
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
   const user = await prisma.user.create({
     data: {
       email,

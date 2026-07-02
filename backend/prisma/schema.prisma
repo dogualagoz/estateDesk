@@ -72,7 +72,9 @@ model Office {
 model Invite {
   id              String       @id @default(cuid())
   email           String?
-  token           String       @unique @default(cuid())
+  // Token DB default'u ile değil, serviste crypto.randomBytes ile üretilir
+  // (cuid tahmin edilebilir; bkz. common/token.util.ts)
+  token           String       @unique
   status          InviteStatus @default(PENDING)
   officeId        String
   office          Office       @relation(fields: [officeId], references: [id])
@@ -207,7 +209,8 @@ model DemandMatch {
 
 model DemandShare {
   id          String            @id @default(cuid())
-  token       String            @unique @default(cuid())
+  // Token serviste crypto.randomBytes ile üretilir (bkz. common/token.util.ts)
+  token       String            @unique
   demandId    String
   demand      Demand            @relation(fields: [demandId], references: [id])
   officeId    String
