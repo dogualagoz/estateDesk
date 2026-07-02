@@ -69,19 +69,19 @@ onMounted(load);
       <div class="flex flex-wrap gap-stack-md">
         <div class="field">
           <label>E-posta</label>
-          <input class="input" type="email" v-model="form.email" required />
+          <input v-model="form.email" class="input" type="email" required />
         </div>
         <div class="field">
           <label>Ad Soyad</label>
-          <input class="input" v-model="form.fullName" required />
+          <input v-model="form.fullName" class="input" required />
         </div>
         <div class="field">
           <label>Şifre</label>
-          <input class="input" type="password" v-model="form.password" required minlength="6" />
+          <input v-model="form.password" class="input" type="password" required minlength="6" />
         </div>
         <div class="field">
           <label>Rol</label>
-          <select class="select" v-model="form.role">
+          <select v-model="form.role" class="select">
             <option value="AGENT">Danışman</option>
             <option value="ADMIN">Admin</option>
           </select>

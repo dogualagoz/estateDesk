@@ -167,22 +167,22 @@ onMounted(load);
       <div class="flex flex-wrap gap-stack-md">
         <div class="field">
           <label>Tür</label>
-          <select class="select" v-model="filters.type">
+          <select v-model="filters.type" class="select">
             <option :value="undefined">Hepsi</option>
             <option v-for="t in PROPERTY_TYPES" :key="t" :value="t">{{ PROPERTY_TYPE_LABELS[t] }}</option>
           </select>
         </div>
         <div class="field">
           <label>Bölge</label>
-          <input class="input" v-model="filters.region" placeholder="Kadıköy" />
+          <input v-model="filters.region" class="input" placeholder="Kadıköy" />
         </div>
         <div class="field">
           <label>Oda</label>
-          <input class="input" v-model="filters.roomPreference" placeholder="2+1" />
+          <input v-model="filters.roomPreference" class="input" placeholder="2+1" />
         </div>
         <div class="field">
           <label>Durum</label>
-          <select class="select" v-model="filters.status">
+          <select v-model="filters.status" class="select">
             <option :value="undefined">Hepsi</option>
             <option value="ACTIVE">Aktif</option>
             <option value="CLOSED">Kapandı</option>
@@ -190,11 +190,11 @@ onMounted(load);
         </div>
         <div class="field">
           <label>Min bütçe</label>
-          <input class="input" type="number" v-model.number="filters.minBudget" />
+          <input v-model.number="filters.minBudget" class="input" type="number" />
         </div>
         <div class="field">
           <label>Max bütçe</label>
-          <input class="input" type="number" v-model.number="filters.maxBudget" />
+          <input v-model.number="filters.maxBudget" class="input" type="number" />
         </div>
       </div>
       <div class="flex gap-3 mt-stack-md items-center">
@@ -243,7 +243,7 @@ onMounted(load);
         </h2>
 
         <!-- Room preferences -->
-        <div class="flex flex-wrap gap-1 mt-1.5" v-if="d.roomPreferences.length">
+        <div v-if="d.roomPreferences.length" class="flex flex-wrap gap-1 mt-1.5">
           <span v-for="r in d.roomPreferences.slice(0, 5)" :key="r" class="text-label-sm text-on-surface-variant px-1.5 py-0.5 rounded bg-surface-container-low">{{ r }}</span>
         </div>
 
@@ -320,7 +320,7 @@ onMounted(load);
               ></span>
               {{ d.status === 'ACTIVE' ? searchAgeLabel(d.createdAt) : 'Kapandı' }}
             </span>
-            <button class="btn ghost danger p-1.5 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity" @click.stop="remove(d)" title="Sil">
+            <button class="btn ghost danger p-1.5 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity" title="Sil" @click.stop="remove(d)">
               <span class="material-symbols-outlined text-[16px]">delete</span>
             </button>
           </div>
@@ -333,8 +333,8 @@ onMounted(load);
       <button
         class="btn p-2"
         :disabled="(filters.page ?? 1) <= 1"
-        @click="goToPage((filters.page ?? 1) - 1)"
         title="Önceki sayfa"
+        @click="goToPage((filters.page ?? 1) - 1)"
       >
         <span class="material-symbols-outlined text-[18px]">chevron_left</span>
       </button>
@@ -356,8 +356,8 @@ onMounted(load);
       <button
         class="btn p-2"
         :disabled="(filters.page ?? 1) >= totalPages"
-        @click="goToPage((filters.page ?? 1) + 1)"
         title="Sonraki sayfa"
+        @click="goToPage((filters.page ?? 1) + 1)"
       >
         <span class="material-symbols-outlined text-[18px]">chevron_right</span>
       </button>

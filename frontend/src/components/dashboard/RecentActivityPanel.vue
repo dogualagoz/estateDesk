@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import type { RecentPortfolio, RecentDemand } from '@/services/dashboard.service';
-import { PROPERTY_TYPE_LABELS } from '@/types/portfolio';
 import { fmtPrice, formatDate } from '@/utils/format';
 
-const props = defineProps<{
+defineProps<{
   portfolios: RecentPortfolio[];
   demands: RecentDemand[];
 }>();

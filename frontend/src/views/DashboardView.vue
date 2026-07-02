@@ -163,8 +163,8 @@ function demandSubtitle(d: NotedDemand) {
               </div>
               <template v-else>
                 <DashboardNoteRow
-                  v-for="p in pendingPortfolios" :key="`pending-p-${p.id}`"
-                  :id="p.id" item-type="portfolio" :badge="portfolioBadge(p)"
+                  v-for="p in pendingPortfolios" :id="p.id"
+                  :key="`pending-p-${p.id}`" item-type="portfolio" :badge="portfolioBadge(p)"
                   :title="portfolioTitle(p)" :subtitle="portfolioSubtitle(p)"
                   :note="p.note" :updated-at="p.updatedAt" :initial-edit-open="true"
                   :agent-name="p.agentName ?? undefined"
@@ -172,8 +172,8 @@ function demandSubtitle(d: NotedDemand) {
                   @cancelled="pendingPortfolios = pendingPortfolios.filter(x => x.id !== p.id)"
                 />
                 <DashboardNoteRow
-                  v-for="p in notedPortfolios" :key="p.id"
-                  :id="p.id" item-type="portfolio" :badge="portfolioBadge(p)"
+                  v-for="p in notedPortfolios" :id="p.id"
+                  :key="p.id" item-type="portfolio" :badge="portfolioBadge(p)"
                   :title="portfolioTitle(p)" :subtitle="portfolioSubtitle(p)"
                   :note="p.note" :updated-at="p.updatedAt"
                   :agent-name="p.agentName ?? undefined"
@@ -212,8 +212,8 @@ function demandSubtitle(d: NotedDemand) {
               </div>
               <template v-else>
                 <DashboardNoteRow
-                  v-for="d in pendingDemands" :key="`pending-d-${d.id}`"
-                  :id="d.id" item-type="demand" badge="Talep"
+                  v-for="d in pendingDemands" :id="d.id"
+                  :key="`pending-d-${d.id}`" item-type="demand" badge="Talep"
                   :title="d.customerName" :subtitle="demandSubtitle(d)"
                   :note="d.note" :updated-at="d.updatedAt" :initial-edit-open="true"
                   :agent-name="d.agentName ?? undefined"
@@ -221,8 +221,8 @@ function demandSubtitle(d: NotedDemand) {
                   @cancelled="pendingDemands = pendingDemands.filter(x => x.id !== d.id)"
                 />
                 <DashboardNoteRow
-                  v-for="d in notedDemands" :key="d.id"
-                  :id="d.id" item-type="demand" badge="Talep"
+                  v-for="d in notedDemands" :id="d.id"
+                  :key="d.id" item-type="demand" badge="Talep"
                   :title="d.customerName" :subtitle="demandSubtitle(d)"
                   :note="d.note" :updated-at="d.updatedAt"
                   :agent-name="d.agentName ?? undefined"

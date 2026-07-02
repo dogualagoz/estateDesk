@@ -9,7 +9,8 @@ const props = defineProps<{
   searchType: 'portfolio' | 'demand';
 }>();
 
-const emit = defineEmits<{
+// Template $emit ile kullanıyor; script tarafında referans gerekmiyor
+defineEmits<{
   select: [item: Portfolio | Demand];
   close: [];
 }>();

@@ -6,7 +6,10 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview --host 0.0.0.0 --port 5173",
-    "type-check": "vue-tsc --noEmit"
+    "type-check": "vue-tsc --noEmit",
+    "lint": "eslint \"src/**/*.{ts,vue}\"",
+    "lint:fix": "eslint \"src/**/*.{ts,vue}\" --fix",
+    "format": "prettier --write \"src/**/*.{ts,vue,css}\""
   },
   "dependencies": {
     "axios": "^1.7.4",
@@ -16,13 +19,19 @@
     "vue-router": "^4.4.3"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@tailwindcss/forms": "^0.5.11",
     "@types/qrcode": "^1.5.6",
     "@vitejs/plugin-vue": "^5.1.2",
     "autoprefixer": "^10.5.0",
+    "eslint": "^10.6.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vue": "^10.9.2",
     "postcss": "^8.5.15",
+    "prettier": "^3.9.4",
     "tailwindcss": "^3.4.19",
     "typescript": "^5.5.4",
+    "typescript-eslint": "^8.62.1",
     "vite": "^5.4.2",
     "vue-tsc": "^2.0.29"
   },

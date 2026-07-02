@@ -58,9 +58,9 @@ async function submit() {
             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-outline pointer-events-none">mail</span>
             <input
               id="email"
+              v-model="email"
               class="input pl-10 h-12"
               type="email"
-              v-model="email"
               placeholder="ornek@estatedesk.com"
               required
               autofocus
@@ -74,9 +74,9 @@ async function submit() {
             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-outline pointer-events-none">lock</span>
             <input
               id="password"
+              v-model="password"
               class="input pl-10 h-12"
               type="password"
-              v-model="password"
               placeholder="••••••••"
               required
             />

@@ -98,13 +98,6 @@ async function onFilesSelected(e: Event) {
   }
 }
 
-async function removeImage(url: string) {
-  if (!item.value) return;
-  const filename = url.split('/').pop()!;
-  item.value = await portfolioService.deleteImage(item.value.id, filename);
-  if (activeImg.value >= (item.value.images?.length ?? 0)) activeImg.value = 0;
-}
-
 onMounted(load);
 </script>
 

@@ -100,7 +100,7 @@ async function logout() {
         <h2 class="text-body-lg font-semibold text-on-surface">Ofis Oluştur</h2>
         <div class="field full">
           <label for="officeName">Ofis Adı</label>
-          <input id="officeName" class="input h-12" v-model="officeName" placeholder="Örn. Yılmaz Emlak" required minlength="2" autofocus />
+          <input id="officeName" v-model="officeName" class="input h-12" placeholder="Örn. Yılmaz Emlak" required minlength="2" autofocus />
         </div>
         <p v-if="error" class="error-msg">{{ error }}</p>
         <div class="flex gap-3">
@@ -116,7 +116,7 @@ async function logout() {
         <h2 class="text-body-lg font-semibold text-on-surface">Davetle Katıl</h2>
         <div class="field full">
           <label for="invite">Davet Linki veya Kodu</label>
-          <input id="invite" class="input h-12" v-model="inviteInput" placeholder="https://…/invite/XXXX veya kod" required autofocus />
+          <input id="invite" v-model="inviteInput" class="input h-12" placeholder="https://…/invite/XXXX veya kod" required autofocus />
         </div>
         <p v-if="error" class="error-msg">{{ error }}</p>
         <div class="flex gap-3">

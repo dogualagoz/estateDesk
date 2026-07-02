@@ -628,7 +628,7 @@ onMounted(load);
             </div>
 
             <div class="flex items-center justify-between flex-wrap gap-2">
-              <p class="text-label-sm text-on-surface-variant" v-if="inviteLink">
+              <p v-if="inviteLink" class="text-label-sm text-on-surface-variant">
                 <span class="material-symbols-outlined text-[14px] align-text-bottom">schedule</span>
                 {{
                   inviteLink.expiresInDays > 0
@@ -648,8 +648,8 @@ onMounted(load);
                 <button
                   class="btn ghost text-[13px] py-1.5 px-2.5 text-on-surface-variant"
                   :disabled="resetting"
-                  @click="resetInviteLink"
                   title="Mevcut linki geçersiz kılıp yeni bir tane oluştur"
+                  @click="resetInviteLink"
                 >
                   <span
                     class="material-symbols-outlined text-[16px]"

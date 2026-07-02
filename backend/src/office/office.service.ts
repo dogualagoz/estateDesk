@@ -193,7 +193,7 @@ export class OfficeService {
       }
 
       const now = new Date();
-      let existingInvite = await this.prisma.invite.findFirst({
+      const existingInvite = await this.prisma.invite.findFirst({
         where: { officeId, email, status: 'PENDING' },
       });
 

@@ -14,7 +14,9 @@
     "seed": "ts-node prisma/seed.ts",
     "seed:demo": "ts-node prisma/seed-demo.ts",
     "seed:images": "ts-node prisma/seed-images.ts",
-    "lint": "echo 'no lint configured'",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
     "test": "jest",
     "test:watch": "jest --watch"
   },
@@ -42,6 +44,7 @@
     "sharp": "^0.34.5"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@nestjs/cli": "^11.0.23",
     "@nestjs/schematics": "^11.1.0",
     "@nestjs/testing": "^10.3.10",
@@ -53,14 +56,18 @@
     "@types/node": "^20.14.10",
     "@types/passport-jwt": "^4.0.1",
     "@types/sharp": "^0.31.1",
+    "eslint": "^10.6.0",
+    "eslint-config-prettier": "^10.1.8",
     "jest": "^30.4.2",
+    "prettier": "^3.9.4",
     "prisma": "^5.18.0",
     "prisma-erd-generator": "^2.4.2",
     "ts-jest": "^29.4.11",
     "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^8.62.1"
   },
   "overrides": {
     "lodash": "^4.17.23",

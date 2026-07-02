@@ -1,0 +1,14 @@
+# Derleme çıktıları ve bağımlılıklar
+**/dist/
+**/node_modules/
+**/coverage/
+
+# Üretilen / veri dosyaları — elle biçimlendirilmez
+backend/prisma/migrations/
+uploads/
+*.min.*
+
+# Büyük statik veri dosyaları (biçimlendirme diff gürültüsü yaratır)
+frontend/src/data/tr-locations.ts
+backend/src/matching/tr-district-coords.ts
+backend/prisma/seed.ts

@@ -29,7 +29,7 @@ const plans: Plan[] = [
 <template>
   <section id="pricing" class="py-20 md:py-28 bg-surface-container-low/50 border-y border-outline-variant">
     <div class="max-w-container-max-width mx-auto px-margin-mobile md:px-margin-desktop">
-      <div class="text-center max-w-2xl mx-auto mb-12 md:mb-16" v-reveal>
+      <div v-reveal class="text-center max-w-2xl mx-auto mb-12 md:mb-16">
         <span class="text-label-sm text-primary uppercase tracking-wider font-semibold">Fiyatlandırma</span>
         <h2 class="text-[28px] leading-9 md:text-headline-xl font-bold text-on-surface mt-2 tracking-tight">
           İhtiyacınıza göre büyüyen paketler

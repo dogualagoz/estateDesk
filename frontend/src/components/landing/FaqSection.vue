@@ -37,7 +37,7 @@ function toggle(i: number) {
 <template>
   <section id="faq" class="py-20 md:py-28">
     <div class="max-w-3xl mx-auto px-margin-mobile md:px-margin-desktop">
-      <div class="text-center mb-12 md:mb-16" v-reveal>
+      <div v-reveal class="text-center mb-12 md:mb-16">
         <span class="text-label-sm text-primary uppercase tracking-wider font-semibold">SSS</span>
         <h2 class="text-[28px] leading-9 md:text-headline-xl font-bold text-on-surface mt-2 tracking-tight">
           Sık sorulan sorular

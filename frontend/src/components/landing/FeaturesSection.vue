@@ -42,7 +42,7 @@ const features: Feature[] = [
 <template>
   <section id="features" class="py-20 md:py-28">
     <div class="max-w-container-max-width mx-auto px-margin-mobile md:px-margin-desktop">
-      <div class="max-w-2xl mb-12 md:mb-16" v-reveal>
+      <div v-reveal class="max-w-2xl mb-12 md:mb-16">
         <span class="text-label-sm text-primary uppercase tracking-wider font-semibold">Özellikler</span>
         <h2 class="text-[28px] leading-9 md:text-headline-xl font-bold text-on-surface mt-2 tracking-tight">
           Sahadaki işi olduğu gibi yansıtan araçlar

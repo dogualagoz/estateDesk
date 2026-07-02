@@ -4,7 +4,7 @@ import type { PendingMatchItem } from '@/services/dashboard.service';
 import { PROPERTY_TYPE_LABELS, type PropertyType } from '@/types/portfolio';
 import { fmtPrice } from '@/utils/format';
 
-const props = withDefaults(
+withDefaults(
   defineProps<{
     items: PendingMatchItem[];
     loading?: boolean;
@@ -24,17 +24,6 @@ const getAgeStatus = (days: number) => {
   if (days < 7) return { borderColor: 'border-l-emerald-400', bgColor: 'bg-emerald-50', textColor: 'text-emerald-700', label: `${days}g` };
   if (days < 14) return { borderColor: 'border-l-amber-400', bgColor: 'bg-amber-50', textColor: 'text-amber-700', label: `${days}g` };
   return { borderColor: 'border-l-red-400', bgColor: 'bg-red-50', textColor: 'text-red-600', label: `${days}g` };
-};
-
-const typeInitial = (types: string[] | undefined): string => {
-  if (!types?.length) return '?';
-  const type = types[0];
-  if (type === 'APARTMENT') return 'D';
-  if (type === 'VILLA') return 'V';
-  if (type === 'LAND') return 'A';
-  if (type === 'SHOP') return 'Ş';
-  if (type === 'OFFICE') return 'O';
-  return type[0];
 };
 </script>
 

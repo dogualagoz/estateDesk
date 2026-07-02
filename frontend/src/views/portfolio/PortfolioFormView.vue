@@ -515,7 +515,8 @@ async function submit() {
               v-for="f in form.features.slice(0, 6)" :key="f"
               class="px-2.5 py-1 rounded-full text-[11px] font-medium bg-primary-fixed text-on-primary-fixed-variant"
             >{{ f }}</span>
-            <span v-if="form.features.length > 6"
+            <span
+v-if="form.features.length > 6"
               class="px-2.5 py-1 rounded-full text-[11px] font-medium bg-surface-container text-on-surface-variant"
             >+{{ form.features.length - 6 }}</span>
           </div>
@@ -530,7 +531,8 @@ async function submit() {
         <div class="shrink-0 px-4 md:px-8 pt-5 pb-4 overflow-x-auto">
           <div class="flex items-start min-w-[300px]">
             <template v-for="(s, i) in STEPS" :key="i">
-              <div v-if="i > 0" class="flex-1 h-0.5 mt-[15px] mx-1 rounded-full transition-colors duration-500"
+              <div
+v-if="i > 0" class="flex-1 h-0.5 mt-[15px] mx-1 rounded-full transition-colors duration-500"
                    :class="stepsDone[i - 1] ? 'bg-primary' : 'bg-outline-variant'" />
               <div class="flex flex-col items-center gap-1.5">
                 <div
@@ -566,11 +568,11 @@ async function submit() {
               <button
                 v-for="t in PROPERTY_TYPES" :key="t"
                 type="button"
-                @click="selectType(t)"
                 class="flex flex-col items-center gap-1.5 px-4 py-3 rounded-xl border-2 text-label-sm font-medium transition-all duration-150 min-w-[72px]"
                 :class="form.type === t && typeChosen
                   ? 'border-primary bg-primary-fixed/60 text-on-surface'
                   : 'border-outline-variant text-on-surface-variant hover:border-primary/50 hover:bg-surface-container'"
+                @click="selectType(t)"
               >
                 <span class="material-symbols-outlined text-[24px]">{{ TYPE_ICONS[t] }}</span>
                 {{ PROPERTY_TYPE_LABELS[t] }}
@@ -580,18 +582,20 @@ async function submit() {
             <!-- İlan tipi -->
             <p class="text-label-sm font-semibold text-on-surface-variant mb-2">İlan Tipi</p>
             <div class="flex gap-3 mb-4">
-              <button type="button" @click="selectListingType('SALE')"
-                class="flex-1 py-2.5 rounded-lg text-label-md font-semibold border-2 transition-all duration-150"
+              <button
+type="button" class="flex-1 py-2.5 rounded-lg text-label-md font-semibold border-2 transition-all duration-150"
                 :class="form.listingType === 'SALE' && listingChosen
                   ? 'bg-primary text-on-primary border-primary'
-                  : 'bg-transparent text-on-surface-variant border-outline-variant hover:border-primary/60'">
+                  : 'bg-transparent text-on-surface-variant border-outline-variant hover:border-primary/60'"
+                @click="selectListingType('SALE')">
                 Satılık
               </button>
-              <button type="button" @click="selectListingType('RENT')"
-                class="flex-1 py-2.5 rounded-lg text-label-md font-semibold border-2 transition-all duration-150"
+              <button
+type="button" class="flex-1 py-2.5 rounded-lg text-label-md font-semibold border-2 transition-all duration-150"
                 :class="form.listingType === 'RENT' && listingChosen
                   ? 'bg-primary text-on-primary border-primary'
-                  : 'bg-transparent text-on-surface-variant border-outline-variant hover:border-primary/60'">
+                  : 'bg-transparent text-on-surface-variant border-outline-variant hover:border-primary/60'"
+                @click="selectListingType('RENT')">
                 Kiralık
               </button>
             </div>
@@ -614,7 +618,7 @@ async function submit() {
                     İlan Başlığı
                     <span class="font-normal ml-1 text-on-surface-variant/60">(isteğe bağlı)</span>
                   </label>
-                  <input class="input" v-model="form.title" placeholder="Örn: Kadıköy Moda'da Deniz Manzaralı" />
+                  <input v-model="form.title" class="input" placeholder="Örn: Kadıköy Moda'da Deniz Manzaralı" />
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                   <div class="flex flex-col gap-1.5">
@@ -660,7 +664,7 @@ async function submit() {
                   <div class="flex flex-col gap-1.5">
                     <label class="text-label-sm font-semibold text-on-surface-variant">Brüt m²</label>
                     <div class="relative">
-                      <input class="input pr-10" type="number" min="0" v-model.number="form.areaSqm" placeholder="145" />
+                      <input v-model.number="form.areaSqm" class="input pr-10" type="number" min="0" placeholder="145" />
                       <span class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-label-sm select-none pointer-events-none">m²</span>
                     </div>
                   </div>
@@ -668,11 +672,12 @@ async function submit() {
                     <label class="text-label-sm font-semibold text-on-surface-variant">Fiyat *</label>
                     <div class="relative">
                       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-label-sm select-none pointer-events-none">₺</span>
-                      <input class="input pl-7" type="text" inputmode="numeric" :value="priceDisplay"
+                      <input
+class="input pl-7" type="text" inputmode="numeric" :value="priceDisplay"
+                        placeholder="12.500.000"
                         @focus="priceDisplay = form.price !== '' ? String(form.price) : ''"
                         @input="onPriceInput"
-                        @blur="onPriceBlur($event)"
-                        placeholder="12.500.000" />
+                        @blur="onPriceBlur($event)" />
                     </div>
                   </div>
                 </div>
@@ -682,9 +687,9 @@ async function submit() {
                     <button
                       v-for="r in ROOM_OPTIONS" :key="r"
                       type="button"
-                      @click="form.roomCount = form.roomCount === r ? '' : r"
                       class="px-4 py-2 rounded-lg text-label-md border-2 font-medium transition-all duration-150"
                       :class="form.roomCount === r ? 'bg-primary text-on-primary border-primary' : 'bg-transparent text-on-surface border-outline-variant hover:border-primary/60'"
+                      @click="form.roomCount = form.roomCount === r ? '' : r"
                     >{{ r }}</button>
                   </div>
                 </div>
@@ -704,16 +709,16 @@ async function submit() {
                     <button
                       v-for="f in FEATURE_PRESETS" :key="f"
                       type="button"
-                      @click="toggleFeature(f)"
                       class="flex items-center gap-1 px-3 py-1.5 rounded-full text-label-sm border-2 transition-all duration-150"
                       :class="form.features.includes(f) ? 'bg-primary text-on-primary border-primary font-medium' : 'bg-transparent text-on-surface-variant border-outline-variant hover:border-primary/60'"
+                      @click="toggleFeature(f)"
                     >
                       {{ f }}
                       <span v-if="form.features.includes(f)" class="opacity-70 text-[11px]">✕</span>
                     </button>
                   </div>
                   <div class="flex gap-2">
-                    <input class="input flex-1" v-model="customFeature" placeholder="Özel özellik ekle..." @keydown.enter.prevent="addCustomFeature" />
+                    <input v-model="customFeature" class="input flex-1" placeholder="Özel özellik ekle..." @keydown.enter.prevent="addCustomFeature" />
                     <button type="button" class="btn" @click="addCustomFeature">
                       <span class="material-symbols-outlined text-[16px]">add</span> Ekle
                     </button>
@@ -726,14 +731,14 @@ async function submit() {
                     <label class="text-label-sm font-semibold text-on-surface-variant">Mal Sahibi *</label>
                     <div class="relative">
                       <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-on-surface-variant pointer-events-none">person</span>
-                      <input class="input pl-9" v-model="form.ownerName" placeholder="İsim Soyisim" />
+                      <input v-model="form.ownerName" class="input pl-9" placeholder="İsim Soyisim" />
                     </div>
                   </div>
                   <div class="flex flex-col gap-1.5">
                     <label class="text-label-sm font-semibold text-on-surface-variant">Telefon *</label>
                     <div class="relative">
                       <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-on-surface-variant pointer-events-none">phone</span>
-                      <input class="input pl-9" v-model="form.ownerPhone" placeholder="05XX XXX XX XX" />
+                      <input v-model="form.ownerPhone" class="input pl-9" placeholder="05XX XXX XX XX" />
                     </div>
                   </div>
                 </div>
@@ -742,17 +747,20 @@ async function submit() {
                 <div class="flex flex-col gap-1.5">
                   <div class="flex items-center justify-between">
                     <label class="text-label-sm font-semibold text-on-surface-variant">İç Notlar</label>
-                    <button type="button" @click="form.visibility = form.visibility === 'HIDDEN' ? 'PUBLIC' : 'HIDDEN'"
-                      class="flex items-center gap-2 cursor-pointer select-none">
-                      <div class="w-9 h-5 rounded-full relative transition-colors duration-200"
+                    <button
+type="button" class="flex items-center gap-2 cursor-pointer select-none"
+                      @click="form.visibility = form.visibility === 'HIDDEN' ? 'PUBLIC' : 'HIDDEN'">
+                      <div
+class="w-9 h-5 rounded-full relative transition-colors duration-200"
                            :class="form.visibility === 'HIDDEN' ? 'bg-primary' : 'bg-outline-variant'">
-                        <div class="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-200"
+                        <div
+class="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-200"
                              :class="form.visibility === 'HIDDEN' ? 'left-[18px]' : 'left-0.5'" />
                       </div>
                       <span class="text-label-sm text-on-surface-variant">Gizli (ofis içi)</span>
                     </button>
                   </div>
-                  <textarea class="textarea" v-model="form.note" rows="3" placeholder="Müşteri görüşmesi notları, anahtar durumu vb." />
+                  <textarea v-model="form.note" class="textarea" rows="3" placeholder="Müşteri görüşmesi notları, anahtar durumu vb." />
                 </div>
               </div>
             </div>
@@ -766,7 +774,7 @@ async function submit() {
         <!-- ── Alt bar ── -->
         <div class="shrink-0 flex items-center justify-end gap-3 px-4 md:px-8 py-4 border-t border-outline-variant bg-surface">
           <button type="button" class="btn" @click="router.back()">İptal</button>
-          <button type="button" class="btn primary" @click="submit" :disabled="saving || !canSubmit">
+          <button type="button" class="btn primary" :disabled="saving || !canSubmit" @click="submit">
             <span class="material-symbols-outlined text-[18px]">{{ saving ? 'hourglass_empty' : 'save' }}</span>
             {{ saving ? 'Kaydediliyor…' : 'Kaydet' }}
           </button>

@@ -278,8 +278,8 @@ onUnmounted(() => window.removeEventListener('resize', updateIndicator));
             <div class="grid grid-cols-2 gap-4">
               <!-- Portföy -->
               <button
-                @click="navigateTo('/portfolio/new')"
                 class="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-outline-variant hover:border-primary hover:bg-primary-fixed/40 transition-all duration-150 cursor-pointer group"
+                @click="navigateTo('/portfolio/new')"
               >
                 <span class="material-symbols-outlined text-[44px] text-primary group-hover:scale-110 transition-transform duration-150">
                   maps_home_work
@@ -292,8 +292,8 @@ onUnmounted(() => window.removeEventListener('resize', updateIndicator));
 
               <!-- Talep -->
               <button
-                @click="navigateTo('/demand/new')"
                 class="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-outline-variant hover:border-primary hover:bg-primary-fixed/40 transition-all duration-150 cursor-pointer group"
+                @click="navigateTo('/demand/new')"
               >
                 <span class="material-symbols-outlined text-[44px] text-primary group-hover:scale-110 transition-transform duration-150">
                   ads_click

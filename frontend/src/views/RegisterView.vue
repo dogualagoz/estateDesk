@@ -49,15 +49,15 @@ async function submit() {
       <form class="flex flex-col gap-stack-md" @submit.prevent="submit">
         <div class="field full">
           <label for="fullName">Ad Soyad</label>
-          <input id="fullName" class="input h-12" v-model="fullName" placeholder="Adınız Soyadınız" required autofocus minlength="2" />
+          <input id="fullName" v-model="fullName" class="input h-12" placeholder="Adınız Soyadınız" required autofocus minlength="2" />
         </div>
         <div class="field full">
           <label for="email">E-posta Adresi</label>
-          <input id="email" class="input h-12" type="email" v-model="email" placeholder="ornek@estatedesk.com" required />
+          <input id="email" v-model="email" class="input h-12" type="email" placeholder="ornek@estatedesk.com" required />
         </div>
         <div class="field full">
           <label for="password">Şifre</label>
-          <input id="password" class="input h-12" type="password" v-model="password" placeholder="En az 8 karakter" required minlength="8" />
+          <input id="password" v-model="password" class="input h-12" type="password" placeholder="En az 8 karakter" required minlength="8" />
           <PasswordStrengthHints :password="password" />
         </div>
 

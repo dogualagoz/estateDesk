@@ -508,22 +508,24 @@ async function submit() {
             <p class="text-label-sm font-semibold uppercase tracking-widest text-on-surface-variant mb-3">Mülk & İlan Tipi</p>
             <div class="flex flex-wrap gap-2 mb-4">
               <button
-                v-for="t in PROPERTY_TYPES" :key="t" type="button" @click="toggleType(t)"
-                class="px-3 py-2 rounded-lg border-2 text-label-md font-medium transition-all duration-150"
+                v-for="t in PROPERTY_TYPES" :key="t" type="button" class="px-3 py-2 rounded-lg border-2 text-label-md font-medium transition-all duration-150"
                 :class="form.types.includes(t)
                   ? 'border-primary bg-primary-fixed/60 text-on-surface'
                   : 'border-outline-variant text-on-surface-variant hover:border-primary/50'"
+                @click="toggleType(t)"
               >{{ PROPERTY_TYPE_LABELS[t] }}</button>
             </div>
             <div class="flex gap-3">
-              <button type="button" @click="form.listingType = 'SALE'"
-                class="flex-1 py-2.5 rounded-lg text-label-md font-semibold border-2 transition-all"
-                :class="form.listingType === 'SALE' ? 'bg-primary text-on-primary border-primary' : 'text-on-surface-variant border-outline-variant hover:border-primary/60'">
+              <button
+type="button" class="flex-1 py-2.5 rounded-lg text-label-md font-semibold border-2 transition-all"
+                :class="form.listingType === 'SALE' ? 'bg-primary text-on-primary border-primary' : 'text-on-surface-variant border-outline-variant hover:border-primary/60'"
+                @click="form.listingType = 'SALE'">
                 {{ LISTING_TYPE_LABELS.SALE }}
               </button>
-              <button type="button" @click="form.listingType = 'RENT'"
-                class="flex-1 py-2.5 rounded-lg text-label-md font-semibold border-2 transition-all"
-                :class="form.listingType === 'RENT' ? 'bg-primary text-on-primary border-primary' : 'text-on-surface-variant border-outline-variant hover:border-primary/60'">
+              <button
+type="button" class="flex-1 py-2.5 rounded-lg text-label-md font-semibold border-2 transition-all"
+                :class="form.listingType === 'RENT' ? 'bg-primary text-on-primary border-primary' : 'text-on-surface-variant border-outline-variant hover:border-primary/60'"
+                @click="form.listingType = 'RENT'">
                 {{ LISTING_TYPE_LABELS.RENT }}
               </button>
             </div>
@@ -575,29 +577,31 @@ async function submit() {
             <div class="grid grid-cols-2 gap-3 mb-3">
               <div class="flex flex-col gap-1.5">
                 <label class="text-label-sm font-semibold text-on-surface-variant">Min Bütçe</label>
-                <input class="input" type="text" inputmode="numeric" :value="minBudgetDisplay"
+                <input
+class="input" type="text" inputmode="numeric" :value="minBudgetDisplay"
+                  placeholder="₺"
                   @focus="minBudgetDisplay = form.minBudget?.toString() ?? ''"
                   @input="onMinBudgetInput"
-                  @blur="onMinBudgetBlur"
-                  placeholder="₺" />
+                  @blur="onMinBudgetBlur" />
               </div>
               <div class="flex flex-col gap-1.5">
                 <label class="text-label-sm font-semibold text-on-surface-variant">Max Bütçe <span class="text-error">(+%10 esneme)</span></label>
-                <input class="input" type="text" inputmode="numeric" :value="maxBudgetDisplay"
+                <input
+class="input" type="text" inputmode="numeric" :value="maxBudgetDisplay"
+                  placeholder="₺"
                   @focus="maxBudgetDisplay = form.maxBudget?.toString() ?? ''"
                   @input="onMaxBudgetInput"
-                  @blur="onMaxBudgetBlur"
-                  placeholder="₺" />
+                  @blur="onMaxBudgetBlur" />
               </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div class="flex flex-col gap-1.5">
                 <label class="text-label-sm font-semibold text-on-surface-variant">Min m²</label>
-                <input class="input" type="number" min="0" v-model.number="form.minArea" />
+                <input v-model.number="form.minArea" class="input" type="number" min="0" />
               </div>
               <div class="flex flex-col gap-1.5">
                 <label class="text-label-sm font-semibold text-on-surface-variant">Max m²</label>
-                <input class="input" type="number" min="0" v-model.number="form.maxArea" />
+                <input v-model.number="form.maxArea" class="input" type="number" min="0" />
               </div>
             </div>
           </div>
@@ -608,9 +612,9 @@ async function submit() {
             <p class="text-label-sm text-on-surface-variant/60 mb-3">En küçük seçim alt sınır (zorunlu); yakın odalar kısmi puan alır.</p>
             <div class="flex flex-wrap gap-2">
               <button
-                v-for="r in ROOM_OPTIONS" :key="r" type="button" @click="toggleRoom(r)"
-                class="px-4 py-2 rounded-lg text-label-md border-2 font-medium transition-all"
+                v-for="r in ROOM_OPTIONS" :key="r" type="button" class="px-4 py-2 rounded-lg text-label-md border-2 font-medium transition-all"
                 :class="form.rooms.includes(r) ? 'bg-primary text-on-primary border-primary' : 'text-on-surface border-outline-variant hover:border-primary/60'"
+                @click="toggleRoom(r)"
               >{{ r }}</button>
             </div>
           </div>
@@ -621,13 +625,13 @@ async function submit() {
             <p class="text-label-sm text-on-surface-variant/60 mb-3">Bunları taşımayan portföyler elenir (sert filtre).</p>
             <div class="flex flex-wrap gap-2 mb-3">
               <button
-                v-for="f in FEATURE_PRESETS" :key="f" type="button" @click="toggleMustHave(f)"
-                class="px-3 py-1.5 rounded-full text-label-sm border-2 transition-all"
+                v-for="f in FEATURE_PRESETS" :key="f" type="button" class="px-3 py-1.5 rounded-full text-label-sm border-2 transition-all"
                 :class="form.mustHaveFeatures.includes(f) ? 'bg-error-container text-on-error-container border-error/40 font-medium' : 'text-on-surface-variant border-outline-variant hover:border-error/40'"
+                @click="toggleMustHave(f)"
               >{{ f }}</button>
             </div>
             <div class="flex gap-2">
-              <input class="input flex-1" v-model="customMust" placeholder="Özel zorunlu özellik..." @keydown.enter.prevent="addCustomMust" />
+              <input v-model="customMust" class="input flex-1" placeholder="Özel zorunlu özellik..." @keydown.enter.prevent="addCustomMust" />
               <button type="button" class="btn" @click="addCustomMust"><span class="material-symbols-outlined text-[16px]">add</span></button>
             </div>
           </div>
@@ -638,13 +642,13 @@ async function submit() {
             <p class="text-label-sm text-on-surface-variant/60 mb-3">Skoru artırır; eksikliği eler değil.</p>
             <div class="flex flex-wrap gap-2 mb-3">
               <button
-                v-for="f in FEATURE_PRESETS" :key="f" type="button" @click="toggleBonus(f)"
-                class="px-3 py-1.5 rounded-full text-label-sm border-2 transition-all"
+                v-for="f in FEATURE_PRESETS" :key="f" type="button" class="px-3 py-1.5 rounded-full text-label-sm border-2 transition-all"
                 :class="form.bonusFeatures.includes(f) ? 'bg-primary-fixed text-on-primary-fixed-variant border-primary/40 font-medium' : 'text-on-surface-variant border-outline-variant hover:border-primary/40'"
+                @click="toggleBonus(f)"
               >{{ f }}</button>
             </div>
             <div class="flex gap-2">
-              <input class="input flex-1" v-model="customBonus" placeholder="Özel bonus özellik..." @keydown.enter.prevent="addCustomBonus" />
+              <input v-model="customBonus" class="input flex-1" placeholder="Özel bonus özellik..." @keydown.enter.prevent="addCustomBonus" />
               <button type="button" class="btn" @click="addCustomBonus"><span class="material-symbols-outlined text-[16px]">add</span></button>
             </div>
           </div>
@@ -655,17 +659,17 @@ async function submit() {
             <div class="grid grid-cols-2 gap-3 mb-3">
               <div class="flex flex-col gap-1.5">
                 <label class="text-label-sm font-semibold text-on-surface-variant">Ad *</label>
-                <input class="input" v-model="form.customerName" placeholder="İsim Soyisim" />
+                <input v-model="form.customerName" class="input" placeholder="İsim Soyisim" />
               </div>
               <div class="flex flex-col gap-1.5">
                 <label class="text-label-sm font-semibold text-on-surface-variant">Telefon *</label>
-                <input class="input" v-model="form.customerPhone" placeholder="05XX XXX XX XX" />
+                <input v-model="form.customerPhone" class="input" placeholder="05XX XXX XX XX" />
               </div>
             </div>
-            <textarea class="textarea" v-model="form.note" rows="2" placeholder="Not (isteğe bağlı)" />
+            <textarea v-model="form.note" class="textarea" rows="2" placeholder="Not (isteğe bağlı)" />
             <div v-if="isEdit" class="flex items-center gap-3 mt-3">
               <label class="text-label-sm font-semibold text-on-surface-variant">Durum</label>
-              <select class="select" v-model="form.status">
+              <select v-model="form.status" class="select">
                 <option value="ACTIVE">Aktif</option>
                 <option value="CLOSED">Kapandı</option>
               </select>
@@ -677,13 +681,13 @@ async function submit() {
 
         <!-- Alt bar -->
         <div class="shrink-0 flex items-center gap-3 px-4 md:px-7 py-4 border-t border-outline-variant bg-surface">
-          <button v-if="isEdit" type="button" class="btn danger" @click="remove" :disabled="removing">
+          <button v-if="isEdit" type="button" class="btn danger" :disabled="removing" @click="remove">
             <span class="material-symbols-outlined text-[18px]">delete</span>
             {{ removing ? 'Siliniyor…' : 'Sil' }}
           </button>
           <div class="flex-1"></div>
           <button type="button" class="btn" @click="router.back()">İptal</button>
-          <button type="button" class="btn primary" @click="submit" :disabled="saving || !canSubmit">
+          <button type="button" class="btn primary" :disabled="saving || !canSubmit" @click="submit">
             <span class="material-symbols-outlined text-[18px]">{{ saving ? 'hourglass_empty' : 'save' }}</span>
             {{ saving ? 'Kaydediliyor…' : isEdit ? 'Değişiklikleri Kaydet' : 'Talebi Kaydet' }}
           </button>
@@ -769,7 +773,8 @@ async function submit() {
                       Eşleştirildi
                     </span>
                   </div>
-                  <div class="absolute bottom-3 right-3 flex flex-col items-center justify-center w-[52px] h-[52px] rounded-2xl backdrop-blur-md shadow-lg"
+                  <div
+class="absolute bottom-3 right-3 flex flex-col items-center justify-center w-[52px] h-[52px] rounded-2xl backdrop-blur-md shadow-lg"
                     :class="scoreBadgeBg(r.score)">
                     <span class="text-[22px] font-black leading-none text-white">{{ r.score }}</span>
                     <span class="text-[9px] font-semibold text-white/70 uppercase tracking-wide leading-none mt-0.5">puan</span>
@@ -788,14 +793,16 @@ async function submit() {
                     <span class="flex items-center gap-0.5 font-medium"><span class="material-symbols-outlined text-[12px]">door_open</span>{{ r.portfolio.roomCount }}</span>
                   </div>
                   <div class="flex items-center justify-between gap-2 mt-auto pt-1">
-                    <a :href="`tel:${r.portfolio.ownerPhone}`" @click.stop
-                      class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary text-on-primary text-[12px] font-semibold hover:opacity-90 active:scale-[0.98] transition-all">
+                    <a
+:href="`tel:${r.portfolio.ownerPhone}`" class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary text-on-primary text-[12px] font-semibold hover:opacity-90 active:scale-[0.98] transition-all"
+                      @click.stop>
                       <span class="material-symbols-outlined text-[14px]">call</span>
                       {{ r.portfolio.ownerName }}
                     </a>
-                    <button type="button" @click.stop="togglePin(r.portfolio.id)"
-                      class="p-2 rounded-xl bg-error-container text-on-error-container hover:opacity-80 transition-all"
-                      title="Eşleştirmeyi kaldır">
+                    <button
+type="button" class="p-2 rounded-xl bg-error-container text-on-error-container hover:opacity-80 transition-all"
+                      title="Eşleştirmeyi kaldır"
+                      @click.stop="togglePin(r.portfolio.id)">
                       <span class="material-symbols-outlined text-[16px]">bookmark_remove</span>
                     </button>
                   </div>

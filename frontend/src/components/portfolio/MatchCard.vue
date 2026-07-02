@@ -3,7 +3,7 @@ import { resolveImgUrl } from '@/utils/image';
 import { PROPERTY_TYPE_LABELS, LISTING_TYPE_LABELS } from '@/types/portfolio';
 import { DIMENSION_LABELS, type DimensionKey, type ScoredPortfolio } from '@/types/matching';
 
-const props = withDefaults(
+withDefaults(
   defineProps<{
     scored: ScoredPortfolio;
     /** Bu portföy talebe eşleştirilmiş mi (görsel vurgu). */
@@ -66,9 +66,6 @@ function dimTextColor(score: number) {
 <template>
   <div
     :draggable="draggable"
-    @dragstart="emit('dragstart', scored.portfolio.id)"
-    @dragend="emit('dragend')"
-    @click="emit('preview', scored.portfolio, $event)"
     class="rounded-2xl overflow-hidden border flex flex-col hover:-translate-y-0.5 transition-all duration-200 select-none cursor-pointer"
     :class="[
       pinned
@@ -76,6 +73,9 @@ function dimTextColor(score: number) {
         : 'border border-outline-variant/50 bg-white shadow-sm hover:shadow-md',
       justPinned ? 'animate-pin-pop' : '',
     ]"
+    @dragstart="emit('dragstart', scored.portfolio.id)"
+    @dragend="emit('dragend')"
+    @click="emit('preview', scored.portfolio, $event)"
   >
     <!-- Görsel -->
     <div class="relative w-full h-52 bg-surface-container shrink-0">
@@ -113,12 +113,12 @@ function dimTextColor(score: number) {
         <button
           v-if="canPin"
           type="button"
-          @click.stop="emit('toggle-pin', scored.portfolio.id)"
           class="flex items-center justify-center w-9 h-9 rounded-xl backdrop-blur-md shadow-md transition-all duration-150"
           :class="pinned
             ? 'bg-primary text-on-primary scale-110'
             : 'bg-black/40 text-white hover:bg-primary hover:text-on-primary hover:scale-110'"
           :title="pinned ? 'Eşleştirmeyi kaldır' : 'Bu talebe eşleştir'"
+          @click.stop="emit('toggle-pin', scored.portfolio.id)"
         >
           <span class="material-symbols-outlined text-[18px]">{{ pinned ? 'bookmark' : 'bookmark_add' }}</span>
         </button>
@@ -216,8 +216,8 @@ function dimTextColor(score: number) {
       <a
         v-if="!hideContact"
         :href="`tel:${scored.portfolio.ownerPhone}`"
-        @click.stop
         class="mt-auto flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary text-on-primary text-[12px] font-semibold hover:opacity-90 active:scale-[0.98] transition-all"
+        @click.stop
       >
         <span class="material-symbols-outlined text-[14px]">call</span>
         {{ scored.portfolio.ownerName }}

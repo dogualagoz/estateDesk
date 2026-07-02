@@ -135,8 +135,8 @@ async function submit() {
               <label for="fullName">Ad Soyad</label>
               <input
                 id="fullName"
-                class="input h-12"
                 v-model="fullName"
+                class="input h-12"
                 placeholder="Adınız Soyadınız"
                 required
                 autofocus
@@ -148,9 +148,9 @@ async function submit() {
               <label for="email">E-posta</label>
               <input
                 id="email"
+                v-model="email"
                 class="input h-12"
                 type="email"
-                v-model="email"
                 placeholder="ornek@example.com"
                 required
                 :disabled="submitting"
@@ -160,9 +160,9 @@ async function submit() {
               <label for="password">Şifre</label>
               <input
                 id="password"
+                v-model="password"
                 class="input h-12"
                 type="password"
-                v-model="password"
                 placeholder="En az 8 karakter"
                 required
                 minlength="8"

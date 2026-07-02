@@ -1,5 +1,5 @@
 import { api } from './api';
-import type { PropertyType, ListingType, Portfolio } from '@/types/portfolio';
+import type { PropertyType, ListingType } from '@/types/portfolio';
 import type { DemandStatus, Demand } from '@/types/demand';
 import type { ScoredPortfolio } from '@/types/matching';
 

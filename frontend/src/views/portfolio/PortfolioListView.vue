@@ -137,34 +137,34 @@ onMounted(load);
       <div class="flex flex-wrap gap-stack-md">
         <div class="field">
           <label>Tür</label>
-          <select class="select" v-model="filters.type">
+          <select v-model="filters.type" class="select">
             <option :value="undefined">Hepsi</option>
             <option v-for="t in PROPERTY_TYPES" :key="t" :value="t">{{ PROPERTY_TYPE_LABELS[t] }}</option>
           </select>
         </div>
         <div class="field">
           <label>İl</label>
-          <input class="input" v-model="filters.city" placeholder="İstanbul" />
+          <input v-model="filters.city" class="input" placeholder="İstanbul" />
         </div>
         <div class="field">
           <label>İlçe</label>
-          <input class="input" v-model="filters.district" placeholder="Kadıköy" />
+          <input v-model="filters.district" class="input" placeholder="Kadıköy" />
         </div>
         <div class="field">
           <label>Oda</label>
-          <input class="input" v-model="filters.roomCount" placeholder="2+1" />
+          <input v-model="filters.roomCount" class="input" placeholder="2+1" />
         </div>
         <div class="field">
           <label>Min fiyat</label>
-          <input class="input" type="number" v-model.number="filters.minPrice" />
+          <input v-model.number="filters.minPrice" class="input" type="number" />
         </div>
         <div class="field">
           <label>Max fiyat</label>
-          <input class="input" type="number" v-model.number="filters.maxPrice" />
+          <input v-model.number="filters.maxPrice" class="input" type="number" />
         </div>
         <div class="field">
           <label>Durum</label>
-          <select class="select" v-model="filters.visibility">
+          <select v-model="filters.visibility" class="select">
             <option :value="undefined">Hepsi</option>
             <option value="PUBLIC">Açık</option>
             <option value="HIDDEN">Gizli</option>
@@ -257,15 +257,15 @@ onMounted(load);
             <div class="flex gap-1">
               <button
                 class="btn ghost p-2"
-                @click.stop="router.push(`/portfolio/${p.id}`)"
                 title="Detay"
+                @click.stop="router.push(`/portfolio/${p.id}`)"
               >
                 <span class="material-symbols-outlined text-[18px]">open_in_new</span>
               </button>
               <button
                 class="btn ghost danger p-2"
-                @click.stop="remove(p)"
                 title="Sil"
+                @click.stop="remove(p)"
               >
                 <span class="material-symbols-outlined text-[18px]">delete</span>
               </button>
@@ -280,8 +280,8 @@ onMounted(load);
       <button
         class="btn p-2"
         :disabled="(filters.page ?? 1) <= 1"
-        @click="goToPage((filters.page ?? 1) - 1)"
         title="Önceki sayfa"
+        @click="goToPage((filters.page ?? 1) - 1)"
       >
         <span class="material-symbols-outlined text-[18px]">chevron_left</span>
       </button>
@@ -303,8 +303,8 @@ onMounted(load);
       <button
         class="btn p-2"
         :disabled="(filters.page ?? 1) >= totalPages"
-        @click="goToPage((filters.page ?? 1) + 1)"
         title="Sonraki sayfa"
+        @click="goToPage((filters.page ?? 1) + 1)"
       >
         <span class="material-symbols-outlined text-[18px]">chevron_right</span>
       </button>
