@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /portfolio
+Disallow: /demand
+Disallow: /office
+Disallow: /users
+Disallow: /search
+Disallow: /onboarding
+Disallow: /invite/
+Disallow: /defter/
+
+Sitemap: https://emlakdefter.com/sitemap.xml

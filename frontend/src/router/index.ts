@@ -3,55 +3,73 @@ import { useAuthStore } from '@/stores/auth';
 // Süper admin paneli — tek bağlantı noktası bu spread (bkz. src/admin/README.md)
 import { adminRoutes } from '@/admin/routes';
 
+// Route meta alanlarının tip tanımı — `to.meta.title` gibi erişimler tip güvenli olur
+declare module 'vue-router' {
+  interface RouteMeta {
+    /** Sekme başlığı: "<title> · emlakdefter". Boşsa varsayılan SEO başlığı kullanılır. */
+    title?: string;
+    /** Auth gerektirmeyen sayfa */
+    public?: boolean;
+    /** AppShell (sidebar/topbar) gizlenir */
+    bare?: boolean;
+    /** Demo oturumuyla gezilebilen sayfa */
+    demo?: boolean;
+    /** Yalnızca ofis admini */
+    adminOnly?: boolean;
+    /** Yalnızca süper admin (/yonetim paneli) */
+    superAdminOnly?: boolean;
+  }
+}
+
 const routes: RouteRecordRaw[] = [
   ...adminRoutes,
   {
     path: '/login',
     name: 'login',
     component: () => import('@/views/LoginView.vue'),
-    meta: { public: true },
+    meta: { title: 'Giriş', public: true },
   },
   {
     path: '/register',
     name: 'register',
     component: () => import('@/views/RegisterView.vue'),
-    meta: { public: true },
+    meta: { title: 'Kayıt Ol', public: true },
   },
   {
     path: '/invite/:token',
     name: 'invite.preview',
     component: () => import('@/views/InvitePreviewView.vue'),
-    meta: { public: true },
+    meta: { title: 'Davet', public: true },
   },
   {
     path: '/invite/:token/register',
     name: 'invite.register',
     component: () => import('@/views/InviteRegisterView.vue'),
-    meta: { public: true },
+    meta: { title: 'Davetle Kayıt', public: true },
   },
   {
     path: '/invite/:token/accept',
     name: 'invite.accept',
     component: () => import('@/views/InviteAcceptView.vue'),
-    meta: { public: true },
+    meta: { title: 'Davet', public: true },
   },
   {
     path: '/invite/success',
     name: 'invite.success',
     component: () => import('@/views/InviteSuccessView.vue'),
-    meta: { public: true },
+    meta: { title: 'Davet Tamamlandı', public: true },
   },
   {
     path: '/defter/:token',
     name: 'shared.collection',
     component: () => import('@/views/SharedCollectionView.vue'),
-    meta: { public: true },
+    meta: { title: 'Paylaşılan Defter', public: true },
   },
   {
     path: '/onboarding',
     name: 'onboarding',
     component: () => import('@/views/OnboardingView.vue'),
-    meta: { bare: true },
+    meta: { title: 'Ofis Kurulumu', bare: true },
   },
   {
     path: '/',
@@ -63,81 +81,92 @@ const routes: RouteRecordRaw[] = [
     path: '/dashboard',
     name: 'dashboard',
     component: () => import('@/views/DashboardView.vue'),
+    meta: { title: 'Panel' },
   },
   // ── Demo: geçici, salt-okunur oturumla aynı ekranlar ──
   {
     path: '/demo',
     name: 'demo',
     component: () => import('@/views/DashboardView.vue'),
-    meta: { demo: true },
+    meta: { title: 'Demo', demo: true },
   },
   {
     path: '/demo/portfolio',
     name: 'demo.portfolio',
     component: () => import('@/views/portfolio/PortfolioListView.vue'),
-    meta: { demo: true },
+    meta: { title: 'Demo · Portföyler', demo: true },
   },
   {
     path: '/demo/demand',
     name: 'demo.demand',
     component: () => import('@/views/demand/DemandListView.vue'),
-    meta: { demo: true },
+    meta: { title: 'Demo · Talepler', demo: true },
   },
   {
     path: '/search',
     name: 'search',
     component: () => import('@/views/SearchView.vue'),
+    meta: { title: 'Arama' },
   },
   {
     path: '/portfolio',
     name: 'portfolio.list',
     component: () => import('@/views/portfolio/PortfolioListView.vue'),
+    meta: { title: 'Portföyler' },
   },
   {
     path: '/portfolio/new',
     name: 'portfolio.new',
     component: () => import('@/views/portfolio/PortfolioFormView.vue'),
+    meta: { title: 'Yeni Portföy' },
   },
   {
     path: '/portfolio/:id',
     name: 'portfolio.detail',
     component: () => import('@/views/portfolio/PortfolioDetailView.vue'),
+    meta: { title: 'Portföy' },
   },
   {
     path: '/portfolio/:id/edit',
     name: 'portfolio.edit',
     component: () => import('@/views/portfolio/PortfolioFormView.vue'),
+    meta: { title: 'Portföy Düzenle' },
   },
   {
     path: '/demand',
     name: 'demand.list',
     component: () => import('@/views/demand/DemandListView.vue'),
+    meta: { title: 'Talepler' },
   },
   {
     path: '/demand/new',
     name: 'demand.new',
     component: () => import('@/views/demand/DemandFormView.vue'),
+    meta: { title: 'Yeni Talep' },
   },
   {
     path: '/demand/:id',
     name: 'demand.detail',
     component: () => import('@/views/demand/DemandFormView.vue'),
+    meta: { title: 'Talep' },
   },
   {
     path: '/office',
     name: 'office',
     component: () => import('@/views/office/OfficeView.vue'),
+    meta: { title: 'Ofisim' },
   },
   {
     path: '/users/:id',
     name: 'profile',
     component: () => import('@/views/users/ProfileView.vue'),
+    meta: { title: 'Profil' },
   },
   {
     path: '/users',
     name: 'users',
     component: () => import('@/views/users/UsersView.vue'),
-    meta: { adminOnly: true },
+    meta: { title: 'Kullanıcılar', adminOnly: true },
   },
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ];
@@ -227,6 +256,13 @@ router.beforeEach(async (to) => {
   }
 
   return true;
+});
+
+// ── Dinamik sekme başlığı ──
+// Landing gibi title'sız sayfalarda tam SEO başlığı; diğerlerinde "Sayfa · emlakdefter"
+const DEFAULT_TITLE = 'emlakdefter — Emlak Ofisleri için Portföy ve Talep Yönetimi';
+router.afterEach((to) => {
+  document.title = to.meta.title ? `${to.meta.title} · emlakdefter` : DEFAULT_TITLE;
 });
 
 export default router;
