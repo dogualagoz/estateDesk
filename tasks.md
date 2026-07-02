@@ -21,10 +21,11 @@ Detaylı plan: `~/.claude/plans/plan-senle-imdi-genel-wise-liskov.md`
 
 ## FAZ 2 — Hedefli Refactor
 - [x] InviteService ayrıştırma (office.service 569 → ~260 satır; spec de taşındı) — **Commit 3**
-- [ ] useAsync + useCurrencyInput + LocationSelect ortak altyapısı
-- [ ] DemandFormView bölme (874 → ~250)
-- [ ] PortfolioFormView bölme (793 → ~250)
-- [ ] OfficeView bölme (713 → ~150) — **Commit 4**
+- [x] useAsync + useCurrencyInput + LocationSelect ortak altyapısı
+- [x] DemandFormView bölme (874 → 335) + useDemandMatching composable
+- [x] PortfolioFormView bölme (802 → 196) + usePortfolioImages composable
+- [x] OfficeView bölme (713 → 139; 3 alt bileşen)
+- [x] Bonus bug fix: edit modunda ilçe/mahalle seçimlerinin silinmesi (kaskad watcher) giderildi — **Commit 4**
 - [ ] Search trigram indeksi (f_unaccent + GIN)
 - [ ] Türkçe yorum eşitleme + logo1.svg temizliği — **Commit 5**
 
