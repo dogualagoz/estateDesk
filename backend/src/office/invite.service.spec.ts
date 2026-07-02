@@ -1,5 +1,5 @@
 import { ForbiddenException } from '@nestjs/common';
-import { OfficeService } from './office.service';
+import { InviteService } from './invite.service';
 import { AlreadyInOfficeException } from './exceptions/already-in-office.exception';
 
 function makeService(prismaOverrides: Record<string, any> = {}) {
@@ -12,8 +12,9 @@ function makeService(prismaOverrides: Record<string, any> = {}) {
   } as any;
   const auth = { buildSession: jest.fn() } as any;
   const config = { get: jest.fn() } as any;
-  const service = new OfficeService(prisma, auth, config);
-  return { service, prisma, auth, config };
+  const office = { getOfficeSummary: jest.fn().mockResolvedValue(officeSummaryStub) } as any;
+  const service = new InviteService(prisma, auth, config, office);
+  return { service, prisma, auth, config, office };
 }
 
 const futureDate = () => new Date(Date.now() + 60 * 60 * 1000);
@@ -26,7 +27,7 @@ const officeSummaryStub = {
   _count: { members: 1, portfolios: 0, demands: 0 },
 };
 
-describe('OfficeService.acceptInvite', () => {
+describe('InviteService.acceptInvite', () => {
   it('davet süresi dolmuşsa INVITE_INVALID / EXPIRED fırlatır', async () => {
     const { service, prisma } = makeService();
     prisma.invite.findUnique.mockResolvedValue({
@@ -91,7 +92,7 @@ describe('OfficeService.acceptInvite', () => {
   });
 
   it('kişisel davette aynı e-posta (case-insensitive) kabul edilir', async () => {
-    const { service, prisma } = makeService();
+    const { service, prisma, office } = makeService();
     prisma.invite.findUnique.mockResolvedValue({
       id: 'inv1',
       officeId: 'office-1',
@@ -99,11 +100,11 @@ describe('OfficeService.acceptInvite', () => {
       status: 'PENDING',
       expiresAt: futureDate(),
     });
-    prisma.office.findUnique.mockResolvedValue(officeSummaryStub);
     const user = { id: 'u1', email: 'Invited@X.com', officeId: null } as any;
 
     await expect(service.acceptInvite(user, 'tok')).resolves.toBeDefined();
     expect(prisma.$transaction).toHaveBeenCalled();
+    expect(office.getOfficeSummary).toHaveBeenCalledWith('office-1');
   });
 
   it('paylaşılan (email:null) davet herhangi bir kullanıcı tarafından kabul edilir', async () => {
@@ -115,14 +116,13 @@ describe('OfficeService.acceptInvite', () => {
       status: 'PENDING',
       expiresAt: futureDate(),
     });
-    prisma.office.findUnique.mockResolvedValue(officeSummaryStub);
     const user = { id: 'u1', email: 'anyone@x.com', officeId: null } as any;
 
     await expect(service.acceptInvite(user, 'tok')).resolves.toBeDefined();
   });
 });
 
-describe('OfficeService.previewInvite', () => {
+describe('InviteService.previewInvite', () => {
   it.each([
     ['ACCEPTED', futureDate(), 'ACCEPTED'],
     ['REVOKED', futureDate(), 'REVOKED'],

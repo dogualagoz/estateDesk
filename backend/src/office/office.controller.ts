@@ -12,6 +12,7 @@ import {
 import type { Response } from 'express';
 import { Role } from '@prisma/client';
 import { OfficeService } from './office.service';
+import { InviteService } from './invite.service';
 import { CreateOfficeDto } from './dto/create-office.dto';
 import { CreateInviteDto } from './dto/create-invite.dto';
 import { UpdateOfficeDto } from './dto/update-office.dto';
@@ -22,7 +23,10 @@ import { CurrentUser, AuthUser } from '../auth/decorators/current-user.decorator
 
 @Controller('offices')
 export class OfficeController {
-  constructor(private readonly office: OfficeService) {}
+  constructor(
+    private readonly office: OfficeService,
+    private readonly invites: InviteService,
+  ) {}
 
   @Post()
   create(@CurrentUser() user: AuthUser, @Body() dto: CreateOfficeDto) {
@@ -80,31 +84,31 @@ export class OfficeController {
   @Roles(Role.ADMIN)
   @Get('invite-link')
   getInviteLink(@CurrentUser() user: AuthUser) {
-    return this.office.getInviteLink(user);
+    return this.invites.getInviteLink(user);
   }
 
   @Roles(Role.ADMIN)
   @Post('invite-link/reset')
   resetInviteLink(@CurrentUser() user: AuthUser) {
-    return this.office.resetInviteLink(user);
+    return this.invites.resetInviteLink(user);
   }
 
   @Roles(Role.ADMIN)
   @Post('invites')
   createInvite(@CurrentUser() user: AuthUser, @Body() dto: CreateInviteDto) {
-    return this.office.createInvite(user, dto);
+    return this.invites.createInvite(user, dto);
   }
 
   @Roles(Role.ADMIN)
   @Get('invites')
   listInvites(@CurrentUser() user: AuthUser) {
-    return this.office.listInvites(user);
+    return this.invites.listInvites(user);
   }
 
   @Roles(Role.ADMIN)
   @Delete('invites/:id')
   revokeInvite(@CurrentUser() user: AuthUser, @Param('id') id: string) {
-    return this.office.revokeInvite(user, id);
+    return this.invites.revokeInvite(user, id);
   }
 
   @Roles(Role.ADMIN)

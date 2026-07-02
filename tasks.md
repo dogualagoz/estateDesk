@@ -17,10 +17,10 @@ Detaylı plan: `~/.claude/plans/plan-senle-imdi-genel-wise-liskov.md`
 - [x] nginx güvenlik başlıkları + limit_req (20r/s, burst 40, 429) — prod stack'te doğrulandı
 - [x] Prod compose healthcheck'ler + non-root backend Dockerfile (whoami → node)
 - [x] npm audit: backend babel fix'lendi; kalan 13 moderate = NestJS 11 major (ROADMAP), frontend esbuild = Vite 8 major, dev-only (ROADMAP)
-- [ ] **Commit 2**
+- [x] **Commit 2** (`da4059a`)
 
 ## FAZ 2 — Hedefli Refactor
-- [ ] InviteService ayrıştırma (office.service 564 → ~250 satır) — **Commit 3**
+- [x] InviteService ayrıştırma (office.service 569 → ~260 satır; spec de taşındı) — **Commit 3**
 - [ ] useAsync + useCurrencyInput + LocationSelect ortak altyapısı
 - [ ] DemandFormView bölme (874 → ~250)
 - [ ] PortfolioFormView bölme (793 → ~250)
