@@ -11,6 +11,8 @@ import { AuthUser } from '../auth/decorators/current-user.decorator';
 import { requireOfficeId } from '../common/office.util';
 import { attachMemberCounts } from '../common/member-counts.util';
 import { BCRYPT_ROUNDS } from '../common/security.constants';
+import { AuditService } from '../audit/audit.service';
+import { AUDIT_ACTIONS } from '../audit/audit-actions';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -27,7 +29,10 @@ const PUBLIC_FIELDS = {
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private audit: AuditService,
+  ) {}
 
   /** Aynı ofisteki üyeleri, portföy/talep sayılarıyla birlikte döner. */
   async list(user: AuthUser) {
@@ -57,7 +62,7 @@ export class UsersService {
     const exists = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (exists) throw new ConflictException('Email already in use');
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
-    return this.prisma.user.create({
+    const created = await this.prisma.user.create({
       data: {
         email: dto.email,
         fullName: dto.fullName,
@@ -68,6 +73,16 @@ export class UsersService {
       },
       select: PUBLIC_FIELDS,
     });
+
+    this.audit.log({
+      action: AUDIT_ACTIONS.USER_CREATED,
+      userId: user.id,
+      officeId,
+      targetType: 'user',
+      targetId: created.id,
+    });
+
+    return created;
   }
 
   async update(user: AuthUser, id: string, dto: UpdateUserDto) {
@@ -106,11 +121,21 @@ export class UsersService {
     const target = await this.prisma.user.findFirst({ where: { id, officeId } });
     if (!target) throw new NotFoundException('User not found');
     await this.assertCanDeactivate(user, officeId, target.id);
-    return this.prisma.user.update({
+    const updated = await this.prisma.user.update({
       where: { id },
       data: { isActive: false },
       select: PUBLIC_FIELDS,
     });
+
+    this.audit.log({
+      action: AUDIT_ACTIONS.USER_DEACTIVATED,
+      userId: user.id,
+      officeId,
+      targetType: 'user',
+      targetId: id,
+    });
+
+    return updated;
   }
 
   private async isOfficeOwner(officeId: string, userId: string) {

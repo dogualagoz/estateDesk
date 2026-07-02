@@ -30,8 +30,8 @@ Detaylı plan: `~/.claude/plans/plan-senle-imdi-genel-wise-liskov.md`
 - [x] Türkçe yorum eşitleme (portfolio/demand/demand-match/dashboard servisleri) + logo1.svg temizliği — **Commit 5**
 
 ## FAZ 3 — Süper Admin Paneli + Analytics
-- [ ] Prisma: SUPERADMIN rolü + AuditLog + RequestLog + retention cron
-- [ ] `audit` modülü (fire-and-forget log + buffered request writer) — **Commit 6**
+- [x] Prisma: SUPERADMIN rolü + AuditLog + RequestLog + retention cron (04:00, env ile ayarlanabilir)
+- [x] `audit` modülü (fire-and-forget log + 5sn/50 kayıt buffered request writer) + auth/office/invite/users kancaları + POST /auth/logout — canlıda doğrulandı — **Commit 6**
 - [ ] `admin` backend modülü (users/offices/logs/analytics/system) + süper admin seed — **Commit 7**
 - [ ] Frontend `/yonetim` paneli (izole src/admin/, 7 view, Chart.js) — **Commit 8**
 

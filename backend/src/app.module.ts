@@ -1,6 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
@@ -16,6 +17,7 @@ import { MatchingModule } from './matching/matching.module';
 import { DemandMatchModule } from './demand-match/demand-match.module';
 import { DemandShareModule } from './demand-share/demand-share.module';
 import { HealthModule } from './health/health.module';
+import { AuditModule } from './audit/audit.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { DemoReadOnlyGuard } from './common/demo-read-only.guard';
@@ -25,6 +27,8 @@ import { uploadsDir } from './common/uploads.util';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    // Cron görevleri (log retention temizliği) için zamanlayıcı altyapısı
+    ScheduleModule.forRoot(),
     // Genel istek limiti; auth endpoint'lerinde daha sıkı limit var (@Throttle)
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
     ServeStaticModule.forRoot({
@@ -44,6 +48,7 @@ import { uploadsDir } from './common/uploads.util';
     DemandMatchModule,
     DemandShareModule,
     HealthModule,
+    AuditModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

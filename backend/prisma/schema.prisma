@@ -8,8 +8,9 @@ datasource db {
 }
 
 enum Role {
-  ADMIN
-  AGENT
+  ADMIN      // Ofis yöneticisi — yetkileri kendi ofisiyle sınırlıdır
+  AGENT      // Danışman
+  SUPERADMIN // Platform sahibi — ofisten bağımsız (officeId null), /admin uçlarına erişir
 }
 
 enum PropertyType {
@@ -226,4 +227,48 @@ model DemandShare {
 
   @@index([demandId])
   @@index([token])
+}
+
+// ── Denetim ve gözlemlenebilirlik (admin paneli) ──────────────────────────
+// Bilinçli olarak FK yok: kullanıcı/ofis silinse bile log kaydı kalmalıdır.
+
+// Güvenlik ve iş olayları denetim kaydı — kim, neyi, ne zaman yaptı.
+// `action` enum değil String: yeni olay türü eklemek migration gerektirmez;
+// geçerli değerler src/audit/audit-actions.ts sabitlerinde toplanır.
+model AuditLog {
+  id         String   @id @default(cuid())
+  action     String
+  userId     String?
+  officeId   String?
+  targetType String? // 'user' | 'office' | 'invite' | 'demand' | ...
+  targetId   String?
+  ip         String?
+  userAgent  String?
+  metadata   Json?
+  requestId  String? // RequestLog / HTTP yanıtlarındaki x-request-id ile korelasyon
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([action, createdAt])
+  @@index([userId, createdAt])
+  @@index([officeId, createdAt])
+}
+
+// HTTP istek günlüğü — stdout'a ek olarak admin panelde sorgulanabilir kalıcı kayıt.
+// Retention: varsayılan 30 gün (log-retention.service.ts cron'u temizler).
+model RequestLog {
+  id         String   @id @default(cuid())
+  requestId  String
+  method     String
+  path       String
+  statusCode Int
+  durationMs Int
+  userId     String?
+  officeId   String?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([statusCode, createdAt])
+  @@index([userId, createdAt])
 }

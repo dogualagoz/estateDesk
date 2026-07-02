@@ -14,6 +14,8 @@ import { AuthUser } from '../auth/decorators/current-user.decorator';
 import { requireOfficeId } from '../common/office.util';
 import { generateSecureToken } from '../common/token.util';
 import { BCRYPT_ROUNDS } from '../common/security.constants';
+import { AuditService } from '../audit/audit.service';
+import { AUDIT_ACTIONS } from '../audit/audit-actions';
 import { CreateInviteDto } from './dto/create-invite.dto';
 import { AlreadyInOfficeException } from './exceptions/already-in-office.exception';
 import { OfficeService } from './office.service';
@@ -37,6 +39,7 @@ export class InviteService {
     private auth: AuthService,
     private config: ConfigService,
     private office: OfficeService,
+    private audit: AuditService,
   ) {}
 
   /** Yöneticinin davet linki üretmesi (email isteğe bağlı). */
@@ -72,6 +75,15 @@ export class InviteService {
       },
     });
 
+    this.audit.log({
+      action: AUDIT_ACTIONS.INVITE_CREATED,
+      userId: user.id,
+      officeId,
+      targetType: 'invite',
+      targetId: invite.id,
+      metadata: { email: email ?? null },
+    });
+
     return this.toInviteResponse(invite);
   }
 
@@ -89,6 +101,15 @@ export class InviteService {
     const invite = await this.prisma.invite.findFirst({ where: { id, officeId } });
     if (!invite) throw new NotFoundException('Davet bulunamadı');
     await this.prisma.invite.update({ where: { id }, data: { status: 'REVOKED' } });
+
+    this.audit.log({
+      action: AUDIT_ACTIONS.INVITE_REVOKED,
+      userId: user.id,
+      officeId,
+      targetType: 'invite',
+      targetId: id,
+    });
+
     return { success: true };
   }
 
@@ -230,6 +251,15 @@ export class InviteService {
           ]),
     ]);
 
+    this.audit.log({
+      action: AUDIT_ACTIONS.INVITE_ACCEPTED,
+      userId: user.id,
+      officeId: invite.officeId,
+      targetType: 'invite',
+      targetId: invite.id,
+      metadata: { shared: isShared },
+    });
+
     return this.office.getOfficeSummary(invite.officeId);
   }
 
@@ -270,7 +300,7 @@ export class InviteService {
     // Kişiye özel davet ise kabul edilince tükenir (ACCEPTED).
     const isShared = invite.email === null;
 
-    return this.prisma.$transaction(async (tx) => {
+    const session = await this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
           email,
@@ -290,6 +320,17 @@ export class InviteService {
 
       return this.auth.buildSession(user);
     });
+
+    this.audit.log({
+      action: AUDIT_ACTIONS.INVITE_REGISTER,
+      userId: session.user.id,
+      officeId: invite.officeId,
+      targetType: 'invite',
+      targetId: invite.id,
+      metadata: { shared: isShared },
+    });
+
+    return session;
   }
 
   /** Davetin PENDING/süre dolmamış dışındaki durumunu ayırt eder (UI'da farklı mesajlar için). */

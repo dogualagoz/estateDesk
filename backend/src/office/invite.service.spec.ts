@@ -13,8 +13,9 @@ function makeService(prismaOverrides: Record<string, any> = {}) {
   const auth = { buildSession: jest.fn() } as any;
   const config = { get: jest.fn() } as any;
   const office = { getOfficeSummary: jest.fn().mockResolvedValue(officeSummaryStub) } as any;
-  const service = new InviteService(prisma, auth, config, office);
-  return { service, prisma, auth, config, office };
+  const audit = { log: jest.fn() } as any;
+  const service = new InviteService(prisma, auth, config, office, audit);
+  return { service, prisma, auth, config, office, audit };
 }
 
 const futureDate = () => new Date(Date.now() + 60 * 60 * 1000);

@@ -9,6 +9,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
 import { requireOfficeId } from '../common/office.util';
 import { attachMemberCounts } from '../common/member-counts.util';
+import { AuditService } from '../audit/audit.service';
+import { AUDIT_ACTIONS } from '../audit/audit-actions';
 import { CreateOfficeDto } from './dto/create-office.dto';
 import { UpdateOfficeDto } from './dto/update-office.dto';
 import { ExportDataset } from './dto/export-query.dto';
@@ -26,7 +28,10 @@ import {
  */
 @Injectable()
 export class OfficeService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private audit: AuditService,
+  ) {}
 
   /** Yeni ofis kurar; kurucu ofis yöneticisi (ADMIN) ve üyesi olur. */
   async createOffice(user: AuthUser, dto: CreateOfficeDto) {
@@ -41,6 +46,15 @@ export class OfficeService {
         data: { officeId: created.id, role: Role.ADMIN },
       });
       return created;
+    });
+
+    this.audit.log({
+      action: AUDIT_ACTIONS.OFFICE_CREATED,
+      userId: user.id,
+      officeId: office.id,
+      targetType: 'office',
+      targetId: office.id,
+      metadata: { name: office.name },
     });
 
     return this.getOfficeSummary(office.id);
@@ -86,6 +100,16 @@ export class OfficeService {
     }
 
     await this.prisma.user.update({ where: { id: memberId }, data: { role } });
+
+    this.audit.log({
+      action: AUDIT_ACTIONS.MEMBER_ROLE_CHANGED,
+      userId: user.id,
+      officeId,
+      targetType: 'user',
+      targetId: memberId,
+      metadata: { newRole: role },
+    });
+
     return { success: true };
   }
 
@@ -147,6 +171,14 @@ export class OfficeService {
       data: { officeId: null },
     });
 
+    this.audit.log({
+      action: AUDIT_ACTIONS.MEMBER_REMOVED,
+      userId: user.id,
+      officeId,
+      targetType: 'user',
+      targetId: memberId,
+    });
+
     return { success: true };
   }
 
@@ -166,6 +198,14 @@ export class OfficeService {
     await this.prisma.user.update({
       where: { id: user.id },
       data: { officeId: null },
+    });
+
+    this.audit.log({
+      action: AUDIT_ACTIONS.MEMBER_LEFT,
+      userId: user.id,
+      officeId,
+      targetType: 'office',
+      targetId: officeId,
     });
 
     return { success: true };
@@ -221,6 +261,13 @@ export class OfficeService {
 
     const stamp = new Date().toISOString().slice(0, 10);
     const baseName = `EstateDesk_${label}_${memberSlug}_${stamp}`;
+
+    this.audit.log({
+      action: AUDIT_ACTIONS.EXPORT_RUN,
+      userId: user.id,
+      officeId,
+      metadata: { dataset, format, memberId: memberId ?? null, rowCount: rows.length },
+    });
 
     if (format === 'csv') {
       return {
