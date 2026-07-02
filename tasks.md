@@ -26,8 +26,8 @@ Detaylı plan: `~/.claude/plans/plan-senle-imdi-genel-wise-liskov.md`
 - [x] PortfolioFormView bölme (802 → 196) + usePortfolioImages composable
 - [x] OfficeView bölme (713 → 139; 3 alt bileşen)
 - [x] Bonus bug fix: edit modunda ilçe/mahalle seçimlerinin silinmesi (kaskad watcher) giderildi — **Commit 4**
-- [ ] Search trigram indeksi (f_unaccent + GIN)
-- [ ] Türkçe yorum eşitleme + logo1.svg temizliği — **Commit 5**
+- [x] Search trigram indeksi (f_unaccent/f_array_to_string IMMUTABLE sarmalayıcılar + 2 GIN indeks; EXPLAIN ile Bitmap Index Scan doğrulandı)
+- [x] Türkçe yorum eşitleme (portfolio/demand/demand-match/dashboard servisleri) + logo1.svg temizliği — **Commit 5**
 
 ## FAZ 3 — Süper Admin Paneli + Analytics
 - [ ] Prisma: SUPERADMIN rolü + AuditLog + RequestLog + retention cron

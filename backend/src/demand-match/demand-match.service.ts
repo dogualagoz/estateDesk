@@ -9,10 +9,16 @@ import {
 } from '../matching/matching.scoring';
 import { demandToCriteria, type ScoredPortfolio } from '../matching/matching.service';
 
+/**
+ * Talep ↔ portföy "eşleştirme" (pin) kayıtları. Danışman, canlı eşleşme
+ * listesinden bir portföyü talebe sabitler; pin kalıcıdır ve paylaşılan
+ * defterin PINNED modunda ziyaretçiye gösterilen listeyi belirler.
+ */
 @Injectable()
 export class DemandMatchService {
   constructor(private prisma: PrismaService) {}
 
+  /** Portföyü talebe sabitler (idempotent — zaten pinliyse dokunmaz). */
   async pin(user: AuthUser, demandId: string, portfolioId: string) {
     const officeId = requireOfficeId(user);
 

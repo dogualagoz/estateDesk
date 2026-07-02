@@ -4,6 +4,10 @@ import { AuthUser } from '../auth/decorators/current-user.decorator';
 import { requireOfficeId } from '../common/office.util';
 import { MatchingService } from '../matching/matching.service';
 
+/**
+ * Ofis dashboard'u: operasyonel özet sayıları + son aktivite + bekleyen eşleşmeler.
+ * Tüm metrikler tek ofise kapsamlıdır (sistem geneli metrikler admin modülündedir).
+ */
 @Injectable()
 export class DashboardService {
   constructor(
@@ -11,6 +15,7 @@ export class DashboardService {
     private matching: MatchingService,
   ) {}
 
+  /** Özet sayılar + notlu kayıtlar + son 5 portföy/talep — tek transaction'da 9 sorgu. */
   async stats(user: AuthUser) {
     const officeId = requireOfficeId(user);
     const hasNote = { AND: [{ note: { not: null } }, { note: { not: '' } }] };
@@ -110,6 +115,10 @@ export class DashboardService {
     };
   }
 
+  /**
+   * "Unutulan fırsatlar": henüz hiç eşleştirme (pin) yapılmamış aktif talepler
+   * ve her biri için en iyi eşleşen portföy (N+1 önlemek için tek toplu skorlama).
+   */
   async pendingMatches(user: AuthUser) {
     const officeId = requireOfficeId(user);
 

@@ -11,10 +11,16 @@ import * as fs from 'fs';
 import * as path from 'path';
 import sharp from 'sharp';
 
+/**
+ * Portföy (mülk ilanı) CRUD + görsel yönetimi.
+ * Tüm sorgular ofis izolasyonuna tabidir (requireOfficeId) ve silmeler
+ * soft delete'tir (deletedAt); listeleme/getirme daima deletedAt: null filtreler.
+ */
 @Injectable()
 export class PortfolioService {
   constructor(private prisma: PrismaService) {}
 
+  /** Sayfalı portföy listesi — tip/şehir/fiyat/özellik filtreleri + basit metin araması. */
   async list(user: AuthUser, query: QueryPortfolioDto) {
     const officeId = requireOfficeId(user);
     const page = query.page ?? 1;
@@ -62,6 +68,7 @@ export class PortfolioService {
     return { items, total, page, pageSize };
   }
 
+  /** Tek portföy — bulunamazsa (veya başka ofise aitse) 404. */
   async get(user: AuthUser, id: string) {
     const officeId = requireOfficeId(user);
     const item = await this.prisma.portfolio.findFirst({
@@ -97,6 +104,7 @@ export class PortfolioService {
   }
 
   async update(user: AuthUser, id: string, dto: UpdatePortfolioDto) {
+    // get() ofis sahipliğini doğrular — başka ofisin kaydı güncellenemez
     await this.get(user, id);
     return this.prisma.portfolio.update({
       where: { id },
@@ -113,6 +121,11 @@ export class PortfolioService {
     return { success: true };
   }
 
+  /**
+   * Görsel yükleme: her dosya sharp ile yeniden encode edilip WebP'ye çevrilir.
+   * Yeniden encode, içine kod gömülmüş (polyglot) görsel riskini sıfırlar;
+   * dosya adı sunucuda üretilir (kullanıcı girdisi dosya yoluna girmez).
+   */
   async addImages(user: AuthUser, id: string, files: Express.Multer.File[]) {
     const item = await this.get(user, id);
     const dir = path.join(uploadsDir(), 'portfolio', id);

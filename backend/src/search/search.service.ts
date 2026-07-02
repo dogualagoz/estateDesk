@@ -6,17 +6,21 @@ import { requireOfficeId } from '../common/office.util';
 import { QuerySearchDto, SearchScope } from './dto/query-search.dto';
 
 // Aranabilir tüm alanların birleştirilip unaccent+lower ile normalize edildiği "arama metni".
+// DİKKAT: Bu ifadeler add_search_trgm_indexes migration'ındaki GIN indeks
+// ifadeleriyle BİREBİR aynıdır — değiştirilirse indeks de güncellenmeli,
+// yoksa sorgular sequential scan'e düşer. f_unaccent/f_array_to_string:
+// IMMUTABLE sarmalayıcılar (ifade indeksi gereksinimi), migration'da tanımlı.
 const PORTFOLIO_DOC = Prisma.raw(
-  `unaccent(lower(coalesce(title,'') || ' ' || city || ' ' || district || ' ' || ` +
+  `f_unaccent(lower(coalesce(title,'') || ' ' || city || ' ' || district || ' ' || ` +
     `coalesce(neighborhood,'') || ' ' || coalesce(note,'') || ' ' || "ownerName" || ' ' || ` +
-    `"roomCount" || ' ' || array_to_string(features, ' ')))`,
+    `"roomCount" || ' ' || f_array_to_string(features, ' ')))`,
 );
 const PORTFOLIO_PHONE = Prisma.raw(`"ownerPhone"`);
 
 const DEMAND_DOC = Prisma.raw(
-  `unaccent(lower(coalesce(note,'') || ' ' || "customerName" || ' ' || ` +
-    `array_to_string(regions, ' ') || ' ' || array_to_string("roomPreferences", ' ') || ' ' || ` +
-    `array_to_string("featurePrefs", ' ') || ' ' || array_to_string(types::text[], ' ')))`,
+  `f_unaccent(lower(coalesce(note,'') || ' ' || "customerName" || ' ' || ` +
+    `f_array_to_string(regions, ' ') || ' ' || f_array_to_string("roomPreferences", ' ') || ' ' || ` +
+    `f_array_to_string("featurePrefs", ' ') || ' ' || f_proptypes_to_string(types)))`,
 );
 const DEMAND_PHONE = Prisma.raw(`"customerPhone"`);
 
@@ -79,9 +83,9 @@ export class SearchService {
       const digits = term.replace(/\D/g, '');
       if (digits.length > 0) {
         const digitLike = `%${digits}%`;
-        return Prisma.sql`(${doc} LIKE unaccent(lower(${like})) OR regexp_replace(${phone}, '[^0-9]', '', 'g') LIKE ${digitLike})`;
+        return Prisma.sql`(${doc} LIKE f_unaccent(lower(${like})) OR regexp_replace(${phone}, '[^0-9]', '', 'g') LIKE ${digitLike})`;
       }
-      return Prisma.sql`(${doc} LIKE unaccent(lower(${like})))`;
+      return Prisma.sql`(${doc} LIKE f_unaccent(lower(${like})))`;
     });
     return Prisma.join(conditions, ' AND ');
   }

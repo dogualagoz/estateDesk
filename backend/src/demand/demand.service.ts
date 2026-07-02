@@ -8,6 +8,11 @@ import { UpdateDemandDto } from './dto/update-demand.dto';
 import { QueryDemandDto } from './dto/query-demand.dto';
 import { MatchingService } from '../matching/matching.service';
 
+/**
+ * Alıcı talepleri CRUD. Çok lokasyonlu model: `districts`/`neighborhoods`
+ * dizileri asıl kaynak, tekil `district`/`neighborhood` alanları geriye
+ * uyumluluk içindir. Soft delete + ofis izolasyonu geçerlidir.
+ */
 @Injectable()
 export class DemandService {
   constructor(
@@ -15,6 +20,7 @@ export class DemandService {
     private matching: MatchingService,
   ) {}
 
+  /** Sayfalı talep listesi — her talebin yanında en iyi eşleşen portföy skoru döner. */
   async list(user: AuthUser, query: QueryDemandDto) {
     const officeId = requireOfficeId(user);
     const page = query.page ?? 1;
@@ -28,7 +34,8 @@ export class DemandService {
     if (query.roomPreference) AND.push({ roomPreferences: { has: query.roomPreference } });
     if (query.status) AND.push({ status: query.status });
 
-    // Budget overlap: demand[min..max] overlaps with query[min..max]
+    // Bütçe aralığı kesişimi: talebin [min..max] aralığı sorgunun aralığıyla çakışmalı
+    // (null uçlar "sınırsız" kabul edilir)
     if (query.minBudget !== undefined) {
       AND.push({
         OR: [{ maxBudget: null }, { maxBudget: { gte: query.minBudget } }],
@@ -114,6 +121,7 @@ export class DemandService {
   }
 
   async update(user: AuthUser, id: string, dto: UpdateDemandDto) {
+    // get() ofis sahipliğini doğrular — başka ofisin kaydı güncellenemez
     await this.get(user, id);
     return this.prisma.demand.update({ where: { id }, data: { ...dto } });
   }
