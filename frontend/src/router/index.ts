@@ -1,7 +1,10 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+// Süper admin paneli — tek bağlantı noktası bu spread (bkz. src/admin/README.md)
+import { adminRoutes } from '@/admin/routes';
 
 const routes: RouteRecordRaw[] = [
+  ...adminRoutes,
   {
     path: '/login',
     name: 'login',
@@ -178,19 +181,31 @@ router.beforeEach(async (to) => {
     return { name: 'invite.preview', params: { token: to.params.token } };
   }
 
+  // ── Süper admin ──
+  // Panel dışındakiler /yonetim'e giremez; süper admin ise ofis-kapsamlı
+  // ekranlar yerine kendi paneline yönlendirilir (ofisi yoktur).
+  if (to.meta.superAdminOnly && !auth.isSuperAdmin) {
+    return auth.isRealAuth ? { name: 'dashboard' } : { name: 'login' };
+  }
+  if (auth.isSuperAdmin && !to.meta.superAdminOnly && !to.meta.public) {
+    return { name: 'admin.overview' };
+  }
+
   // Gerçek hesapla girişli kullanıcı landing/login/register'a giderse uygun yere yönlendir
   // (Demo oturumu bunu tetiklemez; demo kullanıcı siteye geri dönebilsin.)
   if (
     auth.isRealAuth &&
     (to.name === 'landing' || to.name === 'login' || to.name === 'register')
   ) {
+    if (auth.isSuperAdmin) return { name: 'admin.overview' };
     return auth.hasOffice ? { name: 'dashboard' } : { name: 'onboarding' };
   }
 
   // Ofisi olmayan girişli kullanıcı önce onboarding'i tamamlamalı
-  // (davet sayfaları hariç — davetle ofise katılabilsin)
+  // (davet sayfaları hariç — davetle ofise katılabilsin; süper admin muaf)
   if (
     auth.isRealAuth &&
+    !auth.isSuperAdmin &&
     !auth.hasOffice &&
     to.name !== 'onboarding' &&
     to.name !== 'invite.preview' &&

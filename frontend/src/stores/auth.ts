@@ -18,6 +18,8 @@ export const useAuthStore = defineStore('auth', () => {
   // Korumalı route erişimi için: gerçek veya demo oturumu yeterli
   const isAuthenticated = computed(() => !!token.value || !!demoToken.value);
   const isAdmin = computed(() => user.value?.role === 'ADMIN');
+  // Platform sahibi — /yonetim paneline erişir, ofis akışlarından muaftır
+  const isSuperAdmin = computed(() => user.value?.role === 'SUPERADMIN');
   const hasOffice = computed(() => !!user.value?.officeId);
 
   async function login(email: string, password: string) {
@@ -93,7 +95,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     token, demoToken, user, loading,
-    isAuthenticated, isRealAuth, isDemoSession, isAdmin, hasOffice,
+    isAuthenticated, isRealAuth, isDemoSession, isAdmin, isSuperAdmin, hasOffice,
     login, register, loginDemo, exitDemo, logout, setToken, setUser, fetchMe,
   };
 });

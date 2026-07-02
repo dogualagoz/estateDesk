@@ -33,7 +33,8 @@ Detaylı plan: `~/.claude/plans/plan-senle-imdi-genel-wise-liskov.md`
 - [x] Prisma: SUPERADMIN rolü + AuditLog + RequestLog + retention cron (04:00, env ile ayarlanabilir)
 - [x] `audit` modülü (fire-and-forget log + 5sn/50 kayıt buffered request writer) + auth/office/invite/users kancaları + POST /auth/logout — canlıda doğrulandı — **Commit 6**
 - [x] `admin` backend modülü: overview/users CRUD/offices/logs (istek+audit filtreli)/analytics (DAU-WAU-MAU, timeseries)/system + seedSuperAdmin — canlıda doğrulandı (ADMIN→403, cross-office liste, timeseries) — **Commit 7**
-- [ ] Frontend `/yonetim` paneli (izole src/admin/, 7 view, Chart.js) — **Commit 8**
+- [x] Frontend `/yonetim` paneli: izole src/admin/ (README sözleşmesi), AdminLayout + 7 view, Chart.js lazy (ayrı chunk), router guard'ları (superAdminOnly, onboarding muafiyeti) — **Commit 8**
+  - Lokal test: `owner@estatedesk.local` / `Owner1234` ile giriş → /yonetim
 
 ## FAZ 4 — Favicon + SEO
 - [ ] İkon seti üretimi (logo.svg → ico/png/apple-touch/og-cover)
