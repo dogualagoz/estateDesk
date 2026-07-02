@@ -32,7 +32,7 @@ Detaylı plan: `~/.claude/plans/plan-senle-imdi-genel-wise-liskov.md`
 ## FAZ 3 — Süper Admin Paneli + Analytics
 - [x] Prisma: SUPERADMIN rolü + AuditLog + RequestLog + retention cron (04:00, env ile ayarlanabilir)
 - [x] `audit` modülü (fire-and-forget log + 5sn/50 kayıt buffered request writer) + auth/office/invite/users kancaları + POST /auth/logout — canlıda doğrulandı — **Commit 6**
-- [ ] `admin` backend modülü (users/offices/logs/analytics/system) + süper admin seed — **Commit 7**
+- [x] `admin` backend modülü: overview/users CRUD/offices/logs (istek+audit filtreli)/analytics (DAU-WAU-MAU, timeseries)/system + seedSuperAdmin — canlıda doğrulandı (ADMIN→403, cross-office liste, timeseries) — **Commit 7**
 - [ ] Frontend `/yonetim` paneli (izole src/admin/, 7 view, Chart.js) — **Commit 8**
 
 ## FAZ 4 — Favicon + SEO

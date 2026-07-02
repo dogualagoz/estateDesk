@@ -23,6 +23,49 @@ async function seedAdmin() {
   return user;
 }
 
+
+/**
+ * Platform sahibi (SUPERADMIN) hesabı — yalnızca SEED_SUPERADMIN_EMAIL ve
+ * SEED_SUPERADMIN_PASSWORD env'leri tanımlıysa oluşturulur. Ofise bağlı
+ * değildir (officeId null); /admin uçlarına ve /yonetim paneline erişir.
+ * Idempotent: mevcut kullanıcıyı SUPERADMIN'e yükseltir.
+ */
+async function seedSuperAdmin() {
+  const email = process.env.SEED_SUPERADMIN_EMAIL?.toLowerCase().trim();
+  const password = process.env.SEED_SUPERADMIN_PASSWORD;
+  if (!email || !password) {
+    console.log('[seed] SEED_SUPERADMIN_* tanimli degil, super admin atlandi');
+    return null;
+  }
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    if (existing.role !== Role.SUPERADMIN) {
+      await prisma.user.update({
+        where: { id: existing.id },
+        data: { role: Role.SUPERADMIN, isActive: true },
+      });
+      console.log(`[seed] Mevcut kullanici SUPERADMIN yapildi: ${email}`);
+    } else {
+      console.log(`[seed] Super admin already exists: ${email}`);
+    }
+    return existing;
+  }
+
+  const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+  const user = await prisma.user.create({
+    data: {
+      email,
+      passwordHash,
+      fullName: process.env.SEED_SUPERADMIN_NAME || 'Platform Yoneticisi',
+      role: Role.SUPERADMIN,
+      isActive: true,
+    },
+  });
+  console.log(`[seed] Super admin created: ${user.email}`);
+  return user;
+}
+
 async function seedDemoOffice(ownerId: string) {
   const existing = await prisma.office.findUnique({ where: { ownerId } });
   if (existing) {
@@ -2138,6 +2181,7 @@ export async function seedAntalyaPortfolios(ownerId: string, officeId: string) {
 }
 
 async function main() {
+  await seedSuperAdmin();
   const admin = await seedAdmin();
   const office = await seedDemoOffice(admin.id);
   await seedDemoUser(office.id);
