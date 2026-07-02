@@ -37,10 +37,11 @@ Detaylı plan: `~/.claude/plans/plan-senle-imdi-genel-wise-liskov.md`
   - Lokal test: `owner@estatedesk.local` / `Owner1234` ile giriş → /yonetim
 
 ## FAZ 4 — Favicon + SEO
-- [ ] İkon seti üretimi (logo.svg → ico/png/apple-touch/og-cover)
-- [ ] index.html meta paketi (description, OG, Twitter, JSON-LD)
-- [ ] robots.txt + sitemap.xml + site.webmanifest
-- [ ] Route bazlı dinamik title — **Commit 9**
+- [x] İkon seti üretimi (`scripts/generate-icons.mjs`, backend sharp ile logo.svg → ico/png/apple-touch/og-cover; png-to-ico'suz elle ICO kabı)
+- [x] index.html meta paketi (description, canonical, OG, Twitter, JSON-LD, theme-color)
+- [x] robots.txt + sitemap.xml + site.webmanifest (atıl favicon.svg silindi; /yonetim hiçbirinde geçmiyor)
+- [x] Route bazlı dinamik title (`meta.title` + afterEach; landing'de tam SEO başlığı korunur)
+- [x] Bonus: FAZ 3'ten kalan `.env.prod.example` SEED_SUPERADMIN/retention örnekleri dahil edildi — **Commit 9**
 
 ## FAZ 5 — Dokümantasyon + Sürüm
 - [ ] docs/ARCHITECTURE.md (geliştirici/mimari dokümantasyonu — dokümandan kod takibi)
