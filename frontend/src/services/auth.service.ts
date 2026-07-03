@@ -19,4 +19,10 @@ export const authService = {
     api.post<LoginResponse>('/auth/register', payload).then((r) => r.data),
   demoLogin: () => api.post<LoginResponse>('/auth/demo').then((r) => r.data),
   me: () => api.get<User>('/auth/me').then((r) => r.data),
+  forgotPassword: (email: string) =>
+    api.post<{ message: string }>('/auth/forgot-password', { email }).then((r) => r.data),
+  validateResetToken: (token: string) =>
+    api.get<{ valid: boolean }>(`/auth/reset-password/${token}`).then((r) => r.data),
+  resetPassword: (token: string, password: string) =>
+    api.post<{ message: string }>(`/auth/reset-password/${token}`, { password }).then((r) => r.data),
 };

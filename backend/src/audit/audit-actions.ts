@@ -10,6 +10,8 @@ export const AUDIT_ACTIONS = {
   AUTH_REGISTER: 'auth.register',
   AUTH_LOGOUT: 'auth.logout',
   AUTH_DEMO_LOGIN: 'auth.demo_login',
+  AUTH_PASSWORD_RESET_REQUESTED: 'auth.password_reset_requested',
+  AUTH_PASSWORD_RESET: 'auth.password_reset',
 
   // Ofis / üyelik
   OFFICE_CREATED: 'office.created',

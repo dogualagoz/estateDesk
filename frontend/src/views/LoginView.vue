@@ -81,6 +81,9 @@ async function submit() {
               required
             />
           </div>
+          <router-link to="/forgot-password" class="text-xs font-medium text-primary hover:underline mt-1 block text-right">
+            Şifremi unuttum?
+          </router-link>
         </div>
 
         <p v-if="error" class="error-msg text-center">{{ error }}</p>

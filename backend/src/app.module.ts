@@ -19,6 +19,7 @@ import { DemandShareModule } from './demand-share/demand-share.module';
 import { HealthModule } from './health/health.module';
 import { AuditModule } from './audit/audit.module';
 import { AdminModule } from './admin/admin.module';
+import { EmailModule } from './email/email.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { DemoReadOnlyGuard } from './common/demo-read-only.guard';
@@ -51,6 +52,7 @@ import { uploadsDir } from './common/uploads.util';
     HealthModule,
     AuditModule,
     AdminModule,
+    EmailModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

@@ -54,6 +54,12 @@ enum DemandShareStatus {
   REVOKED
 }
 
+enum PasswordResetStatus {
+  PENDING
+  USED
+  EXPIRED
+}
+
 model Office {
   id        String   @id @default(cuid())
   name      String
@@ -90,6 +96,20 @@ model Invite {
   @@index([token])
 }
 
+model PasswordReset {
+  id        String              @id @default(cuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id])
+  token     String              @unique
+  status    PasswordResetStatus @default(PENDING)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime            @default(now())
+
+  @@index([token])
+  @@index([userId, status])
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -106,10 +126,11 @@ model User {
   ownedOffice Office?  @relation("OfficeOwner")
   sentInvites Invite[] @relation("InviteCreatedBy")
 
-  portfolios    Portfolio[]
-  demands       Demand[]
-  demandMatches DemandMatch[]
-  demandShares  DemandShare[]
+  portfolios      Portfolio[]
+  demands         Demand[]
+  demandMatches   DemandMatch[]
+  demandShares    DemandShare[]
+  passwordResets  PasswordReset[]
 }
 
 model Portfolio {
