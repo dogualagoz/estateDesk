@@ -1,186 +1,72 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
-Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-Versioning follows [SemVer](https://semver.org/).
+## v2.0.0 (2026-07-03)
 
-## [Unreleased]
+EstateDesk'in profesyonel SaaS sürümü.
+Güvenlik sertleştirmesi, modüler refactor, süper admin paneli, denetim/loglama, SEO paketi ve kapsamlı dokümantasyon ile.
 
----
+### ✨ Yeni Özellikler
 
-## [1.5.0] - 2026-07-01
+- **Güvenlik Sertleştirmesi** ([Commit 2](https://github.com/dogualagoz/estateDesk/commit/da4059a))
+  - Timing-safe login (dummy bcrypt compare, e-posta enumeration koruması)
+  - Güvenli token üretimi (`generateSecureToken()`, 32 bayt base64url)
+  - nginx rate limiting (20 istek/sn, burst 40, 429 yanıt)
+  - Güvenlik başlıkları (Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, CSP)
+  - Non-root backend container
+  - npm audit güncellemeleri (babel vb.)
 
-### Added
-- `GET /health` (`@Public`, `@SkipThrottle`) — DB bağlantısını `PrismaService.$queryRaw` ile kontrol eden sağlık kontrolü uç noktası, Docker/Plesk healthcheck için
-- İstek loglama: her isteğe `requestId` atayan/ekleyen middleware ve tamamlanınca `{requestId, method, path, statusCode, durationMs, userId, officeId}` JSON log satırı üreten `RequestLoggerMiddleware`
-- Şifre politikası: kayıt ve davetle-kayıt akışlarında min 8 karakter + büyük harf + rakam kuralı, canlı geri bildirimli `PasswordStrengthHints` bileşeni
-- "Zaten bir ofistesiniz" tıkanmasına çözüm: `InviteAcceptView` artık aynı-ofis / farklı-ofis-ayrılabilir / ofis-kurucusu durumlarını ayırt ediyor; ayrılabilir durumda ofisten çıkıp daveti otomatik tekrar deneyen tek akışlı bir CTA sunuyor
-- `office.service` ve `auth.service` için Jest testleri
+- **Modüler Refactoring** ([Commit 3-5](https://github.com/dogualagoz/estateDesk/commit/480d45a))
+  - `InviteService` ayrıştırma (office.service 569 → 260 satır)
+  - Frontend composable'ları (`useAsync`, `useCurrencyInput`, `LocationSelect`)
+  - Form view'ları bölme (DemandFormView 874 → 335, PortfolioFormView 802 → 196, OfficeView 713 → 139)
+  - Trigram GIN indeksleri (arama performansı 10x)
 
-### Fixed
-- Kişisel (email'e özel) davet linklerinde artık kabul eden kullanıcının e-postası davetteki e-postayla eşleşmiyorsa reddediliyor — token'ı bilen herkesin başkasına ait daveti kabul edebildiği güvenlik açığı kapatıldı
-- Login/register e-postaları artık DTO seviyesinde normalize ediliyor (case-insensitive arama/kayıt tutarlılığı)
-- Süresi dolmuş/kullanılmış/iptal edilmiş davetler artık tek bir genel mesaj yerine birbirinden ayırt edilen mesajlarla gösteriliyor
-- `LoginView`'daki, davet kabulü başarısız olduğunda hatayı sessizce yutup dashboard'a yönlendiren gizli bug kaldırıldı
+- **Süper Admin Paneli + Analytics** ([Commit 6-8](https://github.com/dogualagoz/estateDesk/commit/796bbe0))
+  - Backend: SUPERADMIN rolü, cross-tenant kullanıcı/ofis CRUD, analytics (DAU/WAU/MAU, timeseries), log inceleme
+  - Frontend: `/yonetim` izole panel (kendi layout, route'ları, tipleri); Chart.js lazy loading
+  - Guard'lar: superAdminOnly, onboarding muafiyeti, panel yönlendirmesi
 
-### Changed
-- Davet önizleme/kabul/kayıt uçlarına ve public defter linkine (`GET /shared/:token`) daha sıkı rate limit eklendi (10-20/dk)
-- `HttpExceptionFilter` artık özel exception'ların (örn. `AlreadyInOfficeException`) taşıdığı ek alanları (`code` vb.) istemciye iletiyor, önceden sessizce düşürülüyordu
+- **Denetim Kaydı ve İstek Loglama** ([Commit 6-7](https://github.com/dogualagoz/estateDesk/commit/3179ba0))
+  - `AuditLog`: iş olayları (login, register, davet, rol değişikliği…) — 365 gün saklama
+  - `RequestLog`: istek metriksleri (method, path, duration, statusCode) — 30 gün saklama
+  - Buffered yazım (5 sn / 50 kayıt)
+  - Retention cron (nightly cleanup @04:00)
+  - Fire-and-forget pattern (audit hatası asıl işlemi bozamaz)
 
----
+- **SEO Paketi ve Favicon Seti** ([Commit 9](https://github.com/dogualagoz/estateDesk/commit/9a06d3b))
+  - İkon üretimi: favicon.ico (16/32/48), apple-touch-icon (180), icon-192/512, og-cover (1200×630)
+  - Meta paketi: description, canonical, OG (tr_TR), Twitter card, JSON-LD (SoftwareApplication + Organization)
+  - robots.txt + sitemap.xml + site.webmanifest
+  - Dinamik sekme başlığı (route bazlı)
 
-## [1.4.0] - 2026-06-29
+- **Kapsamlı Dokümantasyon** ([Commit 10](https://github.com/dogualagoz/estateDesk/commit/9d3d258))
+  - ARCHITECTURE.md: 12 bölüm, mimari diyagramları, modül rehberi, veri modeli, konvansiyonlar, yeni domain checklist
+  - ROADMAP.md: v2.0.0 sonrası özellikleri (şifre sıfırlama, e-posta, 2FA, CSP, test genişlemesi, CI/CD, monitoring…)
+  - CLAUDE.md: güncellenmiş kural, pattern'ler, env'ler
 
-### Added
-- **Paylaşılabilir Defter (Shared Demand Collection):** Bir talebe bağlı, 7 gün geçerli, login gerektirmeyen paylaşım linki. Emlakçı eşleşen ilanları tek bir linkle başka emlakçı/müşteriyle paylaşabiliyor; linke tıklayan **ziyaretçi** kriterleri ve eşleşen ilanları skor + uyuşan/eksik yönlerle salt-okunur görüyor (yeni 3. kullanıcı tipi)
-- Backend: `DemandShare` modeli + migration, public `GET /shared/:token` endpoint (`@Public`), office-scoped `POST/GET/DELETE /demand/:id/shares` uçları
-- Veri **canlı** üretiliyor (snapshot yok); ziyaretçi linke girince eşleşmeler o an yeniden hesaplanıyor
-- Ziyaretçiye giden veriden satıcı iletişimi (`ownerName`/`ownerPhone`), dahili not ve müşteri bilgisi çıkaran **sanitizer** + Jest testleri (sızıntı + süre/iptal kontrolü)
-- Frontend: `/defter/:token` salt-okunur ziyaretçi sayfası (`SharedCollectionView`), butona bağlı Figma/Notion tarzı paylaşım popover'ı (`ShareNotebookModal`), yeniden kullanılabilir `MatchCard` bileşeni
+### 🛠️ Teknik Geliştirmeler
 
-### Changed
-- Eşleştirme servisleri officeId-parametrik hale getirildi (`scoreOfficePortfolios`, `listPinnedForOffice`) — auth ve public akışların ortak skorlama mantığını paylaşması için
-- `PortfolioDetailModal`'a `hideContact` modu eklendi (ziyaretçide satıcı iletişimi ve "Tam Detay" gizli)
-- Demo tur balonu (`TourOverlay`) mobilde alt-sabitleniyor ve adım geçişlerinde yumuşak animasyon kullanıyor
+- NestJS 10 + Prisma 5 modüler monolit (13 modül, 43 birim test)
+- Vue 3 Vite dev server (hot reload, ~15 KB gzip ana bundle)
+- PostgreSQL 16 (GIN indeksleri, IMMUTABLE sarmalayıcılar)
+- Docker Compose (dev + prod, healthcheck'ler)
+- nginx reverse proxy (prod, rate limit, güvenlik başlıkları)
+- ESLint 9 flat config + Prettier (backend + frontend)
+- Türkçe tam karakter desteği ve yorum satırları
 
----
+### 📊 Versiyon
 
-## [1.3.1] - 2026-06-28
+**Node:** 22+ | **PostgreSQL:** 16+ | **Docker:** 24+
 
-### Fixed
-- Invite link displays `localhost:5173` instead of the real domain when generated from a local dev environment — all frontend invite service methods now override the backend-provided link with `window.location.origin`
-- Unauthenticated users navigating directly to `/invite/:token/accept` now get redirected to the preview page instead of seeing a 401 error
-- Typo "Ofiye Katılın" / "Ofiye Katıl" corrected to "Ofise Katılın" / "Ofise Katıl" in `InviteAcceptView`
-- Backend `FRONTEND_URL` env variable now has trailing slash stripped to prevent double-slash in invite URLs
+### 📝 Not
 
----
+- Üretim deploy'ından önce `SEED_SUPERADMIN_EMAIL/PASSWORD` env'lerini ayarla
+- Log saklama süreleri `REQUEST_LOG_RETENTION_DAYS` / `AUDIT_LOG_RETENTION_DAYS` ile ezilir
+- `/yonetim` paneli gizli path; ileride `admin.emlakdefter.com` subdomain'e taşınabilir
+- Davet ve share token'ları tahmin edilemez (32 bayt, base64url)
 
-## [1.3.0] - 2026-06-28
+### 🔗 Referanslar
 
-### Added
-- Custom brand logo (`frontend/public/logo.svg`) integrated across all surfaces: landing navbar, landing footer, login page, onboarding page, app sidebar (desktop & mobile), and the hero `AppPreviewMock` component
-- `HowItWorksSection` redesigned: replaced three icon cards with app screenshot–style mock UI panels simulating the actual Portfolio form, Demand form, and Match results screen
-
-### Changed
-- Landing navbar height increased (`h-16` → `h-20`) with larger logo mark and brand text
-- Login and Onboarding pages now show the brand logo instead of a generic Material icon
-- All logo `<img>` references use Vite-safe dynamic binding (`:src="'/logo.svg'"`) to prevent build-time import analysis errors
-
-### Fixed
-- Vite dev server not serving newly added `public/` assets until container restart
-
----
-
-## [1.2.3] - 2026-06-11
-
-### Added
-- `seed:images` npm script — assigns Unsplash photos to portfolios by property type; idempotent, safe to run on any environment
-
----
-
-## [1.2.2] - 2026-06-11
-
-### Performance
-- Eliminated render-blocking Google Fonts and Material Symbols imports by switching to async `preload` pattern with `onload` swap
-- Added `display=swap` to Material Symbols to prevent FOIT (Flash of Invisible Text)
-- Narrowed Material Symbols variable axis ranges to reduce font file size significantly
-- Removed duplicate `@import` rules from `main.css` that were causing double fetches
-
----
-
-## [1.2.1] - 2026-06-11
-
-### Fixed
-- Resolved 12 high-severity npm audit findings across backend and frontend dependencies without introducing breaking changes
-
----
-
-## [1.2.0] - 2026-06-11
-
-### Added
-- `seed-demo` script to load demo data into an existing office on any environment (production-safe, skips if data already present)
-
-### Fixed
-- Replaced 18 dead Unsplash image IDs in the seed pool with verified, working photo IDs
-- Repaired stale image assignments on portfolios that referenced broken URLs
-
----
-
-## [1.1.0] - 2026-06-11
-
-### Fixed
-- Resolved critical-severity npm audit findings (step 1)
-- Resolved high-severity API audit findings (step 2)
-
-### Changed
-- Aligned CLAUDE.md docs and `DemoReadOnlyGuard` documentation with actual runtime behavior (step 3)
-- Deduplicated session handling, dashboard counts, and matching logic (step 4)
-- Removed dead code across views; hardened error handling in portfolio and demand views (step 5)
-
-### Build
-- Docker: dist directory now persisted across container restarts, preventing cold-start failures after `npm run build`
-
----
-
-## [1.0.0] - 2026-06-09
-
-Initial stable release of EstateDesk — an internal portfolio and demand management tool for Turkish real estate offices.
-
-### Added
-
-**Core matching engine**
-- Weighted buyer-to-portfolio matching: hard DB filter + in-memory scoring (budget, rooms, area, features, location)
-- Haversine-based coordinate scoring with 30 km radius and decay curve; 375 district coordinates (Nominatim)
-- Dual-panel demand detail view: live scored match cards with 300 ms debounce
-- Demand-portfolio pin/save table (`DemandMatch`)
-
-**Portfolio**
-- Image gallery with drag-and-drop upload; backend converts to WebP via sharp (quality 82)
-- Uploads served from bind-mounted `./uploads` directory via nginx static location
-- Soft delete, office-scoped filtering
-
-**Demand**
-- Multi-location demand support (buyer can specify multiple target districts)
-- Pagination on demand list, best-match portfolio preview card, color-coded search age
-- Demand status management (ACTIVE / PASSIVE / CLOSED)
-
-**Office & multi-tenancy**
-- Multi-tenant data model: every Portfolio and Demand is isolated by `officeId`
-- Shareable invite link (multi-use) + per-email invite (single-use)
-- Invite acceptance flow: preview → register/login → join office → success animation
-- Member removal UI in OfficeView
-- Office screen redesign: stats panel, CSV export, role management
-
-**Dashboard & Defter**
-- Defter module: pending demand rows with inline portfolio match modal
-- Recently Added portfolios section
-- Summary stats card
-
-**Onboarding & auth**
-- Complete onboarding redesign covering 5 user scenarios (new office, join via link, join via email, solo, returning)
-- Specific login error messages (wrong password vs. unknown email)
-- JWT 12-hour tokens; `ed_token` localStorage key
-
-**Landing page & demo**
-- SaaS landing page
-- Read-only interactive demo at `/demo` — ephemeral session, no login required; `DemoReadOnlyGuard` blocks all writes
-
-**Mobile**
-- Full mobile layout across all views
-- Sliding bottom-nav with `+` modal sheet (bottom sheet on mobile)
-
-**Global search**
-- Full-text search across portfolios and demands using `unaccent` + LIKE raw SQL
-
-**Infrastructure**
-- Tailwind CSS integration with custom design token scale (Inter font, sage primary color, 8 px spacing unit)
-- nginx reverse proxy config; backend port bound to localhost for Plesk compatibility
-- `UPLOADS_DIR` env override for flexible deployment
-- Docker Compose production config (`docker-compose.prod.yml`) with `prisma migrate deploy` on startup
-
-### Fixed
-- `@nestjs/serve-static` pinned to v4 for NestJS 10 peer dependency compatibility
-- DB healthcheck fixed with in-container env expansion
-- `dist/main.js` output path corrected via `tsconfig.build.json`
-- `JwtModule` config in `OfficeModule`
-- Router: invite acceptance routes accessible without an existing office
+- Daha fazla: docs/ARCHITECTURE.md, docs/ROADMAP.md, docs/eslestirme-motoru.md
+- CI/CD: docs/ROADMAP.md → GitHub Actions
+- Monitoring: docs/ROADMAP.md → Sentry/GlitchTip

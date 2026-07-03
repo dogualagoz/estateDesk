@@ -43,7 +43,8 @@ Detaylı plan: `~/.claude/plans/plan-senle-imdi-genel-wise-liskov.md`
 - [x] Route bazlı dinamik title (`meta.title` + afterEach; RouteMeta tip tanımı) — dev server'da tüm statik dosyalar 200 doğrulandı — **Commit 9**
 
 ## FAZ 5 — Dokümantasyon + Sürüm
-- [ ] docs/ARCHITECTURE.md (geliştirici/mimari dokümantasyonu — dokümandan kod takibi)
-- [ ] docs/ROADMAP.md (backlog: şifre sıfırlama, ödeme, e-posta, refresh token, CI, yedekleme...)
-- [ ] CLAUDE.md + DEPLOYMENT.md güncellemeleri — **Commit 10**
-- [ ] Release **v2.0.0**
+- [x] docs/ARCHITECTURE.md (12 bölüm: genel bakış, mimari, modüller, veri modeli, eşleştirme, loglama, admin, frontend, konvansiyonlar, checklist, monolith neden) — **Commit 10**
+- [x] docs/ROADMAP.md (5 kategori: güvenlik, ürün, teknik borç, altyapı, OPS; sembollerle öncelik) — **Commit 10**
+- [x] CLAUDE.md güncellemeleri (admin/audit modülleri, lint, fire-and-forget, tenant isolation, admin izolasyon, env'ler, kurallar) — **Commit 10**
+- [x] DEPLOYMENT.md yerel güncellemeleri (gitignore'da, VPS spesifik)
+- [ ] Release **v2.0.0** (tag + CHANGELOG)
