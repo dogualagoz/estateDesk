@@ -47,4 +47,19 @@ Detaylı plan: `~/.claude/plans/plan-senle-imdi-genel-wise-liskov.md`
 - [x] docs/ROADMAP.md (5 kategori: güvenlik, ürün, teknik borç, altyapı, OPS; sembollerle öncelik) — **Commit 10**
 - [x] CLAUDE.md güncellemeleri (admin/audit modülleri, lint, fire-and-forget, tenant isolation, admin izolasyon, env'ler, kurallar) — **Commit 10**
 - [x] DEPLOYMENT.md yerel güncellemeleri (gitignore'da, VPS spesifik)
-- [ ] Release **v2.0.0** (tag + CHANGELOG)
+- [x] Release **v2.0.0** (tag + CHANGELOG) — **Commit 11** + tag v2.0.0
+
+## FAZ 6 — Şifre Sıfırlama + E-posta Servisi
+- [x] Prisma: PasswordReset modeli + migration (token, status, expiresAt, usedAt)
+- [x] Nodemailer + EmailService (SMTP kurulumu, sendPasswordResetEmail template)
+- [x] AuthService: requestPasswordReset(), validateResetToken(), resetPassword()
+- [x] AuthController: 3 endpoint (POST /auth/forgot-password, GET/POST /auth/reset-password/:token)
+- [x] DTO'lar: ForgotPasswordDto, ResetPasswordDto (@IsStrongPassword() reuse)
+- [x] Audit actions: AUTH_PASSWORD_RESET_REQUESTED, AUTH_PASSWORD_RESET
+- [x] Frontend AuthService: 3 metod (forgotPassword, validateResetToken, resetPassword)
+- [x] Frontend ForgotPasswordView.vue + ResetPasswordView.vue
+- [x] Router: 2 route (/forgot-password, /reset-password/:token)
+- [x] LoginView: "Şifremi unuttum?" linki
+- [x] .env.example: SMTP_HOST, PORT, USER, PASSWORD, FROM — **Commit 12**
+
+**Sıradaki:** E-posta servisi testleri + Docker migration test + Plesk SMTP bilgileri. E-posta gönderimi hala dev'de mock; production'da real SMTP credential'ları `.env`'e girilecek.
