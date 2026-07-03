@@ -1,95 +1,3 @@
-<template>
-  <div class="container min-h-screen flex items-center justify-center px-4 py-12">
-    <div class="w-full max-w-md">
-      <div class="rounded-lg border border-gray-200 bg-white p-8">
-        <h1 class="mb-2 text-2xl font-semibold text-gray-900">Şifrenizi Sıfırlayın</h1>
-        <p class="mb-6 text-sm text-gray-600">Yeni bir şifre belirleyin</p>
-
-        <div v-if="loading" class="flex justify-center py-8">
-          <div class="inline-block h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-sage-600"></div>
-        </div>
-
-        <div v-else-if="!tokenValid" class="space-y-4">
-          <div class="rounded-lg bg-red-50 p-4 text-sm text-red-700">
-            <p class="font-medium mb-2">Bu link geçersiz veya süresi dolmuş</p>
-            <p>Lütfen yeni bir sıfırlama isteği gönderin.</p>
-          </div>
-          <router-link to="/forgot-password" class="block w-full text-center rounded-lg bg-sage-600 px-4 py-2 font-medium text-white hover:bg-sage-700">
-            Yeni İstek Gönder
-          </router-link>
-          <router-link to="/login" class="block w-full text-center text-sm font-medium text-sage-600 hover:text-sage-700">
-            Giriş Sayfasına Dön
-          </router-link>
-        </div>
-
-        <form v-else @submit.prevent="handleSubmit" class="space-y-4">
-          <div>
-            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
-              Yeni Şifre
-            </label>
-            <input
-              id="password"
-              v-model="password"
-              type="password"
-              placeholder="En az 8 karakter, 1 büyük harf, 1 rakam"
-              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:border-sage-600 focus:outline-none"
-              :disabled="resetOp.loading.value"
-            />
-            <p class="mt-1 text-xs text-gray-500">
-              En az 8 karakter, en az bir büyük harf ve bir rakam içermeli
-            </p>
-          </div>
-
-          <div>
-            <label for="password-confirm" class="block text-sm font-medium text-gray-700 mb-1">
-              Şifreyi Onayla
-            </label>
-            <input
-              id="password-confirm"
-              v-model="passwordConfirm"
-              type="password"
-              placeholder="Şifreyi tekrar girin"
-              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:border-sage-600 focus:outline-none"
-              :disabled="resetOp.loading.value"
-            />
-          </div>
-
-          <div v-if="passwordMismatch" class="rounded-lg bg-red-50 p-3 text-sm text-red-700">
-            Şifreler eşleşmiyor
-          </div>
-
-          <button
-            type="submit"
-            :disabled="!password || !passwordConfirm || passwordMismatch || resetOp.loading.value"
-            class="w-full rounded-lg bg-sage-600 px-4 py-2 font-medium text-white transition-colors disabled:opacity-50 hover:bg-sage-700"
-          >
-            {{ resetOp.loading.value ? 'Güncelleniyor...' : 'Şifreyi Güncelle' }}
-          </button>
-        </form>
-
-        <div v-if="resetOp.error.value" class="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-          {{ resetOp.error.value }}
-        </div>
-
-        <div v-if="resetSuccess" class="mt-4 rounded-lg bg-green-50 p-3">
-          <p class="text-sm font-medium text-green-800 mb-3">
-            ✓ Şifreniz başarıyla güncellenmiştir!
-          </p>
-          <p class="text-sm text-green-700 mb-4">
-            Yeni şifrenizle giriş yapabilirsiniz.
-          </p>
-          <button
-            @click="navigateToLogin"
-            class="w-full text-center rounded-lg bg-sage-600 px-4 py-2 font-medium text-white hover:bg-sage-700"
-          >
-            Giriş Yap
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
@@ -116,7 +24,7 @@ onMounted(async () => {
   try {
     const result = await authService.validateResetToken(token);
     tokenValid.value = result.valid;
-  } catch (error) {
+  } catch {
     tokenValid.value = false;
   } finally {
     loading.value = false;
@@ -145,3 +53,122 @@ const navigateToLogin = () => {
   router.push({ name: 'login' });
 };
 </script>
+
+<template>
+  <div class="min-h-screen bg-background flex items-center justify-center px-margin-mobile py-margin-desktop">
+    <main class="w-full max-w-[420px] bg-surface-container-lowest rounded-xl shadow-md border border-outline-variant p-stack-lg flex flex-col gap-gutter relative overflow-hidden">
+      <!-- Accent top bar -->
+      <div class="absolute top-0 left-0 right-0 h-1 bg-primary rounded-t-xl"></div>
+
+      <!-- Header -->
+      <header class="flex flex-col items-center gap-2 text-center pt-2">
+        <img :src="'/logo.svg'" alt="emlakdefter" class="w-16 h-16 rounded-xl mb-2" />
+        <h1 class="text-headline-lg font-semibold tracking-tight text-primary">emlakdefter</h1>
+        <p class="text-label-md text-on-surface-variant">Yeni Şifre Belirleyin</p>
+      </header>
+
+      <!-- Loading State -->
+      <div v-if="loading" class="flex justify-center py-12">
+        <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-outline border-t-primary"></div>
+      </div>
+
+      <!-- Invalid Token -->
+      <div v-else-if="!tokenValid" class="flex flex-col gap-stack-md items-center text-center">
+        <div class="flex items-center justify-center w-12 h-12 rounded-full bg-error/10">
+          <span class="material-symbols-outlined text-[28px] text-error">error_circle</span>
+        </div>
+        <div>
+          <p class="text-headline-sm font-semibold text-error mb-1">Geçersiz Link</p>
+          <p class="text-label-md text-on-surface-variant">
+            Bu sıfırlama linki geçersiz veya süresi dolmuş.
+          </p>
+        </div>
+        <router-link to="/forgot-password" class="btn primary w-full h-12 text-[15px] font-semibold">
+          Yeni İstek Gönder
+        </router-link>
+      </div>
+
+      <!-- Reset Form -->
+      <div v-else-if="!resetSuccess" class="flex flex-col gap-stack-md">
+        <form class="flex flex-col gap-stack-md" @submit.prevent="handleSubmit">
+          <div class="field full">
+            <label for="password">Yeni Şifre</label>
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-outline pointer-events-none">lock</span>
+              <input
+                id="password"
+                v-model="password"
+                class="input pl-10 h-12"
+                type="password"
+                placeholder="••••••••"
+                required
+                :disabled="resetOp.loading.value"
+              />
+            </div>
+            <p class="text-label-sm text-on-surface-variant mt-1">
+              En az 8 karakter, 1 büyük harf, 1 rakam
+            </p>
+          </div>
+
+          <div class="field full">
+            <label for="password-confirm">Şifreyi Onayla</label>
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-outline pointer-events-none">check_circle</span>
+              <input
+                id="password-confirm"
+                v-model="passwordConfirm"
+                class="input pl-10 h-12"
+                type="password"
+                placeholder="••••••••"
+                required
+                :disabled="resetOp.loading.value"
+              />
+            </div>
+          </div>
+
+          <p v-if="passwordMismatch" class="error-msg text-center">Şifreler eşleşmiyor</p>
+          <p v-if="resetOp.error.value" class="error-msg text-center">{{ resetOp.error.value }}</p>
+
+          <button
+            type="submit"
+            :disabled="!password || !passwordConfirm || passwordMismatch || resetOp.loading.value"
+            class="btn primary w-full h-12 text-[15px] font-semibold gap-2 mt-1"
+          >
+            {{ resetOp.loading.value ? 'Güncelleniyor…' : 'Şifreyi Güncelle' }}
+            <span v-if="!resetOp.loading.value" class="material-symbols-outlined text-[18px]">check</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Success Message -->
+      <div v-else class="flex flex-col gap-stack-md items-center text-center">
+        <div class="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
+          <span class="material-symbols-outlined text-[28px] text-primary">check_circle</span>
+        </div>
+        <div>
+          <p class="text-headline-sm font-semibold text-on-surface mb-1">Şifre Güncellendi</p>
+          <p class="text-label-md text-on-surface-variant">
+            Şifreniz başarıyla sıfırlanmıştır.
+          </p>
+        </div>
+        <p class="text-label-sm text-on-surface-variant mt-2">
+          2 saniyede giriş sayfasına yönlendirileceksiniz...
+        </p>
+        <button
+          class="btn primary w-full h-12 text-[15px] font-semibold"
+          @click="navigateToLogin"
+        >
+          Şimdi Giriş Yap
+        </button>
+      </div>
+
+      <!-- Footer -->
+      <footer class="flex flex-col items-center gap-2 -mt-2 pt-2 border-t border-outline-variant">
+        <span class="flex items-center gap-1 text-label-sm text-outline">
+          <span class="material-symbols-outlined text-[14px]">verified_user</span>
+          Güvenli bağlantı
+        </span>
+      </footer>
+    </main>
+  </div>
+</template>
