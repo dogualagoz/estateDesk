@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { portfolioService } from '@/services/portfolio.service';
+import { portfolioIntakeService } from '@/services/portfolioIntake.service';
 import { resolveImgUrl } from '@/utils/image';
 import { useConfirm } from '@/composables/useConfirm';
 import { useToast } from '@/composables/useToast';
@@ -91,7 +92,20 @@ async function remove(p: Portfolio) {
   }
 }
 
-onMounted(load);
+// Bekleyen portföy başvurusu rozeti (hata sessiz geçilir — ör. demo oturum)
+const pendingIntakeCount = ref(0);
+async function loadPendingIntake() {
+  try {
+    pendingIntakeCount.value = (await portfolioIntakeService.pendingCount()).count;
+  } catch {
+    pendingIntakeCount.value = 0;
+  }
+}
+
+onMounted(() => {
+  load();
+  loadPendingIntake();
+});
 </script>
 
 <template>
@@ -102,10 +116,20 @@ onMounted(load);
         <h1 class="text-headline-lg-mobile md:text-headline-lg font-semibold tracking-tight text-on-surface">Portföy Yönetimi</h1>
         <p class="text-label-md text-on-surface-variant mt-1">Toplam {{ total }} ilan</p>
       </div>
-      <button class="btn primary" @click="router.push('/portfolio/new')">
-        <span class="material-symbols-outlined text-[18px]">add</span>
-        Yeni Portföy
-      </button>
+      <div class="flex items-center gap-2">
+        <button class="btn relative" @click="router.push('/portfolio/basvurular')">
+          <span class="material-symbols-outlined text-[18px]">inbox</span>
+          Başvurular
+          <span
+            v-if="pendingIntakeCount > 0"
+            class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-error text-on-error text-[10px] font-bold flex items-center justify-center"
+          >{{ pendingIntakeCount > 9 ? '9+' : pendingIntakeCount }}</span>
+        </button>
+        <button class="btn primary" @click="router.push('/portfolio/new')">
+          <span class="material-symbols-outlined text-[18px]">add</span>
+          Yeni Portföy
+        </button>
+      </div>
     </div>
 
     <!-- Search & Filter Bar -->

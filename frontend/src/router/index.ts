@@ -78,6 +78,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'Paylaşılan Defter', public: true },
   },
   {
+    path: '/basvuru/:token',
+    name: 'intake.submit',
+    component: () => import('@/views/intake/IntakeSubmitView.vue'),
+    meta: { title: 'Mülk Başvurusu', public: true },
+  },
+  {
     path: '/onboarding',
     name: 'onboarding',
     component: () => import('@/views/OnboardingView.vue'),
@@ -131,6 +137,19 @@ const routes: RouteRecordRaw[] = [
     name: 'portfolio.new',
     component: () => import('@/views/portfolio/PortfolioFormView.vue'),
     meta: { title: 'Yeni Portföy' },
+  },
+  {
+    // ':id'den ÖNCE kayıtlı olmalı — aksi halde 'basvurular' id sanılır
+    path: '/portfolio/basvurular',
+    name: 'portfolio.intake',
+    component: () => import('@/views/portfolio/IntakeSubmissionsView.vue'),
+    meta: { title: 'Portföy Başvuruları' },
+  },
+  {
+    path: '/portfolio/basvurular/:id',
+    name: 'portfolio.intake.review',
+    component: () => import('@/views/portfolio/IntakeReviewView.vue'),
+    meta: { title: 'Başvuru İncele' },
   },
   {
     path: '/portfolio/:id',

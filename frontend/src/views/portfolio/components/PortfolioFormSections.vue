@@ -21,6 +21,14 @@ import { usePortfolioFormContext, usePortfolioProgress } from '../portfolio-form
 defineProps<{
   /** Kaydetme hatası (ana view'ın submit'inden). */
   error?: string | null;
+  /** true ise mal sahibi adı görünürlük anahtarı devre dışı (yalnızca ekleyen danışman değiştirebilir). */
+  ownerVisibilityLocked?: boolean;
+  /**
+   * Public başvuru formu modu (mülk sahibi kendisi doldurur): ofis-içi
+   * alanlar (görünürlük, iç not, paylaşım) gizlenir; iletişim alanları
+   * "Adınız/Telefonunuz" olarak etiketlenir.
+   */
+  publicMode?: boolean;
 }>();
 
 const ctx = usePortfolioFormContext();
@@ -207,7 +215,9 @@ function addCustomFeature() {
     <!-- ── Bölüm 4: Özellikler & İletişim ── -->
     <Transition name="section-slide">
       <div v-if="showSection4" ref="sec4Ref" class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6">
-        <p class="text-label-xs font-semibold uppercase tracking-widest text-on-surface-variant mb-4">Özellikler & İletişim</p>
+        <p class="text-label-xs font-semibold uppercase tracking-widest text-on-surface-variant mb-4">
+          {{ publicMode ? 'Özellikler & İletişim Bilgileriniz' : 'Özellikler & İletişim' }}
+        </p>
         <div class="space-y-5">
           <!-- Özellikler -->
           <div class="flex flex-col gap-2">
@@ -235,14 +245,19 @@ function addCustomFeature() {
           <!-- Mal sahibi -->
           <div class="grid grid-cols-2 gap-3">
             <div class="flex flex-col gap-1.5">
-              <label class="text-label-sm font-semibold text-on-surface-variant">Mal Sahibi *</label>
+              <label class="text-label-sm font-semibold text-on-surface-variant">{{ publicMode ? 'Adınız Soyadınız *' : 'Mal Sahibi *' }}</label>
               <div class="relative">
-                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-on-surface-variant pointer-events-none">person</span>
-                <input v-model="form.ownerName" class="input pl-9" placeholder="İsim Soyisim" />
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-on-surface-variant pointer-events-none">{{ ownerVisibilityLocked ? 'lock' : 'person' }}</span>
+                <input
+                  v-model="form.ownerName" class="input pl-9"
+                  :class="{ 'opacity-60 cursor-not-allowed': ownerVisibilityLocked }"
+                  :readonly="ownerVisibilityLocked"
+                  :title="ownerVisibilityLocked ? 'Bu bilgiyi yalnızca ekleyen danışman görebilir/değiştirebilir' : undefined"
+                  placeholder="İsim Soyisim" />
               </div>
             </div>
             <div class="flex flex-col gap-1.5">
-              <label class="text-label-sm font-semibold text-on-surface-variant">Telefon *</label>
+              <label class="text-label-sm font-semibold text-on-surface-variant">{{ publicMode ? 'Telefon Numaranız *' : 'Telefon *' }}</label>
               <div class="relative">
                 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-on-surface-variant pointer-events-none">phone</span>
                 <input v-model="form.ownerPhone" class="input pl-9" placeholder="05XX XXX XX XX" />
@@ -250,8 +265,33 @@ function addCustomFeature() {
             </div>
           </div>
 
-          <!-- İç notlar -->
-          <div class="flex flex-col gap-1.5">
+          <!-- Mal sahibi adı görünürlüğü (ofis içi — public formda yok) -->
+          <div v-if="!publicMode" class="flex items-center justify-between px-1">
+            <div class="flex flex-col">
+              <span class="text-label-sm font-semibold text-on-surface-variant">Mal sahibi adını ofis içinde göster</span>
+              <span class="text-label-xs text-on-surface-variant/60">
+                {{ ownerVisibilityLocked
+                  ? 'Yalnızca ekleyen danışman değiştirebilir.'
+                  : 'Kapalıyken yalnızca siz görürsünüz; ofis yöneticisi dahil kimse göremez.' }}
+              </span>
+            </div>
+            <button
+              type="button" class="flex items-center gap-2 select-none shrink-0"
+              :class="ownerVisibilityLocked ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'"
+              :disabled="ownerVisibilityLocked"
+              @click="form.ownerNameVisible = !form.ownerNameVisible">
+              <div
+                class="w-9 h-5 rounded-full relative transition-colors duration-200"
+                :class="form.ownerNameVisible ? 'bg-primary' : 'bg-outline-variant'">
+                <div
+                  class="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-200"
+                  :class="form.ownerNameVisible ? 'left-[18px]' : 'left-0.5'" />
+              </div>
+            </button>
+          </div>
+
+          <!-- İç notlar (ofis içi — public formda yok) -->
+          <div v-if="!publicMode" class="flex flex-col gap-1.5">
             <div class="flex items-center justify-between">
               <label class="text-label-sm font-semibold text-on-surface-variant">İç Notlar</label>
               <button
@@ -268,6 +308,25 @@ function addCustomFeature() {
               </button>
             </div>
             <textarea v-model="form.note" class="textarea" rows="3" placeholder="Müşteri görüşmesi notları, anahtar durumu vb." />
+          </div>
+
+          <!-- Satış sonrası paylaşım (ofis içi — public formda yok) -->
+          <div v-if="!publicMode" class="flex items-center justify-between px-1 pt-1 border-t border-outline-variant">
+            <div class="flex flex-col pt-3">
+              <span class="text-label-sm font-semibold text-on-surface-variant">Paylaşıma açık</span>
+              <span class="text-label-xs text-on-surface-variant/60">Satıldığında diğer ofislerle paylaşılabilir.</span>
+            </div>
+            <button
+              type="button" class="flex items-center gap-2 cursor-pointer select-none shrink-0 pt-3"
+              @click="form.isShareable = !form.isShareable">
+              <div
+                class="w-9 h-5 rounded-full relative transition-colors duration-200"
+                :class="form.isShareable ? 'bg-primary' : 'bg-outline-variant'">
+                <div
+                  class="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-200"
+                  :class="form.isShareable ? 'left-[18px]' : 'left-0.5'" />
+              </div>
+            </button>
           </div>
         </div>
       </div>

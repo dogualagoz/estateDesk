@@ -21,6 +21,7 @@ import { AuditModule } from './audit/audit.module';
 import { AdminModule } from './admin/admin.module';
 import { EmailModule } from './email/email.module';
 import { FeedbackModule } from './feedback/feedback.module';
+import { PortfolioIntakeModule } from './portfolio-intake/portfolio-intake.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { DemoReadOnlyGuard } from './common/demo-read-only.guard';
@@ -55,6 +56,7 @@ import { uploadsDir } from './common/uploads.util';
     AdminModule,
     EmailModule,
     FeedbackModule,
+    PortfolioIntakeModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

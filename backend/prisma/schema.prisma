@@ -60,6 +60,17 @@ enum PasswordResetStatus {
   EXPIRED
 }
 
+enum IntakeLinkStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum IntakeSubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Office {
   id        String   @id @default(cuid())
   name      String
@@ -77,6 +88,7 @@ model Office {
   demandMatches DemandMatch[]
   demandShares  DemandShare[]
   feedbackThread FeedbackThread?
+  intakeLinks   PortfolioIntakeLink[]
 }
 
 model Invite {
@@ -135,6 +147,8 @@ model User {
   demandShares    DemandShare[]
   passwordResets  PasswordReset[]
   feedbackMessages FeedbackMessage[] @relation("FeedbackSender")
+  intakeLinks         PortfolioIntakeLink[] @relation("IntakeLinkCreatedBy")
+  reviewedSubmissions PortfolioSubmission[] @relation("IntakeReviewedBy")
 }
 
 model Portfolio {
@@ -252,6 +266,68 @@ model DemandShare {
 
   @@index([demandId])
   @@index([token])
+}
+
+// ── Portföy toplama linki (harici mülk sahibi başvurusu) ──────────────────
+// Danışman süreli/iptal edilebilir link üretir; mülk sahibi kayıt olmadan
+// başvuru gönderir. Başvuru PENDING bekler; danışman onaylayınca mevcut
+// portfolio.create yoluyla gerçek Portfolio oluşur (Portfolio'ya status
+// EKLENMEZ — mevcut deletedAt:null sorguları hiç etkilenmesin diye).
+
+model PortfolioIntakeLink {
+  id          String           @id @default(cuid())
+  // Token serviste crypto.randomBytes ile üretilir (bkz. common/token.util.ts)
+  token       String           @unique
+  officeId    String
+  office      Office           @relation(fields: [officeId], references: [id])
+  createdById String
+  createdBy   User             @relation("IntakeLinkCreatedBy", fields: [createdById], references: [id])
+  label       String? // örn. "Mehmet Bey — eczacı"
+  status      IntakeLinkStatus @default(ACTIVE)
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  submissions PortfolioSubmission[]
+
+  @@index([officeId, status])
+  @@index([token])
+}
+
+model PortfolioSubmission {
+  id             String              @id @default(cuid())
+  linkId         String
+  link           PortfolioIntakeLink @relation(fields: [linkId], references: [id])
+  officeId       String // ofis-kapsamlı sorgular için denormalize
+  submitterName  String
+  submitterPhone String
+
+  type         PropertyType
+  listingType  ListingType @default(SALE)
+  title        String?
+  city         String
+  district     String
+  neighborhood String?
+  areaSqm      Int
+  roomCount    String
+  price        Decimal     @db.Decimal(14, 2)
+  features     String[]    @default([])
+  description  String? // onayda Portfolio.note olur
+  images       String[]    @default([]) // /uploads/intake/:id/*.webp
+
+  kvkkAcceptedAt DateTime
+  status         IntakeSubmissionStatus @default(PENDING)
+  reviewedById   String?
+  reviewedBy     User?                  @relation("IntakeReviewedBy", fields: [reviewedById], references: [id])
+  reviewedAt     DateTime?
+  rejectReason   String?
+  portfolioId    String?                @unique
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  @@index([officeId, status, createdAt])
+  @@index([linkId])
 }
 
 // ── Geri bildirim mesajlaşması (beta) ─────────────────────────────────────

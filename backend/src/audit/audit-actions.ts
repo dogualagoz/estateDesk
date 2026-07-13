@@ -47,6 +47,13 @@ export const AUDIT_ACTIONS = {
   // Geri bildirim mesajlaşması (beta)
   FEEDBACK_MESSAGE_SENT: 'feedback.message_sent',
   FEEDBACK_ADMIN_REPLIED: 'feedback.admin_replied',
+
+  // Portföy toplama linki (harici mülk sahibi başvurusu)
+  INTAKE_LINK_CREATED: 'intake.link_created',
+  INTAKE_LINK_REVOKED: 'intake.link_revoked',
+  INTAKE_SUBMISSION_RECEIVED: 'intake.submission_received',
+  INTAKE_SUBMISSION_APPROVED: 'intake.submission_approved',
+  INTAKE_SUBMISSION_REJECTED: 'intake.submission_rejected',
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];
