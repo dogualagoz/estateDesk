@@ -4,6 +4,7 @@ import { AdminUsersService } from './admin-users.service';
 import { AdminOfficesService } from './admin-offices.service';
 import { AdminLogsService } from './admin-logs.service';
 import { AdminAnalyticsService } from './admin-analytics.service';
+import { AdminFeedbackService } from './admin-feedback.service';
 
 /**
  * Süper admin (platform sahibi) modülü. Diğer modüllerden hiçbir servis
@@ -12,6 +13,12 @@ import { AdminAnalyticsService } from './admin-analytics.service';
  */
 @Module({
   controllers: [AdminController],
-  providers: [AdminUsersService, AdminOfficesService, AdminLogsService, AdminAnalyticsService],
+  providers: [
+    AdminUsersService,
+    AdminOfficesService,
+    AdminLogsService,
+    AdminAnalyticsService,
+    AdminFeedbackService,
+  ],
 })
 export class AdminModule {}

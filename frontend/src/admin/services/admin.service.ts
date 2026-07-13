@@ -1,6 +1,8 @@
 import { api } from '@/services/api';
 import type {
   AdminAuditLog,
+  AdminFeedbackMessage,
+  AdminFeedbackThread,
   AdminOffice,
   AdminOfficeDetail,
   AdminOverview,
@@ -63,6 +65,32 @@ export const adminService = {
     api
       .delete<{ success: boolean; deactivatedMembers: number }>(`/admin/offices/${id}`)
       .then((r) => r.data),
+
+  toggleOfficeFeedback: (id: string, enabled: boolean) =>
+    api
+      .patch<{ success: boolean; feedbackEnabled: boolean }>(`/admin/offices/${id}/feedback`, {
+        enabled,
+      })
+      .then((r) => r.data),
+
+  // ── Geri bildirim sohbetleri ──
+  feedbackThreads: (params: { page?: number; pageSize?: number } = {}) =>
+    api.get<Paged<AdminFeedbackThread>>('/admin/feedback/threads', { params }).then((r) => r.data),
+
+  feedbackUnread: () => api.get<{ total: number }>('/admin/feedback/unread').then((r) => r.data),
+
+  feedbackMessages: (officeId: string) =>
+    api
+      .get<AdminFeedbackMessage[]>(`/admin/feedback/threads/${officeId}/messages`)
+      .then((r) => r.data),
+
+  feedbackReply: (officeId: string, body: string) =>
+    api
+      .post<AdminFeedbackMessage>(`/admin/feedback/threads/${officeId}/messages`, { body })
+      .then((r) => r.data),
+
+  feedbackMarkRead: (officeId: string) =>
+    api.post(`/admin/feedback/threads/${officeId}/read`).then((r) => r.data),
 
   // ── Loglar ──
   requestLogs: (params: Record<string, unknown>) =>

@@ -27,8 +27,25 @@ export interface AdminOffice {
   id: string;
   name: string;
   createdAt: string;
+  feedbackEnabled: boolean;
   owner: { id: string; fullName: string; email: string };
   _count: { members: number; portfolios: number; demands: number; invites?: number };
+}
+
+export interface AdminFeedbackThread {
+  officeId: string;
+  officeName: string;
+  lastMessageAt: string | null;
+  lastMessageSnippet: string;
+  unreadCount: number;
+}
+
+export interface AdminFeedbackMessage {
+  id: string;
+  body: string;
+  fromAdmin: boolean;
+  senderName: string;
+  createdAt: string;
 }
 
 export interface AdminOfficeDetail extends AdminOffice {

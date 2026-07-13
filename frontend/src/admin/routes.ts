@@ -37,6 +37,12 @@ export const adminRoutes: RouteRecordRaw[] = [
         meta: { title: 'Yönetim · Ofis Detayı' },
       },
       {
+        path: 'mesajlar',
+        name: 'admin.feedback',
+        component: () => import('./views/AdminFeedbackView.vue'),
+        meta: { title: 'Yönetim · Mesajlar' },
+      },
+      {
         path: 'loglar',
         name: 'admin.logs',
         component: () => import('./views/AdminLogsView.vue'),

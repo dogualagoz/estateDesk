@@ -2,15 +2,31 @@
 import { computed, ref, reactive, onMounted, onUnmounted, watch, nextTick, provide } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useFeedbackStore } from '@/stores/feedback';
 import { useConfirm } from '@/composables/useConfirm';
 import DemoBanner from '@/components/demo/DemoBanner.vue';
+import FeedbackWidget from '@/components/feedback/FeedbackWidget.vue';
 
 const auth = useAuthStore();
+const feedback = useFeedbackStore();
 const router = useRouter();
 const route = useRoute();
 const { confirm } = useConfirm();
 
 const isDemo = computed(() => auth.isDemoSession);
+const feedbackWidget = ref<InstanceType<typeof FeedbackWidget> | null>(null);
+
+// Geri bildirim kanalı (beta): yalnızca gerçek oturum + ofis üyeliğinde poll'lanır
+let feedbackTimer: ReturnType<typeof setInterval> | null = null;
+onMounted(() => {
+  if (auth.isRealAuth && auth.hasOffice && !auth.isSuperAdmin) {
+    feedback.fetchStatus();
+    feedbackTimer = setInterval(() => feedback.fetchStatus(), 60_000);
+  }
+});
+onUnmounted(() => {
+  if (feedbackTimer) clearInterval(feedbackTimer);
+});
 
 const links = computed(() =>
   isDemo.value
@@ -141,6 +157,8 @@ onUnmounted(() => window.removeEventListener('resize', updateIndicator));
           <span class="material-symbols-outlined text-[20px]">{{ l.icon }}</span>
           {{ l.label }}
         </router-link>
+
+        <FeedbackWidget v-if="feedback.enabled && !isDemo" ref="feedbackWidget" />
       </nav>
 
       <!-- User + Logout -->
@@ -183,13 +201,27 @@ onUnmounted(() => window.removeEventListener('resize', updateIndicator));
         <img :src="'/logo.svg'" alt="emlakdefter" class="h-7 w-7 rounded-lg" />
         <span class="font-bold text-headline-md text-on-primary tracking-tight">emlakdefter</span>
       </router-link>
-      <router-link
-        :to="profilePath"
-        class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-[13px] font-bold text-on-primary select-none active:scale-95 transition-transform"
-        title="Profilim"
-      >
-        {{ initials }}
-      </router-link>
+      <div class="flex items-center gap-2">
+        <button
+          v-if="feedback.enabled && !isDemo"
+          class="relative w-9 h-9 rounded-full bg-white/10 flex items-center justify-center active:scale-95 transition-transform"
+          aria-label="Geri Bildirim"
+          @click="feedbackWidget?.openModal()"
+        >
+          <span class="material-symbols-outlined text-[20px]">forum</span>
+          <span
+            v-if="feedback.unreadCount > 0"
+            class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-error text-on-error text-[10px] font-bold flex items-center justify-center"
+          >{{ feedback.unreadCount > 9 ? '9+' : feedback.unreadCount }}</span>
+        </button>
+        <router-link
+          :to="profilePath"
+          class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-[13px] font-bold text-on-primary select-none active:scale-95 transition-transform"
+          title="Profilim"
+        >
+          {{ initials }}
+        </router-link>
+      </div>
     </header>
 
     <!-- Main Content -->

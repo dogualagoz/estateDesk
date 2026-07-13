@@ -42,6 +42,11 @@ export const AUDIT_ACTIONS = {
   ADMIN_USER_UPDATED: 'admin.user_updated',
   ADMIN_USER_DEACTIVATED: 'admin.user_deactivated',
   ADMIN_OFFICE_DEACTIVATED: 'admin.office_deactivated',
+  ADMIN_OFFICE_FEEDBACK_TOGGLED: 'admin.office_feedback_toggled',
+
+  // Geri bildirim mesajlaşması (beta)
+  FEEDBACK_MESSAGE_SENT: 'feedback.message_sent',
+  FEEDBACK_ADMIN_REPLIED: 'feedback.admin_replied',
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];

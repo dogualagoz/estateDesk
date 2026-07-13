@@ -65,6 +65,8 @@ model Office {
   name      String
   ownerId   String   @unique
   owner     User     @relation("OfficeOwner", fields: [ownerId], references: [id])
+  // Beta geri bildirim kanalı — süperadmin ofis bazında açar/kapatır
+  feedbackEnabled Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -74,6 +76,7 @@ model Office {
   invites       Invite[]
   demandMatches DemandMatch[]
   demandShares  DemandShare[]
+  feedbackThread FeedbackThread?
 }
 
 model Invite {
@@ -131,6 +134,7 @@ model User {
   demandMatches   DemandMatch[]
   demandShares    DemandShare[]
   passwordResets  PasswordReset[]
+  feedbackMessages FeedbackMessage[] @relation("FeedbackSender")
 }
 
 model Portfolio {
@@ -248,6 +252,36 @@ model DemandShare {
 
   @@index([demandId])
   @@index([token])
+}
+
+// ── Geri bildirim mesajlaşması (beta) ─────────────────────────────────────
+// Ofis başına tek sohbet: ofis kullanıcıları ↔ platform sahibi (SUPERADMIN).
+// Okunmadı sayacı lastReadAt damgalarıyla hesaplanır (mesaj başına flag yok).
+
+model FeedbackThread {
+  id               String    @id @default(cuid())
+  officeId         String    @unique
+  office           Office    @relation(fields: [officeId], references: [id])
+  officeLastReadAt DateTime?
+  adminLastReadAt  DateTime?
+  lastMessageAt    DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  messages FeedbackMessage[]
+}
+
+model FeedbackMessage {
+  id        String         @id @default(cuid())
+  threadId  String
+  thread    FeedbackThread @relation(fields: [threadId], references: [id])
+  senderId  String
+  sender    User           @relation("FeedbackSender", fields: [senderId], references: [id])
+  fromAdmin Boolean        @default(false)
+  body      String
+  createdAt DateTime       @default(now())
+
+  @@index([threadId, createdAt])
 }
 
 // ── Denetim ve gözlemlenebilirlik (admin paneli) ──────────────────────────

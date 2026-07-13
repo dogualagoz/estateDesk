@@ -46,6 +46,67 @@ export class EmailService {
     }
   }
 
+  async sendFeedbackNotificationEmail(
+    to: string,
+    officeName: string,
+    senderName: string,
+    body: string,
+  ): Promise<void> {
+    if (!this.transporter) {
+      this.logger.warn('Email gönderimi yapılandırılmamış (SMTP env değişkenleri eksik)');
+      return;
+    }
+
+    try {
+      await this.transporter.sendMail({
+        from: this.config.get<string>('SMTP_FROM') || 'noreply@emlakdefter.com',
+        to,
+        subject: `EstateDesk — Yeni geri bildirim: ${officeName}`,
+        html: this.renderFeedbackNotificationTemplate(officeName, senderName, body),
+      });
+    } catch (error) {
+      this.logger.error(`E-posta gönderimi başarısız (${to}):`, error);
+      // Fire-and-forget: hata işlemi engellemiyor
+    }
+  }
+
+  private renderFeedbackNotificationTemplate(
+    officeName: string,
+    senderName: string,
+    body: string,
+  ): string {
+    const panelUrl = `${(this.config.get<string>('FRONTEND_URL') || 'http://localhost:5173').replace(/\/+$/, '')}/yonetim/mesajlar`;
+    const esc = (s: string) =>
+      s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const safeOffice = esc(officeName);
+    const safeSender = esc(senderName);
+    const safeBody = esc(body).replace(/\n/g, '<br>');
+    return `
+      <!DOCTYPE html>
+      <html lang="tr">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Yeni Geri Bildirim</title>
+      </head>
+      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #4e604f;">Yeni Geri Bildirim</h2>
+          <p><strong>${safeOffice}</strong> ofisinden <strong>${safeSender}</strong> yeni bir mesaj gönderdi:</p>
+          <p style="background-color: #f5f5f5; padding: 14px; border-radius: 8px; white-space: pre-wrap;">${safeBody}</p>
+          <div style="margin: 30px 0;">
+            <a href="${panelUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4e604f; color: white; text-decoration: none; border-radius: 8px;">Yönetim Panelinde Cevapla</a>
+          </div>
+          <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+          <p style="color: #999; font-size: 12px; text-align: center;">
+            EstateDesk
+          </p>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
   private renderPasswordResetTemplate(resetUrl: string): string {
     return `
       <!DOCTYPE html>

@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { api } from '@/services/api';
+import { adminService } from '../services/admin.service';
 
 /**
  * Panel iskeleti: sol menü + içerik. Ana AppShell bilinçli olarak
@@ -14,10 +16,29 @@ const NAV = [
   { name: 'admin.overview', label: 'Genel Bakış', icon: 'space_dashboard' },
   { name: 'admin.users', label: 'Kullanıcılar', icon: 'group' },
   { name: 'admin.offices', label: 'Ofisler', icon: 'apartment' },
+  { name: 'admin.feedback', label: 'Mesajlar', icon: 'forum' },
   { name: 'admin.logs', label: 'Loglar', icon: 'receipt_long' },
   { name: 'admin.analytics', label: 'Analitik', icon: 'monitoring' },
   { name: 'admin.system', label: 'Sistem', icon: 'host' },
 ];
+
+// Okunmamış geri bildirim rozeti — 30 sn poll
+const feedbackUnread = ref(0);
+let unreadTimer: ReturnType<typeof setInterval> | null = null;
+async function loadUnread() {
+  try {
+    feedbackUnread.value = (await adminService.feedbackUnread()).total;
+  } catch {
+    // Rozet poll hatası sessiz geçilir
+  }
+}
+onMounted(() => {
+  loadUnread();
+  unreadTimer = setInterval(loadUnread, 30_000);
+});
+onUnmounted(() => {
+  if (unreadTimer) clearInterval(unreadTimer);
+});
 
 async function logout() {
   // Audit kaydı için backend'e haber ver; başarısız olsa da çıkışı engelleme
@@ -53,6 +74,10 @@ async function logout() {
         >
           <span class="material-symbols-outlined text-[19px]">{{ item.icon }}</span>
           {{ item.label }}
+          <span
+            v-if="item.name === 'admin.feedback' && feedbackUnread > 0"
+            class="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-error text-on-error text-[10px] font-bold flex items-center justify-center"
+          >{{ feedbackUnread > 9 ? '9+' : feedbackUnread }}</span>
         </RouterLink>
       </nav>
 

@@ -6,15 +6,18 @@ import { AdminUsersService } from './admin-users.service';
 import { AdminOfficesService } from './admin-offices.service';
 import { AdminLogsService } from './admin-logs.service';
 import { AdminAnalyticsService } from './admin-analytics.service';
+import { AdminFeedbackService } from './admin-feedback.service';
 import {
   AdminAnalyticsQueryDto,
   AdminAuditLogsQueryDto,
   AdminOfficesQueryDto,
+  AdminPageDto,
   AdminRequestLogsQueryDto,
   AdminTimeseriesQueryDto,
   AdminUsersQueryDto,
 } from './dto/admin-query.dto';
 import { AdminCreateUserDto, AdminUpdateUserDto } from './dto/admin-user.dto';
+import { AdminFeedbackReplyDto, AdminOfficeFeedbackToggleDto } from './dto/admin-feedback.dto';
 
 /**
  * Süper admin uçları — sınıf seviyesinde @Roles(SUPERADMIN):
@@ -29,6 +32,7 @@ export class AdminController {
     private readonly offices: AdminOfficesService,
     private readonly logs: AdminLogsService,
     private readonly analytics: AdminAnalyticsService,
+    private readonly feedback: AdminFeedbackService,
   ) {}
 
   // ── Genel bakış / analytics / sistem ──
@@ -93,6 +97,45 @@ export class AdminController {
   @Delete('offices/:id')
   deactivateOffice(@CurrentUser() admin: AuthUser, @Param('id') id: string) {
     return this.offices.deactivate(admin, id);
+  }
+
+  @Patch('offices/:id/feedback')
+  toggleOfficeFeedback(
+    @CurrentUser() admin: AuthUser,
+    @Param('id') id: string,
+    @Body() dto: AdminOfficeFeedbackToggleDto,
+  ) {
+    return this.feedback.toggleOffice(admin, id, dto.enabled);
+  }
+
+  // ── Geri bildirim sohbetleri ──
+  @Get('feedback/threads')
+  feedbackThreads(@Query() query: AdminPageDto) {
+    return this.feedback.listThreads(query);
+  }
+
+  @Get('feedback/unread')
+  feedbackUnread() {
+    return this.feedback.unreadTotal();
+  }
+
+  @Get('feedback/threads/:officeId/messages')
+  feedbackMessages(@Param('officeId') officeId: string) {
+    return this.feedback.listMessages(officeId);
+  }
+
+  @Post('feedback/threads/:officeId/messages')
+  feedbackReply(
+    @CurrentUser() admin: AuthUser,
+    @Param('officeId') officeId: string,
+    @Body() dto: AdminFeedbackReplyDto,
+  ) {
+    return this.feedback.reply(admin, officeId, dto.body);
+  }
+
+  @Post('feedback/threads/:officeId/read')
+  feedbackMarkRead(@Param('officeId') officeId: string) {
+    return this.feedback.markRead(officeId);
   }
 
   // ── Loglar ──

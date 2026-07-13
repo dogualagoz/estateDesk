@@ -47,6 +47,23 @@ async function deactivate() {
   }
 }
 
+const togglingFeedback = ref(false);
+async function toggleFeedback() {
+  if (!office.value || togglingFeedback.value) return;
+  togglingFeedback.value = true;
+  try {
+    const next = !office.value.feedbackEnabled;
+    await adminService.toggleOfficeFeedback(office.value.id, next);
+    office.value.feedbackEnabled = next;
+    toast.success(next ? 'Geri bildirim açıldı' : 'Geri bildirim kapatıldı');
+  } catch (e: unknown) {
+    const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+    toast.error(msg || 'İşlem başarısız');
+  } finally {
+    togglingFeedback.value = false;
+  }
+}
+
 function fmtDate(iso: string | null) {
   if (!iso) return '—';
   return new Intl.DateTimeFormat('tr-TR', { dateStyle: 'medium' }).format(new Date(iso));
@@ -72,10 +89,33 @@ function fmtDate(iso: string | null) {
             son aktivite: {{ fmtDate(office.lastActivityAt) }}
           </p>
         </div>
-        <button class="btn border-error text-error bg-transparent hover:bg-error-container" @click="deactivate">
-          <span class="material-symbols-outlined text-[18px]">domain_disabled</span>
-          Devre Dışı Bırak
-        </button>
+        <div class="flex items-center gap-3 flex-wrap">
+          <!-- Geri Bildirim (Beta) toggle -->
+          <button
+            class="flex items-center gap-2 px-3 py-2 rounded-lg border text-label-md font-medium transition-colors"
+            :class="office.feedbackEnabled
+              ? 'border-primary bg-primary-fixed/40 text-on-surface'
+              : 'border-outline-variant text-on-surface-variant hover:bg-surface-container'"
+            :disabled="togglingFeedback"
+            @click="toggleFeedback"
+          >
+            <span class="material-symbols-outlined text-[18px]">forum</span>
+            Geri Bildirim (Beta)
+            <span
+              class="relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors"
+              :class="office.feedbackEnabled ? 'bg-primary' : 'bg-outline-variant'"
+            >
+              <span
+                class="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform"
+                :class="office.feedbackEnabled ? 'translate-x-[18px]' : 'translate-x-0.5'"
+              />
+            </span>
+          </button>
+          <button class="btn border-error text-error bg-transparent hover:bg-error-container" @click="deactivate">
+            <span class="material-symbols-outlined text-[18px]">domain_disabled</span>
+            Devre Dışı Bırak
+          </button>
+        </div>
       </div>
 
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-stack-md mb-stack-lg">
