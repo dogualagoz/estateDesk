@@ -1,5 +1,22 @@
 # Changelog
 
+## v2.1.0 (2026-07-15)
+
+Şifre sıfırlama, ofis geri bildirim mesajlaşması, harici portföy başvuru linki ve portföy yönetiminde kapsamlı UX iyileştirmesi.
+
+### ✨ Yeni Özellikler
+
+- **Şifre Sıfırlama** ([8c88ab8](https://github.com/dogualagoz/estateDesk/commit/8c88ab8)) — SMTP e-posta servisiyle uçtan uca şifre sıfırlama akışı; giriş sayfasıyla uyumlu tasarım ([32ec27a](https://github.com/dogualagoz/estateDesk/commit/32ec27a))
+- **Ofis Geri Bildirim Mesajlaşması (beta)** ([0be12f6](https://github.com/dogualagoz/estateDesk/commit/0be12f6)) — ofis ile platform sahibi arasında iki yönlü sohbet, okunmadı sayacı, e-posta bildirimi
+- **Harici Portföy Başvuru Linki** ([133128a](https://github.com/dogualagoz/estateDesk/commit/133128a)) — mülk sahiplerine gönderilebilen link üzerinden başvuru toplama, danışman onay/red akışı
+- **Mal Sahibi Adı Görünürlüğü + Satış Sonrası Paylaşım** ([57a65a6](https://github.com/dogualagoz/estateDesk/commit/57a65a6)) — mal sahibi adı varsayılan olarak yalnızca ekleyen danışmana görünür; portföyün satış sonrası diğer ofislerle paylaşılabilirliği ayrı bir alan
+- **Portföy Satır İçi Düzenleme + UX İyileştirmesi** ([64dd685](https://github.com/dogualagoz/estateDesk/commit/64dd685)) — detay sayfasında "Düzenle" artık sayfa değiştirmeden aynı yerde açılıyor; ekleme formu ve liste kartları yeniden tasarlandı
+- **Portföy Başvuruları Link Arayüzü** ([3fd9cbd](https://github.com/dogualagoz/estateDesk/commit/3fd9cbd)) — uygulamadaki diğer paylaşım linki arayüzleriyle tutarlı, Notion tarzı link kutusu
+
+### 🐛 Düzeltmeler
+
+- **forgot-password Transform importu** ([a7b3845](https://github.com/dogualagoz/estateDesk/commit/a7b3845)) — `Transform` decorator'ı yanlış paketten import ediliyordu; `EmailModule` wiring eksikti
+
 ## v2.0.0 (2026-07-03)
 
 EstateDesk'in profesyonel SaaS sürümü.
