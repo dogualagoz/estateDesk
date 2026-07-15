@@ -5,21 +5,36 @@ import { portfolioService } from '@/services/portfolio.service';
 import { resolveImgUrl } from '@/utils/image';
 import { useConfirm } from '@/composables/useConfirm';
 import { useToast } from '@/composables/useToast';
+import { useAsync } from '@/composables/useAsync';
+import { useAuthStore } from '@/stores/auth';
 import {
   PROPERTY_TYPE_LABELS,
   LISTING_TYPE_LABELS,
   type Portfolio,
   type PropertyType,
 } from '@/types/portfolio';
+import {
+  createPortfolioFormContext,
+  providePortfolioForm,
+} from './portfolio-form-context';
+import { usePortfolioImages } from './composables/usePortfolioImages';
+import { buildPortfolioPayload } from './portfolio-payload.util';
+import PortfolioPreviewPanel from './components/PortfolioPreviewPanel.vue';
+import PortfolioFormSections from './components/PortfolioFormSections.vue';
 
+/**
+ * Portföy detay sayfası: salt-okunur görüntüleme + sayfa değiştirmeden
+ * satır içi düzenleme. Düzenleme modunda PortfolioFormView ile birebir
+ * aynı bileşenler (PortfolioPreviewPanel + PortfolioFormSections) kullanılır
+ * — böylece ekleme ve görüntüleme ekranları görsel olarak hep tutarlı kalır.
+ */
 const route  = useRoute();
 const router = useRouter();
+const auth = useAuthStore();
 const { confirm } = useConfirm();
 const toast = useToast();
 const item      = ref<Portfolio | null>(null);
 const loading   = ref(true);
-const uploading = ref(false);
-const fileInput = ref<HTMLInputElement | null>(null);
 const activeImg = ref(0);
 
 const TYPE_ICONS: Record<PropertyType, string> = {
@@ -50,6 +65,9 @@ const location    = computed(() => {
   if (!item.value) return '';
   return [item.value.neighborhood, item.value.district, item.value.city].filter(Boolean).join(', ');
 });
+const ownerNameHidden = computed(
+  () => !!item.value && !item.value.ownerNameVisible && item.value.createdById !== auth.user?.id,
+);
 
 function fmtPrice(p: string | number) {
   const n = typeof p === 'string' ? parseFloat(p) : p;
@@ -84,18 +102,94 @@ async function remove() {
   }
 }
 
-function pickImages() { fileInput.value?.click(); }
+// ── Satır içi düzenleme ──
+// Context/composable senkron olarak setup() içinde oluşturulur (provide/inject
+// ve onUnmounted için gerekli); `editing` yalnızca gösterilip gösterilmeyeceğini
+// kontrol eder.
+const ctx = createPortfolioFormContext();
+providePortfolioForm(ctx);
+const { form, typeChosen, listingChosen } = ctx;
 
-async function onFilesSelected(e: Event) {
-  const input = e.target as HTMLInputElement;
-  if (!input.files?.length || !item.value) return;
-  uploading.value = true;
-  try {
-    item.value = await portfolioService.uploadImages(item.value.id, Array.from(input.files));
-  } finally {
-    uploading.value = false;
-    input.value = '';
-  }
+const editing = ref(false);
+const images = usePortfolioImages(() => route.params.id as string);
+const saveOp = useAsync();
+
+// Mal sahibi adı görünürlüğü yalnızca ekleyen danışman tarafından değiştirilebilir
+const loadedCreatedById = ref<string | null>(null);
+const ownerVisibilityLocked = computed(
+  () => loadedCreatedById.value !== null && loadedCreatedById.value !== auth.user?.id,
+);
+
+const canSubmit = computed(
+  () =>
+    form.city.trim() !== '' &&
+    form.district.trim() !== '' &&
+    Number(form.price) > 0 &&
+    form.ownerName.trim() !== '' &&
+    form.ownerPhone.trim() !== '',
+);
+
+function fillForm(p: Portfolio) {
+  Object.assign(form, {
+    type: p.type,
+    listingType: p.listingType ?? 'SALE',
+    title: p.title ?? '',
+    city: p.city,
+    district: p.district,
+    neighborhood: p.neighborhood ?? '',
+    areaSqm: p.areaSqm,
+    roomCount: p.roomCount,
+    price: typeof p.price === 'string' ? parseFloat(p.price) : p.price,
+    features: [...p.features],
+    visibility: p.visibility,
+    note: p.note ?? '',
+    ownerName: p.ownerName,
+    ownerNameVisible: p.ownerNameVisible,
+    ownerPhone: p.ownerPhone,
+    isShareable: p.isShareable,
+  });
+  images.existingImages.value = [...(p.images ?? [])];
+  loadedCreatedById.value = p.createdById;
+  typeChosen.value = true;
+  listingChosen.value = true;
+}
+
+function startEdit() {
+  if (!item.value) return;
+  images.clearPending();
+  fillForm(item.value);
+  editing.value = true;
+}
+
+function cancelEdit() {
+  // Not: mevcut sunucu görsellerinin silinmesi (removeExistingImage) tıklanır
+  // tıklanmaz kalıcıdır — İptal bunu geri almaz. Bu, eski /edit rotasında da
+  // aynı şekilde çalışıyordu; burada yeni bir tutarsızlık eklenmiyor.
+  images.clearPending();
+  editing.value = false;
+}
+
+async function saveEdit() {
+  if (!item.value || !canSubmit.value) return;
+  const id = item.value.id;
+  const payload = buildPortfolioPayload(form, ownerVisibilityLocked.value);
+
+  const saved = await saveOp.run(
+    async () => {
+      await portfolioService.update(id, payload);
+      if (images.pendingFiles.value.length) {
+        await portfolioService.uploadImages(id, images.pendingFiles.value);
+      }
+      return true;
+    },
+    { errorMessage: 'Kaydetme başarısız', toastError: false },
+  );
+  if (!saved) return;
+
+  images.clearPending();
+  editing.value = false;
+  toast.success('Portföy güncellendi');
+  await load();
 }
 
 onMounted(load);
@@ -117,14 +211,14 @@ onMounted(load);
           <h1 class="text-headline-md font-semibold text-on-surface tracking-tight">
             {{ item.title || (PROPERTY_TYPE_LABELS[item.type] + ' — ' + item.city + ' / ' + item.district) }}
           </h1>
-          <p class="text-label-md text-on-surface-variant mt-0.5">Portföy Detayı</p>
+          <p class="text-label-md text-on-surface-variant mt-0.5">{{ editing ? 'Portföy Düzenleniyor' : 'Portföy Detayı' }}</p>
         </div>
         <div v-else-if="loading">
           <div class="h-5 w-48 bg-surface-container rounded animate-pulse" />
         </div>
       </div>
-      <div v-if="item" class="flex gap-2 shrink-0">
-        <button class="btn" @click="router.push(`/portfolio/${item.id}/edit`)">
+      <div v-if="item && !editing" class="flex gap-2 shrink-0">
+        <button class="btn" @click="startEdit">
           <span class="material-symbols-outlined text-[18px]">edit</span>
           <span class="hidden sm:inline">Düzenle</span>
         </button>
@@ -147,19 +241,9 @@ onMounted(load);
     <div v-else class="flex-1 flex flex-col md:flex-row md:overflow-hidden">
 
       <!-- ────────────────────────────────────────────────────
-           Sol: Görsel Panel
+           Sol: Görsel Panel (salt-okunur) / Düzenleme (canlı önizleme + upload)
       ──────────────────────────────────────────────────── -->
-      <div class="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-outline-variant flex flex-col overflow-hidden">
-
-        <!-- hidden file input -->
-        <input
-          ref="fileInput"
-          type="file"
-          multiple
-          accept="image/jpeg,image/png,image/webp"
-          class="hidden"
-          @change="onFilesSelected"
-        />
+      <div v-if="!editing" class="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-outline-variant flex flex-col overflow-hidden">
 
         <!-- Ana görsel alanı -->
         <div
@@ -187,24 +271,11 @@ onMounted(load);
             <div class="absolute bottom-24 left-6 w-12 h-12 rounded-full bg-white/10" />
           </template>
 
-          <!-- Sağ üst: görsel sayaç + ekle butonu -->
-          <div class="absolute top-4 right-4 z-10 flex items-center gap-2">
-            <span
-              v-if="hasImages"
-              class="px-2.5 py-1 rounded-full bg-black/50 text-white text-label-sm backdrop-blur-sm"
-            >
+          <!-- Sağ üst: görsel sayaç -->
+          <div v-if="hasImages" class="absolute top-4 right-4 z-10">
+            <span class="px-2.5 py-1 rounded-full bg-black/50 text-white text-label-sm backdrop-blur-sm">
               {{ activeImg + 1 }} / {{ item.images.length }}
             </span>
-            <button
-              type="button"
-              class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white text-label-sm font-medium transition-all"
-              :disabled="uploading"
-              @click="pickImages"
-            >
-              <span v-if="uploading" class="material-symbols-outlined text-[15px] animate-spin">progress_activity</span>
-              <span v-else class="material-symbols-outlined text-[15px]">add_photo_alternate</span>
-              {{ uploading ? 'Yükleniyor…' : 'Görsel Ekle' }}
-            </button>
           </div>
 
           <!-- Badge'ler -->
@@ -282,10 +353,12 @@ onMounted(load);
         </div>
       </div>
 
+      <PortfolioPreviewPanel v-else :images="images" is-edit />
+
       <!-- ────────────────────────────────────────────────────
-           Sağ: Detay Bölümleri (read-only)
+           Sağ: Detay Bölümleri (salt-okunur) / Form Bölümleri (düzenleme)
       ──────────────────────────────────────────────────── -->
-      <div class="w-full md:w-1/2 flex flex-col md:overflow-hidden">
+      <div v-if="!editing" class="w-full md:w-1/2 flex flex-col md:overflow-hidden">
 
         <!-- Kaydırılabilir içerik -->
         <div class="flex-1 md:overflow-y-auto px-4 md:px-8 py-6 space-y-4">
@@ -322,6 +395,17 @@ onMounted(load);
                 </span>
                 {{ item.visibility === 'HIDDEN' ? 'Gizli' : 'Açık' }}
               </div>
+            </div>
+            <!-- Paylaşıma açık -->
+            <div class="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-container/50">
+              <span class="material-symbols-outlined text-[16px]" :class="item.isShareable ? 'text-primary' : 'text-on-surface-variant'">
+                {{ item.isShareable ? 'share' : 'block' }}
+              </span>
+              <span class="text-label-sm text-on-surface-variant">
+                {{ item.isShareable
+                  ? 'Satıldığında diğer ofislerle paylaşılabilir'
+                  : 'Satıldığında diğer ofislerle paylaşılamaz' }}
+              </span>
             </div>
           </div>
 
@@ -387,9 +471,18 @@ onMounted(load);
               <!-- Mal sahibi -->
               <div class="grid grid-cols-2 gap-3">
                 <div class="flex flex-col gap-1">
-                  <span class="text-label-sm font-semibold text-on-surface-variant">Mal Sahibi</span>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-label-sm font-semibold text-on-surface-variant">Mal Sahibi</span>
+                    <span
+                      v-if="ownerNameHidden"
+                      class="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-semibold"
+                      title="Bu bilgiyi yalnızca ekleyen danışman görebilir"
+                    >
+                      <span class="material-symbols-outlined text-[11px]">lock</span>Gizli
+                    </span>
+                  </div>
                   <div class="input bg-surface-container/50 text-on-surface cursor-default flex items-center gap-2">
-                    <span class="material-symbols-outlined text-[16px] text-on-surface-variant">person</span>
+                    <span class="material-symbols-outlined text-[16px] text-on-surface-variant">{{ ownerNameHidden ? 'lock' : 'person' }}</span>
                     {{ item.ownerName }}
                   </div>
                 </div>
@@ -445,7 +538,7 @@ onMounted(load);
             <span class="material-symbols-outlined text-[18px]">arrow_back</span>
             Geri Dön
           </button>
-          <button type="button" class="btn" @click="router.push(`/portfolio/${item.id}/edit`)">
+          <button type="button" class="btn" @click="startEdit">
             <span class="material-symbols-outlined text-[18px]">edit</span>
             Düzenle
           </button>
@@ -455,6 +548,20 @@ onMounted(load);
           </button>
         </div>
 
+      </div>
+
+      <!-- Düzenleme modu: Sağ panel -->
+      <div v-else class="w-full md:w-1/2 flex flex-col md:overflow-hidden">
+        <PortfolioFormSections :error="saveOp.error.value" :owner-visibility-locked="ownerVisibilityLocked" />
+
+        <!-- ── Alt bar: İptal / Kaydet ── -->
+        <div class="shrink-0 flex items-center justify-end gap-3 px-4 md:px-8 py-4 border-t border-outline-variant bg-surface">
+          <button type="button" class="btn" @click="cancelEdit">İptal</button>
+          <button type="button" class="btn primary" :disabled="saveOp.loading.value || !canSubmit" @click="saveEdit">
+            <span class="material-symbols-outlined text-[18px]">{{ saveOp.loading.value ? 'hourglass_empty' : 'save' }}</span>
+            {{ saveOp.loading.value ? 'Kaydediliyor…' : 'Kaydet' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>

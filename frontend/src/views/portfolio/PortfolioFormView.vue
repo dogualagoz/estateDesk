@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { onMounted, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { portfolioService } from '@/services/portfolio.service';
-import type { CreatePortfolioPayload, Portfolio } from '@/types/portfolio';
+import type { CreatePortfolioPayload } from '@/types/portfolio';
 import { useAsync } from '@/composables/useAsync';
 import {
   createPortfolioFormContext,
@@ -10,27 +10,26 @@ import {
   usePortfolioProgress,
 } from './portfolio-form-context';
 import { usePortfolioImages } from './composables/usePortfolioImages';
+import { buildPortfolioPayload } from './portfolio-payload.util';
 import PortfolioPreviewPanel from './components/PortfolioPreviewPanel.vue';
 import PortfolioFormSections from './components/PortfolioFormSections.vue';
 
 /**
- * İki panelli portföy formu: solda canlı önizleme + görsel yükleme
+ * Yeni portföy ekleme formu: solda canlı önizleme + görsel yükleme
  * (PortfolioPreviewPanel), sağda adım göstergeli form bölümleri
- * (PortfolioFormSections). Hem create hem edit modu.
+ * (PortfolioFormSections). Mevcut kaydı düzenlemek için PortfolioDetailView'in
+ * satır içi düzenleme modu kullanılır — bu ekran yalnızca oluşturma içindir.
  */
-const route = useRoute();
 const router = useRouter();
-const isEdit = computed(() => !!route.params.id);
 
 const ctx = createPortfolioFormContext();
 providePortfolioForm(ctx);
-const { form, typeChosen, listingChosen } = ctx;
+const { form } = ctx;
 const { s1Done, stepsDone, currentStep } = usePortfolioProgress(ctx);
 
-const images = usePortfolioImages(() => (isEdit.value ? (route.params.id as string) : undefined));
+const images = usePortfolioImages(() => undefined);
 
 const saveOp = useAsync();
-const loadOp = useAsync();
 
 const STEPS = [
   { label: 'Temel Bilgiler' },
@@ -49,69 +48,12 @@ const canSubmit = computed(
     form.ownerPhone.trim() !== '',
 );
 
-onMounted(async () => {
-  if (!isEdit.value) return;
-  const p = await loadOp.run(() => portfolioService.get(route.params.id as string), {
-    errorMessage: 'Portföy yüklenemedi',
-  });
-  if (!p) {
-    router.push('/portfolio');
-    return;
-  }
-  fillForm(p);
-});
-
-function fillForm(p: Portfolio) {
-  Object.assign(form, {
-    type: p.type,
-    listingType: p.listingType ?? 'SALE',
-    title: p.title ?? '',
-    city: p.city,
-    district: p.district,
-    neighborhood: p.neighborhood ?? '',
-    areaSqm: p.areaSqm,
-    roomCount: p.roomCount,
-    price: typeof p.price === 'string' ? parseFloat(p.price) : p.price,
-    features: [...p.features],
-    visibility: p.visibility,
-    note: p.note ?? '',
-    ownerName: p.ownerName,
-    ownerPhone: p.ownerPhone,
-  });
-  images.existingImages.value = [...(p.images ?? [])];
-  typeChosen.value = true;
-  listingChosen.value = true;
-}
-
 async function submit() {
-  const payload: CreatePortfolioPayload = {
-    type: form.type,
-    listingType: form.listingType,
-    title: form.title || undefined,
-    city: form.city,
-    district: form.district,
-    neighborhood: form.neighborhood || undefined,
-    areaSqm: Number(form.areaSqm) || 0,
-    roomCount: form.roomCount,
-    price: Number(form.price),
-    features: [...form.features],
-    visibility: form.visibility,
-    note: form.note || undefined,
-    ownerName: form.ownerName,
-    ownerPhone: form.ownerPhone,
-  };
+  const payload = buildPortfolioPayload(form, false);
 
   const saved = await saveOp.run(
     async () => {
-      if (isEdit.value) {
-        const id = route.params.id as string;
-        await portfolioService.update(id, payload);
-        if (images.pendingFiles.value.length) {
-          await portfolioService.uploadImages(id, images.pendingFiles.value);
-        }
-        return id;
-      }
-      const created = await portfolioService.create(payload);
+      const created = await portfolioService.create(payload as CreatePortfolioPayload);
       if (images.pendingFiles.value.length) {
         await portfolioService.uploadImages(created.id, images.pendingFiles.value);
       }
@@ -135,9 +77,7 @@ async function submit() {
         <span class="material-symbols-outlined text-[20px]">arrow_back</span>
       </button>
       <div>
-        <h1 class="text-headline-md font-semibold text-on-surface tracking-tight">
-          {{ isEdit ? 'Portföy Düzenle' : 'Yeni Portföy Ekle' }}
-        </h1>
+        <h1 class="text-headline-md font-semibold text-on-surface tracking-tight">Yeni Portföy Ekle</h1>
         <p class="text-label-md text-on-surface-variant mt-0.5">
           İlan detaylarını eksiksiz girerek potansiyel alıcılara ulaşın.
         </p>
@@ -147,7 +87,7 @@ async function submit() {
     <!-- ── Body: mobilde dikey istif, masaüstünde iki sütun ── -->
     <div class="flex-1 flex flex-col md:flex-row md:overflow-hidden">
       <!-- Sol: Canlı önizleme + görsel yükleme -->
-      <PortfolioPreviewPanel :images="images" :is-edit="isEdit" />
+      <PortfolioPreviewPanel :images="images" :is-edit="false" />
 
       <!-- Sağ: Form -->
       <div class="w-full md:w-1/2 flex flex-col md:overflow-hidden">

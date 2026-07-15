@@ -9,6 +9,7 @@ import { useToast } from '@/composables/useToast';
 import {
   PROPERTY_TYPES,
   PROPERTY_TYPE_LABELS,
+  LISTING_TYPE_LABELS,
   type Portfolio,
   type PortfolioQuery,
 } from '@/types/portfolio';
@@ -73,6 +74,10 @@ function resetFilters() {
 function fmtPrice(p: string | number) {
   const n = typeof p === 'string' ? parseFloat(p) : p;
   return new Intl.NumberFormat('tr-TR').format(n) + ' ₺';
+}
+
+function initials(name: string) {
+  return name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 }
 
 async function remove(p: Portfolio) {
@@ -212,7 +217,7 @@ onMounted(() => {
       <article
         v-for="p in items"
         :key="p.id"
-        class="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col cursor-pointer group"
+        class="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden hover:shadow-md hover:border-outline transition-all duration-200 flex flex-col cursor-pointer group"
         @click="router.push(`/portfolio/${p.id}`)"
       >
         <!-- Image / Placeholder -->
@@ -224,76 +229,64 @@ onMounted(() => {
             class="absolute inset-0 w-full h-full object-cover"
           />
           <span v-else class="material-symbols-outlined text-[44px] text-outline-variant">maps_home_work</span>
-          <!-- Type badge -->
-          <div class="absolute top-3 left-3">
-            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary text-on-primary text-label-sm shadow-sm">
-              <span class="w-1.5 h-1.5 rounded-full bg-on-primary/70"></span>
-              {{ PROPERTY_TYPE_LABELS[p.type] }}
-            </span>
-          </div>
-          <!-- Visibility badge -->
-          <div class="absolute top-3 right-3">
-            <span
-              :class="[
-                'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-sm font-semibold uppercase tracking-wider backdrop-blur-sm',
-                p.visibility === 'HIDDEN'
-                  ? 'bg-error-container/90 text-on-error-container border border-error/20'
-                  : 'bg-emerald-50/90 text-emerald-700 border border-emerald-200'
-              ]"
-            >
-              <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
-              {{ p.visibility === 'HIDDEN' ? 'Gizli' : 'Açık' }}
-            </span>
-          </div>
         </div>
 
         <!-- Card Body -->
-        <div class="p-stack-md flex flex-col flex-1">
-          <h3 class="text-body-lg font-semibold text-on-surface mb-1 truncate group-hover:text-primary transition-colors">
-            {{ p.city }}, {{ p.district }}<span v-if="p.neighborhood"> / {{ p.neighborhood }}</span>
-          </h3>
-          <p class="text-label-md text-on-surface-variant flex items-center gap-1 mb-3">
-            <span class="material-symbols-outlined text-[14px]">location_on</span>
-            {{ PROPERTY_TYPE_LABELS[p.type] }}
-          </p>
-
-          <!-- Specs -->
-          <div class="flex items-center gap-3 py-3 border-t border-b border-outline-variant mb-3">
-            <div class="flex items-center gap-1 text-label-md text-on-surface flex-1 justify-center">
-              <span class="material-symbols-outlined text-[18px] text-outline">bed</span>
-              {{ p.roomCount }}
+        <div class="px-stack-md pt-stack-md pb-3 flex flex-col flex-1">
+          <!-- Badge row: tip · ilan tipi  +  görünürlük -->
+          <div class="flex justify-between items-center gap-2 mb-3">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-md text-label-sm font-medium bg-surface-container text-on-surface-variant shrink-0">
+                {{ PROPERTY_TYPE_LABELS[p.type] }}
+              </span>
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded-md text-label-sm font-medium shrink-0"
+                :class="p.listingType === 'RENT' ? 'bg-amber-50 text-amber-700' : 'bg-primary-fixed text-on-primary-fixed-variant'"
+              >{{ LISTING_TYPE_LABELS[p.listingType] }}</span>
             </div>
-            <div class="w-px h-4 bg-outline-variant"></div>
-            <div class="flex items-center gap-1 text-label-md text-on-surface flex-1 justify-center">
-              <span class="material-symbols-outlined text-[18px] text-outline">square_foot</span>
-              {{ p.areaSqm }} m²
-            </div>
-            <div class="w-px h-4 bg-outline-variant"></div>
-            <div class="flex items-center gap-1 text-label-md text-on-surface flex-1 justify-center">
-              <span class="material-symbols-outlined text-[18px] text-outline">person</span>
-              <span class="truncate max-w-[80px]">{{ p.ownerName }}</span>
-            </div>
+            <span
+              class="inline-flex items-center gap-1.5 text-label-sm font-medium shrink-0"
+              :class="p.visibility === 'HIDDEN' ? 'text-amber-600' : 'text-emerald-600'"
+            >
+              <span class="w-1.5 h-1.5 rounded-full" :class="p.visibility === 'HIDDEN' ? 'bg-amber-500' : 'bg-emerald-500'"></span>
+              {{ p.visibility === 'HIDDEN' ? 'Gizli' : 'Açık' }}
+            </span>
           </div>
 
+          <!-- Title -->
+          <h3 class="text-body-lg font-semibold leading-snug text-on-surface transition-colors group-hover:text-primary truncate">
+            {{ p.city }}, {{ p.district }}<span v-if="p.neighborhood"> / {{ p.neighborhood }}</span>
+          </h3>
+
+          <!-- Specs -->
+          <div class="flex items-center gap-3 mt-1.5 text-label-md text-on-surface-variant">
+            <span v-if="p.roomCount" class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px] text-outline">bed</span>{{ p.roomCount }}
+            </span>
+            <span class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px] text-outline">square_foot</span>{{ p.areaSqm }} m²
+            </span>
+          </div>
+
+          <!-- Price -->
+          <div class="text-headline-md font-semibold tracking-tight text-primary tabular-nums mt-3">{{ fmtPrice(p.price) }}</div>
+
           <!-- Footer -->
-          <div class="flex justify-between items-center mt-auto">
-            <div class="text-headline-md font-semibold tracking-tight text-primary">{{ fmtPrice(p.price) }}</div>
-            <div class="flex gap-1">
-              <button
-                class="btn ghost p-2"
-                title="Detay"
-                @click.stop="router.push(`/portfolio/${p.id}`)"
-              >
-                <span class="material-symbols-outlined text-[18px]">open_in_new</span>
-              </button>
-              <button
-                class="btn ghost danger p-2"
-                title="Sil"
-                @click.stop="remove(p)"
-              >
-                <span class="material-symbols-outlined text-[18px]">delete</span>
-              </button>
+          <div class="flex justify-between items-center mt-auto pt-2.5 border-t border-outline-variant">
+            <div class="flex items-center gap-2 min-w-0">
+              <div
+                v-if="p.createdBy"
+                class="w-7 h-7 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center text-[11px] font-bold shrink-0"
+              >{{ initials(p.createdBy.fullName) }}</div>
+              <span class="text-label-md font-medium text-on-surface truncate">{{ p.createdBy?.fullName || '—' }}</span>
             </div>
+            <button
+              class="btn ghost danger p-1.5 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+              title="Sil"
+              @click.stop="remove(p)"
+            >
+              <span class="material-symbols-outlined text-[16px]">delete</span>
+            </button>
           </div>
         </div>
       </article>

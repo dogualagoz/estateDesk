@@ -158,12 +158,6 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'Portföy' },
   },
   {
-    path: '/portfolio/:id/edit',
-    name: 'portfolio.edit',
-    component: () => import('@/views/portfolio/PortfolioFormView.vue'),
-    meta: { title: 'Portföy Düzenle' },
-  },
-  {
     path: '/demand',
     name: 'demand.list',
     component: () => import('@/views/demand/DemandListView.vue'),

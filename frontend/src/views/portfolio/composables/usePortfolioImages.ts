@@ -82,6 +82,17 @@ export function usePortfolioImages(portfolioId: () => string | undefined) {
     }
   }
 
+  /**
+   * Bekleyen (henüz yüklenmemiş) tüm görselleri temizler — düzenleme iptal
+   * edildiğinde. Component unmount olmadığı için onUnmounted temizliği bu
+   * durumda tetiklenmez, elle çağrılması gerekir.
+   */
+  function clearPending() {
+    previewUrls.value.forEach(URL.revokeObjectURL);
+    previewUrls.value = [];
+    pendingFiles.value = [];
+  }
+
   // Bellek sızıntısını önle: oluşturulan object URL'leri bırak
   onUnmounted(() => previewUrls.value.forEach(URL.revokeObjectURL));
 
@@ -98,6 +109,7 @@ export function usePortfolioImages(portfolioId: () => string | undefined) {
     onDrop,
     removePreview,
     removeExistingImage,
+    clearPending,
   };
 }
 

@@ -60,12 +60,26 @@ const showSection2 = s1Done;
 const showSection3 = s2Done;
 const showSection4 = s3Done;
 
-// Yeni bölüm açıldığında kaydır
+// Yeni bölüm açıldığında kaydır + ilk metin alanına odaklan (hızlı giriş için)
 const sec2Ref = ref<HTMLElement | null>(null);
 const sec3Ref = ref<HTMLElement | null>(null);
 const sec4Ref = ref<HTMLElement | null>(null);
-watch(showSection2, (v) => { if (v) nextTick(() => sec2Ref.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })); });
-watch(showSection3, (v) => { if (v) nextTick(() => sec3Ref.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })); });
+const titleInputRef = ref<HTMLInputElement | null>(null);
+const areaInputRef = ref<HTMLInputElement | null>(null);
+watch(showSection2, (v) => {
+  if (!v) return;
+  nextTick(() => {
+    sec2Ref.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    titleInputRef.value?.focus();
+  });
+});
+watch(showSection3, (v) => {
+  if (!v) return;
+  nextTick(() => {
+    sec3Ref.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    areaInputRef.value?.focus();
+  });
+});
 watch(showSection4, (v) => { if (v) nextTick(() => sec4Ref.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })); });
 
 function selectType(t: PropertyType) {
@@ -154,7 +168,7 @@ function addCustomFeature() {
               İlan Başlığı
               <span class="font-normal ml-1 text-on-surface-variant/60">(isteğe bağlı)</span>
             </label>
-            <input v-model="form.title" class="input" placeholder="Örn: Kadıköy Moda'da Deniz Manzaralı" />
+            <input ref="titleInputRef" v-model="form.title" class="input" placeholder="Örn: Kadıköy Moda'da Deniz Manzaralı" />
           </div>
           <LocationSelect
             v-model:city="form.city"
@@ -179,7 +193,7 @@ function addCustomFeature() {
             <div class="flex flex-col gap-1.5">
               <label class="text-label-sm font-semibold text-on-surface-variant">Brüt m²</label>
               <div class="relative">
-                <input v-model.number="form.areaSqm" class="input pr-10" type="number" min="0" placeholder="145" />
+                <input ref="areaInputRef" v-model.number="form.areaSqm" class="input pr-10" type="number" min="0" placeholder="145" />
                 <span class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-label-sm select-none pointer-events-none">m²</span>
               </div>
             </div>
@@ -341,7 +355,7 @@ function addCustomFeature() {
 <style scoped>
 /* Bölüm açılış animasyonu */
 .section-slide-enter-active {
-  transition: opacity 0.35s ease, transform 0.35s ease;
+  transition: opacity 0.22s ease, transform 0.22s ease;
 }
 .section-slide-enter-from {
   opacity: 0;
