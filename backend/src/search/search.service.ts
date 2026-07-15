@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
 import { requireOfficeId } from '../common/office.util';
+import { maskOwnerNames } from '../common/portfolio-owner.util';
 import { QuerySearchDto, SearchScope } from './dto/query-search.dto';
 
 // Aranabilir tüm alanların birleştirilip unaccent+lower ile normalize edildiği "arama metni".
@@ -47,13 +48,17 @@ export class SearchService {
     const [portfolios, demands, pCount, dCount] = await Promise.all([
       runPortfolio
         ? this.prisma.$queryRaw<any[]>(Prisma.sql`
-            SELECT * FROM "Portfolio"
+            SELECT "Portfolio".*,
+              (SELECT "fullName" FROM "User" WHERE "User".id = "Portfolio"."createdById") AS "createdByName"
+            FROM "Portfolio"
             WHERE "deletedAt" IS NULL AND "officeId" = ${officeId} AND ${portfolioWhere}
             ORDER BY "createdAt" DESC LIMIT ${limit}`)
         : Promise.resolve([]),
       runDemand
         ? this.prisma.$queryRaw<any[]>(Prisma.sql`
-            SELECT * FROM "Demand"
+            SELECT "Demand".*,
+              (SELECT "fullName" FROM "User" WHERE "User".id = "Demand"."createdById") AS "createdByName"
+            FROM "Demand"
             WHERE "deletedAt" IS NULL AND "officeId" = ${officeId} AND ${demandWhere}
             ORDER BY "createdAt" DESC LIMIT ${limit}`)
         : Promise.resolve([]),
@@ -70,7 +75,7 @@ export class SearchService {
     ]);
 
     return {
-      portfolios,
+      portfolios: maskOwnerNames(portfolios, user.id),
       demands,
       counts: { portfolios: pCount[0]?.count ?? 0, demands: dCount[0]?.count ?? 0 },
     };

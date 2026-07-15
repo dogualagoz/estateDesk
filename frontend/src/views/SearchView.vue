@@ -93,6 +93,10 @@ const hasResults = () =>
               <span class="text-label-md font-bold text-primary">{{ fmtPrice(p.price) }}</span>
               <span class="text-label-sm text-on-surface-variant">{{ p.ownerName }}</span>
             </div>
+            <p v-if="(p as any).createdByName" class="text-label-xs text-on-surface-variant/70 flex items-center gap-1 mt-1.5">
+              <span class="material-symbols-outlined text-[12px]">badge</span>
+              {{ (p as any).createdByName }}
+            </p>
           </article>
         </div>
       </section>
@@ -125,6 +129,10 @@ const hasResults = () =>
                 {{ initials(d.customerName) }}
               </div>
             </div>
+            <p v-if="(d as any).createdByName" class="text-label-xs text-on-surface-variant/70 flex items-center gap-1 mt-1.5">
+              <span class="material-symbols-outlined text-[12px]">badge</span>
+              {{ (d as any).createdByName }}
+            </p>
           </article>
         </div>
       </section>

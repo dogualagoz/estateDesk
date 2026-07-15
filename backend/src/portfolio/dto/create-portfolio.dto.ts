@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsBoolean,
   IsEnum,
   IsInt,
   IsOptional,
@@ -61,6 +62,14 @@ export class CreatePortfolioDto {
   @IsString()
   ownerName!: string;
 
+  @IsOptional()
+  @IsBoolean()
+  ownerNameVisible?: boolean;
+
   @IsString()
   ownerPhone!: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isShareable?: boolean;
 }

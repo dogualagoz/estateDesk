@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsBoolean,
   IsEnum,
   IsInt,
   IsNumber,
@@ -24,5 +25,7 @@ export class UpdatePortfolioDto {
   @IsOptional() @IsEnum(PortfolioVisibility) visibility?: PortfolioVisibility;
   @IsOptional() @IsString() note?: string;
   @IsOptional() @IsString() ownerName?: string;
+  @IsOptional() @IsBoolean() ownerNameVisible?: boolean;
   @IsOptional() @IsString() ownerPhone?: string;
+  @IsOptional() @IsBoolean() isShareable?: boolean;
 }

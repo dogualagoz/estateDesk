@@ -325,6 +325,12 @@ onMounted(load);
             </button>
           </div>
         </div>
+
+        <!-- Ekleyen -->
+        <p v-if="d.createdBy" class="text-label-xs text-on-surface-variant/70 flex items-center gap-1 mt-2">
+          <span class="material-symbols-outlined text-[13px]">badge</span>
+          Ekleyen: {{ d.createdBy.fullName }}
+        </p>
       </article>
     </div>
 

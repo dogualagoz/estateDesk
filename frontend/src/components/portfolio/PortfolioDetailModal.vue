@@ -253,6 +253,12 @@ function goToDetail() {
                   {{ portfolio.note }}
                 </div>
               </div>
+
+              <!-- Ekleyen -->
+              <p v-if="portfolio.createdBy" class="text-label-sm text-on-surface-variant/70 flex items-center gap-1 px-1">
+                <span class="material-symbols-outlined text-[14px]">badge</span>
+                Ekleyen: {{ portfolio.createdBy.fullName }}
+              </p>
             </div>
           </div>
 

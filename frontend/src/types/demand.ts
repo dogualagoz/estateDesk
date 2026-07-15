@@ -15,6 +15,7 @@ export interface DemandBestMatch {
   price: number;
   image: string | null;
   score: number;
+  createdBy: { id: string; fullName: string } | null;
 }
 
 export const DEMAND_STATUS_LABELS: Record<DemandStatus, string> = {

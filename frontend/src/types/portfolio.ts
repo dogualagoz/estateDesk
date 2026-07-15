@@ -43,7 +43,9 @@ export interface Portfolio {
   visibility: PortfolioVisibility;
   note?: string | null;
   ownerName: string;
+  ownerNameVisible: boolean;
   ownerPhone: string;
+  isShareable: boolean;
   createdById: string;
   createdBy?: { id: string; fullName: string };
   deletedAt?: string | null;
@@ -65,7 +67,9 @@ export interface CreatePortfolioPayload {
   visibility?: PortfolioVisibility;
   note?: string;
   ownerName: string;
+  ownerNameVisible?: boolean;
   ownerPhone: string;
+  isShareable?: boolean;
 }
 
 export type UpdatePortfolioPayload = Partial<CreatePortfolioPayload>;

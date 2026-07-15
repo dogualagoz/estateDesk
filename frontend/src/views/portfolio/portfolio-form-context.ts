@@ -16,7 +16,9 @@ export interface PortfolioFormState {
   visibility: 'PUBLIC' | 'HIDDEN';
   note: string;
   ownerName: string;
+  ownerNameVisible: boolean;
   ownerPhone: string;
+  isShareable: boolean;
 }
 
 export interface PortfolioFormContext {
@@ -42,7 +44,9 @@ export function createPortfolioFormContext(): PortfolioFormContext {
     visibility: 'PUBLIC',
     note: '',
     ownerName: '',
+    ownerNameVisible: false,
     ownerPhone: '',
+    isShareable: true,
   });
   return { form, typeChosen: ref(false), listingChosen: ref(false) };
 }

@@ -149,6 +149,11 @@ function dimTextColor(score: number) {
         <span class="truncate">{{ locationOf(scored.portfolio) }}</span>
       </p>
 
+      <p v-if="scored.portfolio.createdBy" class="text-[11px] text-on-surface-variant/70 flex items-center gap-0.5">
+        <span class="material-symbols-outlined text-[12px] shrink-0">badge</span>
+        <span class="truncate">{{ scored.portfolio.createdBy.fullName }}</span>
+      </p>
+
       <div class="flex items-center gap-3 text-[11px] text-on-surface-variant">
         <span class="flex items-center gap-0.5 font-medium">
           <span class="material-symbols-outlined text-[12px]">straighten</span>{{ scored.portfolio.areaSqm }} m²

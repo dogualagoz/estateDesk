@@ -9,6 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
 import { requireOfficeId } from '../common/office.util';
 import { attachMemberCounts } from '../common/member-counts.util';
+import { maskOwnerNames } from '../common/portfolio-owner.util';
 import { AuditService } from '../audit/audit.service';
 import { AUDIT_ACTIONS } from '../audit/audit-actions';
 import { CreateOfficeDto } from './dto/create-office.dto';
@@ -244,11 +245,12 @@ export class OfficeService {
     if (dataset === ExportDataset.PORTFOLIOS) {
       columns = PORTFOLIO_COLUMNS;
       label = 'Portfoyler';
-      rows = await this.prisma.portfolio.findMany({
+      const portfolioRows = await this.prisma.portfolio.findMany({
         where,
         orderBy: { createdAt: 'desc' },
-        include: { createdBy: { select: { fullName: true } } },
+        include: { createdBy: { select: { id: true, fullName: true } } },
       });
+      rows = maskOwnerNames(portfolioRows, user.id);
     } else {
       columns = DEMAND_COLUMNS;
       label = 'Talepler';

@@ -1,9 +1,15 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
 import { requireOfficeId } from '../common/office.util';
 import { uploadsDir } from '../common/uploads.util';
+import { maskOwnerName, maskOwnerNames } from '../common/portfolio-owner.util';
 import { CreatePortfolioDto } from './dto/create-portfolio.dto';
 import { UpdatePortfolioDto } from './dto/update-portfolio.dto';
 import { QueryPortfolioDto } from './dto/query-portfolio.dto';
@@ -65,7 +71,7 @@ export class PortfolioService {
       }),
     ]);
 
-    return { items, total, page, pageSize };
+    return { items: maskOwnerNames(items, user.id), total, page, pageSize };
   }
 
   /** Tek portföy — bulunamazsa (veya başka ofise aitse) 404. */
@@ -76,7 +82,7 @@ export class PortfolioService {
       include: { createdBy: { select: { id: true, fullName: true } } },
     });
     if (!item) throw new NotFoundException('Portfolio not found');
-    return item;
+    return maskOwnerName(item, user.id);
   }
 
   async create(user: AuthUser, dto: CreatePortfolioDto) {
@@ -96,7 +102,9 @@ export class PortfolioService {
         visibility: dto.visibility ?? 'PUBLIC',
         note: dto.note,
         ownerName: dto.ownerName,
+        ownerNameVisible: dto.ownerNameVisible ?? false,
         ownerPhone: dto.ownerPhone,
+        isShareable: dto.isShareable ?? true,
         createdById: user.id,
         officeId,
       },
@@ -104,8 +112,18 @@ export class PortfolioService {
   }
 
   async update(user: AuthUser, id: string, dto: UpdatePortfolioDto) {
-    // get() ofis sahipliğini doğrular — başka ofisin kaydı güncellenemez
-    await this.get(user, id);
+    const officeId = requireOfficeId(user);
+    // Ofis sahipliğini doğrula — başka ofisin kaydı güncellenemez (maskeleme burada önemsiz)
+    const existing = await this.prisma.portfolio.findFirst({
+      where: { id, deletedAt: null, officeId },
+    });
+    if (!existing) throw new NotFoundException('Portfolio not found');
+
+    // Mal sahibi adının görünürlüğünü yalnızca ekleyen danışman değiştirebilir
+    if (dto.ownerNameVisible !== undefined && existing.createdById !== user.id) {
+      throw new ForbiddenException('Mal sahibi adı görünürlüğünü yalnızca ekleyen danışman değiştirebilir');
+    }
+
     return this.prisma.portfolio.update({
       where: { id },
       data: { ...dto },
@@ -142,11 +160,12 @@ export class PortfolioService {
       newUrls.push(`/uploads/portfolio/${id}/${filename}`);
     }
 
-    return this.prisma.portfolio.update({
+    const updated = await this.prisma.portfolio.update({
       where: { id },
       data: { images: { set: [...item.images, ...newUrls] } },
       include: { createdBy: { select: { id: true, fullName: true } } },
     });
+    return maskOwnerName(updated, user.id);
   }
 
   async removeImage(user: AuthUser, id: string, filename: string) {
@@ -168,10 +187,11 @@ export class PortfolioService {
       fs.unlinkSync(filePath);
     }
 
-    return this.prisma.portfolio.update({
+    const updated = await this.prisma.portfolio.update({
       where: { id },
       data: { images: { set: item.images.filter((img) => img !== url) } },
       include: { createdBy: { select: { id: true, fullName: true } } },
     });
+    return maskOwnerName(updated, user.id);
   }
 }

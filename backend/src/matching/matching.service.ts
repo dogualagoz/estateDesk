@@ -14,6 +14,7 @@ import {
   roomIndex,
 } from './matching.scoring';
 import { MIN_SCORE, PRICE_STRETCH } from './matching.constants';
+import { maskOwnerName } from '../common/portfolio-owner.util';
 
 type PortfolioRow = Prisma.PortfolioGetPayload<{
   include: { createdBy: { select: { id: true; fullName: true } } };
@@ -79,6 +80,7 @@ export interface BestMatchSummary {
   price: number;
   image: string | null;
   score: number;
+  createdBy: { id: string; fullName: string } | null;
 }
 
 @Injectable()
@@ -87,7 +89,8 @@ export class MatchingService {
 
   async matchPortfolios(user: AuthUser, dto: MatchPortfoliosDto): Promise<ScoredPortfolio[]> {
     const officeId = requireOfficeId(user);
-    return this.scoreOfficePortfolios(officeId, dto);
+    const results = await this.scoreOfficePortfolios(officeId, dto);
+    return results.map((r) => ({ ...r, portfolio: maskOwnerName(r.portfolio, user.id) }));
   }
 
   /**
@@ -158,6 +161,7 @@ export class MatchingService {
         price: p.price,
         image: p.images?.[0] ?? null,
         score: best.score,
+        createdBy: p.createdBy ? { id: p.createdBy.id, fullName: p.createdBy.fullName } : null,
       };
     }
     return out;
