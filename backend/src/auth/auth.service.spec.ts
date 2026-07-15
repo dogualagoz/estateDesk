@@ -19,8 +19,9 @@ function makeService(userOverrides: Record<string, any> = {}) {
   } as any;
   const jwt = { signAsync: jest.fn().mockResolvedValue('token') } as any;
   const audit = { log: jest.fn() } as any;
-  const service = new AuthService(prisma, jwt, audit);
-  return { service, prisma, jwt, audit };
+  const email = { sendPasswordResetEmail: jest.fn() } as any;
+  const service = new AuthService(prisma, jwt, audit, email);
+  return { service, prisma, jwt, audit, email };
 }
 
 describe('AuthService.register', () => {
