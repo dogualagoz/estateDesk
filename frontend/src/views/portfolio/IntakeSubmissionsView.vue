@@ -27,6 +27,8 @@ const loadingLinks = ref(false);
 const loadingSubmissions = ref(false);
 const creating = ref(false);
 const newLabel = ref('');
+const showNewLinkForm = ref(false);
+const copiedId = ref<string | null>(null);
 const statusFilter = ref<IntakeSubmissionStatus>('PENDING');
 
 const STATUS_TABS: { value: IntakeSubmissionStatus; label: string }[] = [
@@ -75,6 +77,7 @@ async function createLink() {
     const link = await portfolioIntakeService.createLink(newLabel.value.trim() || undefined);
     links.value.unshift(link);
     newLabel.value = '';
+    showNewLinkForm.value = false;
     await copyLink(link);
   } catch {
     toast.error('Link oluşturulamadı');
@@ -86,10 +89,14 @@ async function createLink() {
 async function copyLink(link: IntakeLink) {
   try {
     await navigator.clipboard.writeText(link.link);
-    toast.success('Link kopyalandı');
   } catch {
     toast.info(link.link);
+    return;
   }
+  copiedId.value = link.id;
+  setTimeout(() => {
+    if (copiedId.value === link.id) copiedId.value = null;
+  }, 2000);
 }
 
 async function revokeLink(link: IntakeLink) {
@@ -148,48 +155,79 @@ onMounted(() => {
 
     <!-- ── Başvuru Linkleri ── -->
     <div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 mb-6">
-      <p class="text-label-xs font-semibold uppercase tracking-widest text-on-surface-variant mb-4">Başvuru Linkleri</p>
+      <div class="flex items-center justify-between gap-3 mb-4">
+        <p class="text-label-xs font-semibold uppercase tracking-widest text-on-surface-variant">Başvuru Linkleri</p>
+        <button
+          v-if="!showNewLinkForm"
+          type="button"
+          class="btn ghost text-[13px] py-1.5 px-2.5 text-primary"
+          @click="showNewLinkForm = true"
+        >
+          <span class="material-symbols-outlined text-[16px]">add_link</span>
+          Yeni Link
+        </button>
+      </div>
 
-      <form class="flex gap-2 mb-4" @submit.prevent="createLink">
+      <!-- Yeni link oluşturma formu (Notion tarzı: not/etiket + oluştur) -->
+      <form v-if="showNewLinkForm" class="mb-4 space-y-2.5" @submit.prevent="createLink">
         <input
           v-model="newLabel"
-          class="input flex-1"
+          class="input w-full"
           maxlength="120"
           placeholder="Etiket (isteğe bağlı) — örn: Mehmet Bey"
+          autofocus
         />
-        <button type="submit" class="btn primary" :disabled="creating">
-          <span class="material-symbols-outlined text-[18px]">add_link</span>
-          Link Oluştur
-        </button>
+        <div class="flex items-center gap-2">
+          <button type="submit" class="btn primary flex-1 h-10" :disabled="creating">
+            <span class="material-symbols-outlined text-[18px]">{{ creating ? 'hourglass_empty' : 'link' }}</span>
+            {{ creating ? 'Oluşturuluyor…' : 'Bağlantı Oluştur' }}
+          </button>
+          <button
+            type="button"
+            class="btn ghost h-10 text-on-surface-variant"
+            @click="showNewLinkForm = false; newLabel = ''"
+          >
+            Vazgeç
+          </button>
+        </div>
       </form>
 
       <p v-if="loadingLinks && links.length === 0" class="text-label-md text-on-surface-variant">Yükleniyor…</p>
-      <p v-else-if="links.length === 0" class="text-label-md text-on-surface-variant">
+      <p v-else-if="links.length === 0 && !showNewLinkForm" class="text-label-md text-on-surface-variant">
         Henüz aktif link yok. Link oluşturup WhatsApp ile mülk sahibine gönderin.
       </p>
-      <div v-else class="space-y-2">
+      <div v-else class="space-y-3">
         <div
           v-for="l in links"
           :key="l.id"
-          class="flex items-center gap-3 px-4 py-3 rounded-lg border border-outline-variant/60"
+          class="rounded-xl border border-outline-variant p-3.5 space-y-2.5"
         >
-          <span class="material-symbols-outlined text-[20px] text-primary shrink-0">link</span>
-          <div class="min-w-0 flex-1">
-            <p class="text-label-md font-semibold text-on-surface truncate">{{ l.label || 'Genel başvuru linki' }}</p>
-            <p class="text-label-sm text-on-surface-variant">
-              {{ l.submissionCount }} başvuru · {{ fmtDate(l.expiresAt) }} tarihine kadar geçerli
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px] text-primary shrink-0">link</span>
+            <p class="flex-1 text-label-md font-semibold text-on-surface truncate">
+              {{ l.label || 'Genel başvuru linki' }}
             </p>
+            <span class="text-label-sm text-on-surface-variant shrink-0">{{ l.submissionCount }} başvuru</span>
           </div>
-          <button class="btn !px-3" title="Linki kopyala" @click="copyLink(l)">
-            <span class="material-symbols-outlined text-[18px]">content_copy</span>
-          </button>
-          <button
-            class="btn !px-3 border-error text-error bg-transparent hover:bg-error-container"
-            title="Linki iptal et"
-            @click="revokeLink(l)"
-          >
-            <span class="material-symbols-outlined text-[18px]">link_off</span>
-          </button>
+
+          <!-- Notion/Figma tarzı link kutusu -->
+          <div class="flex items-center gap-1.5 p-1.5 pl-3 rounded-xl border border-outline-variant bg-surface-container/40">
+            <span class="flex-1 text-label-md text-on-surface truncate">{{ l.link }}</span>
+            <button type="button" class="btn primary h-9 px-3.5 shrink-0" @click="copyLink(l)">
+              <span class="material-symbols-outlined text-[16px]">{{ copiedId === l.id ? 'check' : 'content_copy' }}</span>
+              {{ copiedId === l.id ? 'Kopyalandı' : 'Kopyala' }}
+            </button>
+          </div>
+
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-label-sm text-on-surface-variant flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">schedule</span>
+              {{ fmtDate(l.expiresAt) }} tarihine kadar geçerli
+            </p>
+            <button type="button" class="text-label-sm font-medium text-error hover:underline" @click="revokeLink(l)">
+              İptal et
+            </button>
+          </div>
         </div>
       </div>
     </div>
