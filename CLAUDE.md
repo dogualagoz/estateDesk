@@ -39,28 +39,7 @@ cd backend && npm install && npm run start:dev
 cd frontend && npm install && npm run dev
 ```
 
-### Backend script'leri
-
-```bash
-npm run build          # nest build → dist/
-npm run start:dev      # watch modu
-npm run seed           # ts-node prisma/seed.ts (SEED_ADMIN_ + SEED_SUPERADMIN_ env'leri ile)
-npm run test           # Jest (43 test, matching + auth + invite)
-npm run lint           # ESLint flat config
-npm run lint:fix       # ESLint auto-fix
-npm run prisma:migrate # prisma migrate dev
-npm run prisma:deploy  # prod için
-```
-
-### Frontend script'leri
-
-```bash
-npm run dev            # Vite dev server
-npm run build          # vue-tsc + vite build
-npm run type-check     # vue-tsc --noEmit
-npm run lint           # ESLint (plugin-vue)
-npm run lint:fix       # auto-fix
-```
+Diğer script'ler için `backend/package.json` ve `frontend/package.json` scripts bölümüne bakın.
 
 ## Mimari
 
@@ -139,19 +118,14 @@ Davet akışı: `POST /office/invites` → token üret → `GET /invites/:token`
 - **`composables/useAsync.ts`** — yükleme/hata/toast sarmalayıcısı; tüm asenkron aksiyonlar bununla
 - **`composables/useCurrencyInput.ts`** — TL fiyat girişi: canlı nokta formatlama, model senkronizasyonu
 - **`components/ui/LocationSelect.vue`** — il → ilçe → mahalle kaskadı; edit modunda geçerlilik bazlı temizlik
-- **`views/`** — `portfolio/`, `demand/`, `users/`, `office/`, `auth/` klasörleri
-- **`types/`** — `portfolio.ts`, `demand.ts`, `user.ts`, `office.ts`, `matching.ts`, `common.ts`
-
 **Önemli view'lar:**
 - `DemandFormView.vue` — iki panelli: sol kriter formu + sağ debounce'lu (300ms) canlı skorlu eşleştirme kartları; provide/inject ile durum paylaşımı
 - `PortfolioFormView.vue` — fiyat canlı formatlama, il/ilçe/mahalle dropdown, sürükle-bırak görsel yükleme
 - `RegisterView`, `OnboardingView`, `InviteAcceptView`, `OfficeView`, `ProfileView` — kayıt/ofis akışı
 
-### Veritabanı (Prisma şeması: `backend/prisma/schema.prisma`)
+### Veritabanı
 
-**Modeller:** `Office`, `Invite`, `User`, `Portfolio`, `Demand`, `DemandMatch`
-
-**Enum'lar:** `Role` (ADMIN|AGENT), `PropertyType` (APARTMENT|VILLA|LAND|SHOP|OFFICE|HOTEL), `ListingType` (SALE|RENT), `PortfolioVisibility`, `DemandStatus`, `InviteStatus`
+Modeller ve enum'lar için `backend/prisma/schema.prisma` kaynaktır.
 
 ### Tasarım Sistemi (`DESIGN.md`)
 
